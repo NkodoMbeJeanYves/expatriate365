@@ -1,0 +1,92 @@
+# ============================================================
+# .gitignore — School365 (.NET + Angular monorepo)
+# ============================================================
+
+# ------ .NET / ASP.NET Core --------------------------------
+/server/bin/
+/server/obj/
+*.user
+*.suo
+.vs/
+*.DotSettings.user
+launchSettings.json
+
+# ---- EF Core / SQLite databases ---------------------------
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# ---- Secrets & environment --------------------------------
+/server/appsettings.Development.json
+/server/appsettings.Local.json
+/server/appsettings.Production.json
+/server/secrets.json
+/server/.env
+/server/.env.*
+.env
+
+# ---- NuGet ------------------------------------------------
+*.nupkg
+*.snupkg
+.nuget/
+
+# ------ Angular / Node -------------------------------------
+/client/node_modules/
+/client/dist/
+/client/.angular/
+/client/.angular/cache/
+
+# ---- Angular build artifacts ------------------------------
+*.js.map
+*.d.ts.map
+
+# ------ General --------------------------------------------
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- JetBrains IDEs ---------------------------------------
+.idea/
+*.iml
+
+# ---- VSCode (keep workspace settings, ignore user-specific)
+.vscode/launch.json
+.vscode/*.code-workspace
+
+# ---- Coverage / test output -------------------------------
+coverage/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# ---- Published output -------------------------------------
+publish/
+
+.claude/
+
+_dbcheck/
+_mysqlcheck/
+
+
+/School365.Domain/obj/
+/School365.Domain/bin/
+/School365.Application/obj/
+/School365.Application/bin/
+/School365.Infrastructure/bin/
+/School365.Infrastructure/obj/
+
+# Build outputs
+**/bin/
+**/obj/
+
+/server/wwwroot/
+/server/uploads/
+/server/logs/

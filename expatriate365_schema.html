@@ -1,0 +1,517 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expatriate365 — Schéma BDD</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f172a; font-family: 'Segoe UI', Arial, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 24px; }
+    h1 { color: #f1f5f9; font-size: 1.25rem; font-weight: 600; margin-bottom: 16px; letter-spacing: 0.02em; }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 16px; }
+    .toolbar button { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer; transition: background 0.15s; }
+    .toolbar button:hover { background: #334155; color: #f1f5f9; }
+    .container { background: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: auto; max-width: 100%; max-height: 80vh; padding: 12px; }
+    .container svg { display: block; }
+    footer { color: #475569; font-size: 0.75rem; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Expatriate365 — Schéma Base de Données</h1>
+  <div class="toolbar">
+    <button onclick="zoom(1.2)">＋ Zoom</button>
+    <button onclick="zoom(0.8)">－ Zoom</button>
+    <button onclick="reset()">Reset</button>
+    <button onclick="window.print()">Imprimer</button>
+  </div>
+  <div class="container" id="container">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2150" height="1220" viewBox="0 0 2150 1220" font-family="Segoe UI,Arial,sans-serif">
+<rect width="2150" height="1220" fill="#f1f5f9"/>
+<defs><marker id="a" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#94a3b8"/></marker></defs>
+<path d="M372,90 C646.0,90 646.0,100 920,100" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M746,280 C746,230.0 1016,230.0 1016,180" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M650,370 C511.0,370 511.0,90 372,90" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M746,280 C746,220.0 656,220.0 656,160" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M212,610 C566.0,610 566.0,100 920,100" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M422,620 C536.0,620 536.0,370 650,370" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M230,620 C221.0,620 221.0,610 212,610" fill="none" stroke="#1d4ed866" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M536,530 C536,495.0 746,495.0 746,460" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M440,610 C431.0,610 431.0,620 422,620" fill="none" stroke="#1d4ed866" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M756,530 C756,495.0 746,495.0 746,460" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M976,530 C976,355.0 1016,355.0 1016,180" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M976,770 C976,730.0 976,730.0 976,690" fill="none" stroke="#b4530966" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M976,770 C976,615.0 746,615.0 746,460" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1196,530 C1196,355.0 1016,355.0 1016,180" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1196,770 C1196,730.0 1196,730.0 1196,690" fill="none" stroke="#7c3aed66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1196,770 C1196,615.0 746,615.0 746,460" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1406,770 C1406,730.0 1196,730.0 1196,690" fill="none" stroke="#7c3aed66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M212,850 C566.0,850 566.0,100 920,100" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M116,1000 C116,965.0 116,965.0 116,930" fill="none" stroke="#be185d66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M116,1000 C116,730.0 746,730.0 746,460" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M326,1000 C326,580.0 276,580.0 276,160" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M546,770 C546,615.0 746,615.0 746,460" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1520,610 C1316.0,610 1316.0,100 1112,100" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1616,770 C1616,730.0 1616,730.0 1616,690" fill="none" stroke="#b91c1c66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1520,840 C1181.0,840 1181.0,370 842,370" fill="none" stroke="#0f766e66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1826,770 C1826,730.0 1616,730.0 1616,690" fill="none" stroke="#b91c1c66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1616,1000 C1616,955.0 1616,955.0 1616,910" fill="none" stroke="#b91c1c66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1826,1000 C1826,845.0 1616,845.0 1616,690" fill="none" stroke="#b91c1c66" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1826,1000 C1826,955.0 1616,955.0 1616,910" fill="none" stroke="#b91c1c66" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="922" y="22" width="192" height="160" rx="5" fill="#00000018"/>
+<rect x="920" y="20" width="192" height="160" rx="5" fill="#f0fdfa" stroke="#99f6e4" stroke-width="1.5"/>
+<rect x="920" y="20" width="192" height="32" rx="5" fill="#0f766e"/>
+<rect x="920" y="46" width="192" height="6" fill="#0f766e"/>
+<text x="928" y="41" font-size="10" font-weight="700" fill="#fff">tenants</text>
+<line x1="920" y1="52" x2="1112" y2="52" stroke="#99f6e4" stroke-width="1"/>
+<rect x="924" y="55" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="933" y="66" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="947" y="66" font-size="10" fill="#374151">id</text>
+<rect x="920" y="72" width="192" height="20" fill="#00000008"/>
+<text x="947" y="86" font-size="10" fill="#374151">name</text>
+<text x="947" y="106" font-size="10" fill="#374151">slug</text>
+<rect x="920" y="112" width="192" height="20" fill="#00000008"/>
+<text x="947" y="126" font-size="10" fill="#374151">subscription_status</text>
+<text x="947" y="146" font-size="10" fill="#374151">base_currency</text>
+<rect x="920" y="152" width="192" height="20" fill="#00000008"/>
+<text x="947" y="166" font-size="10" fill="#374151">is_active</text>
+<rect x="182" y="22" width="192" height="140" rx="5" fill="#00000018"/>
+<rect x="180" y="20" width="192" height="140" rx="5" fill="#f0fdfa" stroke="#99f6e4" stroke-width="1.5"/>
+<rect x="180" y="20" width="192" height="32" rx="5" fill="#0f766e"/>
+<rect x="180" y="46" width="192" height="6" fill="#0f766e"/>
+<text x="188" y="41" font-size="10" font-weight="700" fill="#fff">users</text>
+<line x1="180" y1="52" x2="372" y2="52" stroke="#99f6e4" stroke-width="1"/>
+<rect x="184" y="55" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="193" y="66" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="207" y="66" font-size="10" fill="#374151">id</text>
+<rect x="180" y="72" width="192" height="20" fill="#00000008"/>
+<rect x="184" y="75" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="193" y="86" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="207" y="86" font-size="10" fill="#374151">tenant_id</text>
+<text x="207" y="106" font-size="10" fill="#374151">email</text>
+<rect x="180" y="112" width="192" height="20" fill="#00000008"/>
+<text x="207" y="126" font-size="10" fill="#374151">role</text>
+<text x="207" y="146" font-size="10" fill="#374151">status</text>
+<rect x="562" y="22" width="192" height="140" rx="5" fill="#00000018"/>
+<rect x="560" y="20" width="192" height="140" rx="5" fill="#f0fdfa" stroke="#99f6e4" stroke-width="1.5"/>
+<rect x="560" y="20" width="192" height="32" rx="5" fill="#0f766e"/>
+<rect x="560" y="46" width="192" height="6" fill="#0f766e"/>
+<text x="568" y="41" font-size="10" font-weight="700" fill="#fff">membership categories</text>
+<line x1="560" y1="52" x2="752" y2="52" stroke="#99f6e4" stroke-width="1"/>
+<rect x="564" y="55" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="573" y="66" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="587" y="66" font-size="10" fill="#374151">id</text>
+<rect x="560" y="72" width="192" height="20" fill="#00000008"/>
+<rect x="564" y="75" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="573" y="86" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="587" y="86" font-size="10" fill="#374151">tenant_id</text>
+<text x="587" y="106" font-size="10" fill="#374151">name</text>
+<rect x="560" y="112" width="192" height="20" fill="#00000008"/>
+<text x="587" y="126" font-size="10" fill="#374151">contribution_rate</text>
+<text x="587" y="146" font-size="10" fill="#374151">voting_rights</text>
+<rect x="652" y="282" width="192" height="180" rx="5" fill="#00000018"/>
+<rect x="650" y="280" width="192" height="180" rx="5" fill="#f0fdfa" stroke="#99f6e4" stroke-width="1.5"/>
+<rect x="650" y="280" width="192" height="32" rx="5" fill="#0f766e"/>
+<rect x="650" y="306" width="192" height="6" fill="#0f766e"/>
+<text x="658" y="301" font-size="10" font-weight="700" fill="#fff">members</text>
+<line x1="650" y1="312" x2="842" y2="312" stroke="#99f6e4" stroke-width="1"/>
+<rect x="654" y="315" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="663" y="326" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="677" y="326" font-size="10" fill="#374151">id</text>
+<rect x="650" y="332" width="192" height="20" fill="#00000008"/>
+<rect x="654" y="335" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="663" y="346" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="677" y="346" font-size="10" fill="#374151">tenant_id</text>
+<rect x="654" y="355" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="663" y="366" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="677" y="366" font-size="10" fill="#374151">user_id</text>
+<rect x="650" y="372" width="192" height="20" fill="#00000008"/>
+<rect x="654" y="375" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="663" y="386" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="677" y="386" font-size="10" fill="#374151">category_id</text>
+<text x="677" y="406" font-size="10" fill="#374151">membership_number</text>
+<rect x="650" y="412" width="192" height="20" fill="#00000008"/>
+<text x="677" y="426" font-size="10" fill="#374151">status</text>
+<text x="677" y="446" font-size="10" fill="#374151">joined_date</text>
+<rect x="22" y="532" width="192" height="160" rx="5" fill="#00000018"/>
+<rect x="20" y="530" width="192" height="160" rx="5" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+<rect x="20" y="530" width="192" height="32" rx="5" fill="#1d4ed8"/>
+<rect x="20" y="556" width="192" height="6" fill="#1d4ed8"/>
+<text x="28" y="551" font-size="10" font-weight="700" fill="#fff">contribution types</text>
+<line x1="20" y1="562" x2="212" y2="562" stroke="#bfdbfe" stroke-width="1"/>
+<rect x="24" y="565" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="33" y="576" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="47" y="576" font-size="10" fill="#374151">id</text>
+<rect x="20" y="582" width="192" height="20" fill="#00000008"/>
+<rect x="24" y="585" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="33" y="596" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="47" y="596" font-size="10" fill="#374151">tenant_id</text>
+<text x="47" y="616" font-size="10" fill="#374151">name</text>
+<rect x="20" y="622" width="192" height="20" fill="#00000008"/>
+<text x="47" y="636" font-size="10" fill="#374151">frequency</text>
+<text x="47" y="656" font-size="10" fill="#374151">base_amount</text>
+<rect x="20" y="662" width="192" height="20" fill="#00000008"/>
+<text x="47" y="676" font-size="10" fill="#374151">is_active</text>
+<rect x="232" y="532" width="192" height="180" rx="5" fill="#00000018"/>
+<rect x="230" y="530" width="192" height="180" rx="5" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+<rect x="230" y="530" width="192" height="32" rx="5" fill="#1d4ed8"/>
+<rect x="230" y="556" width="192" height="6" fill="#1d4ed8"/>
+<text x="238" y="551" font-size="10" font-weight="700" fill="#fff">contribution charges</text>
+<line x1="230" y1="562" x2="422" y2="562" stroke="#bfdbfe" stroke-width="1"/>
+<rect x="234" y="565" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="243" y="576" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="257" y="576" font-size="10" fill="#374151">id</text>
+<rect x="230" y="582" width="192" height="20" fill="#00000008"/>
+<rect x="234" y="585" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="243" y="596" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="257" y="596" font-size="10" fill="#374151">member_id</text>
+<rect x="234" y="605" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="243" y="616" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="257" y="616" font-size="10" fill="#374151">contribution_type_id</text>
+<rect x="230" y="622" width="192" height="20" fill="#00000008"/>
+<text x="257" y="636" font-size="10" fill="#374151">due_date</text>
+<text x="257" y="656" font-size="10" fill="#374151">base_amount</text>
+<rect x="230" y="662" width="192" height="20" fill="#00000008"/>
+<text x="257" y="676" font-size="10" fill="#374151">amount_paid</text>
+<text x="257" y="696" font-size="10" fill="#374151">status</text>
+<rect x="442" y="532" width="192" height="160" rx="5" fill="#00000018"/>
+<rect x="440" y="530" width="192" height="160" rx="5" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+<rect x="440" y="530" width="192" height="32" rx="5" fill="#1d4ed8"/>
+<rect x="440" y="556" width="192" height="6" fill="#1d4ed8"/>
+<text x="448" y="551" font-size="10" font-weight="700" fill="#fff">payments</text>
+<line x1="440" y1="562" x2="632" y2="562" stroke="#bfdbfe" stroke-width="1"/>
+<rect x="444" y="565" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="453" y="576" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="467" y="576" font-size="10" fill="#374151">id</text>
+<rect x="440" y="582" width="192" height="20" fill="#00000008"/>
+<rect x="444" y="585" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="453" y="596" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="467" y="596" font-size="10" fill="#374151">member_id</text>
+<rect x="444" y="605" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="453" y="616" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="467" y="616" font-size="10" fill="#374151">charge_id</text>
+<rect x="440" y="622" width="192" height="20" fill="#00000008"/>
+<text x="467" y="636" font-size="10" fill="#374151">receipt_number</text>
+<text x="467" y="656" font-size="10" fill="#374151">amount</text>
+<rect x="440" y="662" width="192" height="20" fill="#00000008"/>
+<text x="467" y="676" font-size="10" fill="#374151">status</text>
+<rect x="662" y="532" width="192" height="140" rx="5" fill="#00000018"/>
+<rect x="660" y="530" width="192" height="140" rx="5" fill="#fffbeb" stroke="#fde68a" stroke-width="1.5"/>
+<rect x="660" y="530" width="192" height="32" rx="5" fill="#b45309"/>
+<rect x="660" y="556" width="192" height="6" fill="#b45309"/>
+<text x="668" y="551" font-size="10" font-weight="700" fill="#fff">welfare requests</text>
+<line x1="660" y1="562" x2="852" y2="562" stroke="#fde68a" stroke-width="1"/>
+<rect x="664" y="565" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="673" y="576" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="687" y="576" font-size="10" fill="#374151">id</text>
+<rect x="660" y="582" width="192" height="20" fill="#00000008"/>
+<rect x="664" y="585" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="673" y="596" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="687" y="596" font-size="10" fill="#374151">member_id</text>
+<text x="687" y="616" font-size="10" fill="#374151">type</text>
+<rect x="660" y="622" width="192" height="20" fill="#00000008"/>
+<text x="687" y="636" font-size="10" fill="#374151">amount_requested</text>
+<text x="687" y="656" font-size="10" fill="#374151">status</text>
+<rect x="882" y="532" width="192" height="160" rx="5" fill="#00000018"/>
+<rect x="880" y="530" width="192" height="160" rx="5" fill="#fffbeb" stroke="#fde68a" stroke-width="1.5"/>
+<rect x="880" y="530" width="192" height="32" rx="5" fill="#b45309"/>
+<rect x="880" y="556" width="192" height="6" fill="#b45309"/>
+<text x="888" y="551" font-size="10" font-weight="700" fill="#fff">events</text>
+<line x1="880" y1="562" x2="1072" y2="562" stroke="#fde68a" stroke-width="1"/>
+<rect x="884" y="565" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="893" y="576" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="907" y="576" font-size="10" fill="#374151">id</text>
+<rect x="880" y="582" width="192" height="20" fill="#00000008"/>
+<rect x="884" y="585" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="893" y="596" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="907" y="596" font-size="10" fill="#374151">tenant_id</text>
+<text x="907" y="616" font-size="10" fill="#374151">title</text>
+<rect x="880" y="622" width="192" height="20" fill="#00000008"/>
+<text x="907" y="636" font-size="10" fill="#374151">type</text>
+<text x="907" y="656" font-size="10" fill="#374151">status</text>
+<rect x="880" y="662" width="192" height="20" fill="#00000008"/>
+<text x="907" y="676" font-size="10" fill="#374151">start_date</text>
+<rect x="882" y="772" width="192" height="120" rx="5" fill="#00000018"/>
+<rect x="880" y="770" width="192" height="120" rx="5" fill="#fffbeb" stroke="#fde68a" stroke-width="1.5"/>
+<rect x="880" y="770" width="192" height="32" rx="5" fill="#b45309"/>
+<rect x="880" y="796" width="192" height="6" fill="#b45309"/>
+<text x="888" y="791" font-size="10" font-weight="700" fill="#fff">event registrations</text>
+<line x1="880" y1="802" x2="1072" y2="802" stroke="#fde68a" stroke-width="1"/>
+<rect x="884" y="805" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="893" y="816" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="907" y="816" font-size="10" fill="#374151">id</text>
+<rect x="880" y="822" width="192" height="20" fill="#00000008"/>
+<rect x="884" y="825" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="893" y="836" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="907" y="836" font-size="10" fill="#374151">event_id</text>
+<rect x="884" y="845" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="893" y="856" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="907" y="856" font-size="10" fill="#374151">member_id</text>
+<rect x="880" y="862" width="192" height="20" fill="#00000008"/>
+<text x="907" y="876" font-size="10" fill="#374151">status</text>
+<rect x="1102" y="532" width="192" height="160" rx="5" fill="#00000018"/>
+<rect x="1100" y="530" width="192" height="160" rx="5" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.5"/>
+<rect x="1100" y="530" width="192" height="32" rx="5" fill="#7c3aed"/>
+<rect x="1100" y="556" width="192" height="6" fill="#7c3aed"/>
+<text x="1108" y="551" font-size="10" font-weight="700" fill="#fff">meetings</text>
+<line x1="1100" y1="562" x2="1292" y2="562" stroke="#ddd6fe" stroke-width="1"/>
+<rect x="1104" y="565" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="1113" y="576" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="1127" y="576" font-size="10" fill="#374151">id</text>
+<rect x="1100" y="582" width="192" height="20" fill="#00000008"/>
+<rect x="1104" y="585" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1113" y="596" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1127" y="596" font-size="10" fill="#374151">tenant_id</text>
+<text x="1127" y="616" font-size="10" fill="#374151">title</text>
+<rect x="1100" y="622" width="192" height="20" fill="#00000008"/>
+<text x="1127" y="636" font-size="10" fill="#374151">type</text>
+<text x="1127" y="656" font-size="10" fill="#374151">status</text>
+<rect x="1100" y="662" width="192" height="20" fill="#00000008"/>
+<text x="1127" y="676" font-size="10" fill="#374151">scheduled_at</text>
+<rect x="1102" y="772" width="192" height="120" rx="5" fill="#00000018"/>
+<rect x="1100" y="770" width="192" height="120" rx="5" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.5"/>
+<rect x="1100" y="770" width="192" height="32" rx="5" fill="#7c3aed"/>
+<rect x="1100" y="796" width="192" height="6" fill="#7c3aed"/>
+<text x="1108" y="791" font-size="10" font-weight="700" fill="#fff">meeting attendances</text>
+<line x1="1100" y1="802" x2="1292" y2="802" stroke="#ddd6fe" stroke-width="1"/>
+<rect x="1104" y="805" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="1113" y="816" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="1127" y="816" font-size="10" fill="#374151">id</text>
+<rect x="1100" y="822" width="192" height="20" fill="#00000008"/>
+<rect x="1104" y="825" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1113" y="836" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1127" y="836" font-size="10" fill="#374151">meeting_id</text>
+<rect x="1104" y="845" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1113" y="856" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1127" y="856" font-size="10" fill="#374151">member_id</text>
+<rect x="1100" y="862" width="192" height="20" fill="#00000008"/>
+<text x="1127" y="876" font-size="10" fill="#374151">status</text>
+<rect x="1312" y="772" width="192" height="120" rx="5" fill="#00000018"/>
+<rect x="1310" y="770" width="192" height="120" rx="5" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.5"/>
+<rect x="1310" y="770" width="192" height="32" rx="5" fill="#7c3aed"/>
+<rect x="1310" y="796" width="192" height="6" fill="#7c3aed"/>
+<text x="1318" y="791" font-size="10" font-weight="700" fill="#fff">meeting minutes</text>
+<line x1="1310" y1="802" x2="1502" y2="802" stroke="#ddd6fe" stroke-width="1"/>
+<rect x="1314" y="805" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="1323" y="816" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="1337" y="816" font-size="10" fill="#374151">id</text>
+<rect x="1310" y="822" width="192" height="20" fill="#00000008"/>
+<rect x="1314" y="825" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1323" y="836" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1337" y="836" font-size="10" fill="#374151">meeting_id</text>
+<text x="1337" y="856" font-size="10" fill="#374151">is_approved</text>
+<rect x="1310" y="862" width="192" height="20" fill="#00000008"/>
+<text x="1337" y="876" font-size="10" fill="#374151">approved_at</text>
+<rect x="22" y="772" width="192" height="160" rx="5" fill="#00000018"/>
+<rect x="20" y="770" width="192" height="160" rx="5" fill="#fdf2f8" stroke="#fbcfe8" stroke-width="1.5"/>
+<rect x="20" y="770" width="192" height="32" rx="5" fill="#be185d"/>
+<rect x="20" y="796" width="192" height="6" fill="#be185d"/>
+<text x="28" y="791" font-size="10" font-weight="700" fill="#fff">communications</text>
+<line x1="20" y1="802" x2="212" y2="802" stroke="#fbcfe8" stroke-width="1"/>
+<rect x="24" y="805" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="33" y="816" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="47" y="816" font-size="10" fill="#374151">id</text>
+<rect x="20" y="822" width="192" height="20" fill="#00000008"/>
+<rect x="24" y="825" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="33" y="836" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="47" y="836" font-size="10" fill="#374151">tenant_id</text>
+<text x="47" y="856" font-size="10" fill="#374151">title</text>
+<rect x="20" y="862" width="192" height="20" fill="#00000008"/>
+<text x="47" y="876" font-size="10" fill="#374151">type</text>
+<text x="47" y="896" font-size="10" fill="#374151">channel</text>
+<rect x="20" y="902" width="192" height="20" fill="#00000008"/>
+<text x="47" y="916" font-size="10" fill="#374151">status</text>
+<rect x="22" y="1002" width="192" height="140" rx="5" fill="#00000018"/>
+<rect x="20" y="1000" width="192" height="140" rx="5" fill="#fdf2f8" stroke="#fbcfe8" stroke-width="1.5"/>
+<rect x="20" y="1000" width="192" height="32" rx="5" fill="#be185d"/>
+<rect x="20" y="1026" width="192" height="6" fill="#be185d"/>
+<text x="28" y="1021" font-size="10" font-weight="700" fill="#fff">communication recipients</text>
+<line x1="20" y1="1032" x2="212" y2="1032" stroke="#fbcfe8" stroke-width="1"/>
+<rect x="24" y="1035" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="33" y="1046" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="47" y="1046" font-size="10" fill="#374151">id</text>
+<rect x="20" y="1052" width="192" height="20" fill="#00000008"/>
+<rect x="24" y="1055" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="33" y="1066" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="47" y="1066" font-size="10" fill="#374151">communication_id</text>
+<rect x="24" y="1075" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="33" y="1086" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="47" y="1086" font-size="10" fill="#374151">member_id</text>
+<rect x="20" y="1092" width="192" height="20" fill="#00000008"/>
+<text x="47" y="1106" font-size="10" fill="#374151">status</text>
+<text x="47" y="1126" font-size="10" fill="#374151">read_at</text>
+<rect x="232" y="1002" width="192" height="160" rx="5" fill="#00000018"/>
+<rect x="230" y="1000" width="192" height="160" rx="5" fill="#fdf2f8" stroke="#fbcfe8" stroke-width="1.5"/>
+<rect x="230" y="1000" width="192" height="32" rx="5" fill="#be185d"/>
+<rect x="230" y="1026" width="192" height="6" fill="#be185d"/>
+<text x="238" y="1021" font-size="10" font-weight="700" fill="#fff">documents</text>
+<line x1="230" y1="1032" x2="422" y2="1032" stroke="#fbcfe8" stroke-width="1"/>
+<rect x="234" y="1035" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="243" y="1046" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="257" y="1046" font-size="10" fill="#374151">id</text>
+<rect x="230" y="1052" width="192" height="20" fill="#00000008"/>
+<rect x="234" y="1055" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="243" y="1066" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="257" y="1066" font-size="10" fill="#374151">tenant_id</text>
+<rect x="234" y="1075" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="243" y="1086" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="257" y="1086" font-size="10" fill="#374151">uploaded_by</text>
+<rect x="230" y="1092" width="192" height="20" fill="#00000008"/>
+<text x="257" y="1106" font-size="10" fill="#374151">title</text>
+<text x="257" y="1126" font-size="10" fill="#374151">type</text>
+<rect x="230" y="1132" width="192" height="20" fill="#00000008"/>
+<text x="257" y="1146" font-size="10" fill="#374151">file_url</text>
+<rect x="452" y="772" width="192" height="140" rx="5" fill="#00000018"/>
+<rect x="450" y="770" width="192" height="140" rx="5" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5"/>
+<rect x="450" y="770" width="192" height="32" rx="5" fill="#c2410c"/>
+<rect x="450" y="796" width="192" height="6" fill="#c2410c"/>
+<text x="458" y="791" font-size="10" font-weight="700" fill="#fff">board members</text>
+<line x1="450" y1="802" x2="642" y2="802" stroke="#fed7aa" stroke-width="1"/>
+<rect x="454" y="805" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="463" y="816" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="477" y="816" font-size="10" fill="#374151">id</text>
+<rect x="450" y="822" width="192" height="20" fill="#00000008"/>
+<rect x="454" y="825" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="463" y="836" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="477" y="836" font-size="10" fill="#374151">member_id</text>
+<text x="477" y="856" font-size="10" fill="#374151">role</text>
+<rect x="450" y="862" width="192" height="20" fill="#00000008"/>
+<text x="477" y="876" font-size="10" fill="#374151">start_date</text>
+<text x="477" y="896" font-size="10" fill="#374151">end_date</text>
+<rect x="452" y="1002" width="192" height="140" rx="5" fill="#00000018"/>
+<rect x="450" y="1000" width="192" height="140" rx="5" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5"/>
+<rect x="450" y="1000" width="192" height="32" rx="5" fill="#c2410c"/>
+<rect x="450" y="1026" width="192" height="6" fill="#c2410c"/>
+<text x="458" y="1021" font-size="10" font-weight="700" fill="#fff">resolutions</text>
+<line x1="450" y1="1032" x2="642" y2="1032" stroke="#fed7aa" stroke-width="1"/>
+<rect x="454" y="1035" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="463" y="1046" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="477" y="1046" font-size="10" fill="#374151">id</text>
+<rect x="450" y="1052" width="192" height="20" fill="#00000008"/>
+<rect x="454" y="1055" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="463" y="1066" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="477" y="1066" font-size="10" fill="#374151">tenant_id</text>
+<text x="477" y="1086" font-size="10" fill="#374151">title</text>
+<rect x="450" y="1092" width="192" height="20" fill="#00000008"/>
+<text x="477" y="1106" font-size="10" fill="#374151">status</text>
+<text x="477" y="1126" font-size="10" fill="#374151">adopted_at</text>
+<rect x="1522" y="532" width="192" height="160" rx="5" fill="#00000018"/>
+<rect x="1520" y="530" width="192" height="160" rx="5" fill="#fef2f2" stroke="#fecaca" stroke-width="1.5"/>
+<rect x="1520" y="530" width="192" height="32" rx="5" fill="#b91c1c"/>
+<rect x="1520" y="556" width="192" height="6" fill="#b91c1c"/>
+<text x="1528" y="551" font-size="10" font-weight="700" fill="#fff">elections</text>
+<line x1="1520" y1="562" x2="1712" y2="562" stroke="#fecaca" stroke-width="1"/>
+<rect x="1524" y="565" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="1533" y="576" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="1547" y="576" font-size="10" fill="#374151">id</text>
+<rect x="1520" y="582" width="192" height="20" fill="#00000008"/>
+<rect x="1524" y="585" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1533" y="596" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1547" y="596" font-size="10" fill="#374151">tenant_id</text>
+<text x="1547" y="616" font-size="10" fill="#374151">title</text>
+<rect x="1520" y="622" width="192" height="20" fill="#00000008"/>
+<text x="1547" y="636" font-size="10" fill="#374151">type</text>
+<text x="1547" y="656" font-size="10" fill="#374151">status</text>
+<rect x="1520" y="662" width="192" height="20" fill="#00000008"/>
+<text x="1547" y="676" font-size="10" fill="#374151">start_date</text>
+<rect x="1522" y="772" width="192" height="140" rx="5" fill="#00000018"/>
+<rect x="1520" y="770" width="192" height="140" rx="5" fill="#fef2f2" stroke="#fecaca" stroke-width="1.5"/>
+<rect x="1520" y="770" width="192" height="32" rx="5" fill="#b91c1c"/>
+<rect x="1520" y="796" width="192" height="6" fill="#b91c1c"/>
+<text x="1528" y="791" font-size="10" font-weight="700" fill="#fff">election candidates</text>
+<line x1="1520" y1="802" x2="1712" y2="802" stroke="#fecaca" stroke-width="1"/>
+<rect x="1524" y="805" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="1533" y="816" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="1547" y="816" font-size="10" fill="#374151">id</text>
+<rect x="1520" y="822" width="192" height="20" fill="#00000008"/>
+<rect x="1524" y="825" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1533" y="836" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1547" y="836" font-size="10" fill="#374151">election_id</text>
+<rect x="1524" y="845" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1533" y="856" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1547" y="856" font-size="10" fill="#374151">member_id</text>
+<rect x="1520" y="862" width="192" height="20" fill="#00000008"/>
+<text x="1547" y="876" font-size="10" fill="#374151">display_order</text>
+<text x="1547" y="896" font-size="10" fill="#374151">statement</text>
+<rect x="1732" y="772" width="192" height="100" rx="5" fill="#00000018"/>
+<rect x="1730" y="770" width="192" height="100" rx="5" fill="#fef2f2" stroke="#fecaca" stroke-width="1.5"/>
+<rect x="1730" y="770" width="192" height="32" rx="5" fill="#b91c1c"/>
+<rect x="1730" y="796" width="192" height="6" fill="#b91c1c"/>
+<text x="1738" y="791" font-size="10" font-weight="700" fill="#fff">election votes</text>
+<line x1="1730" y1="802" x2="1922" y2="802" stroke="#fecaca" stroke-width="1"/>
+<rect x="1734" y="805" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="1743" y="816" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="1757" y="816" font-size="10" fill="#374151">id</text>
+<rect x="1730" y="822" width="192" height="20" fill="#00000008"/>
+<rect x="1734" y="825" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1743" y="836" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1757" y="836" font-size="10" fill="#374151">election_id</text>
+<text x="1757" y="856" font-size="10" fill="#374151">voter_id (anon)</text>
+<rect x="1522" y="1002" width="192" height="100" rx="5" fill="#00000018"/>
+<rect x="1520" y="1000" width="192" height="100" rx="5" fill="#fef2f2" stroke="#fecaca" stroke-width="1.5"/>
+<rect x="1520" y="1000" width="192" height="32" rx="5" fill="#b91c1c"/>
+<rect x="1520" y="1026" width="192" height="6" fill="#b91c1c"/>
+<text x="1528" y="1021" font-size="10" font-weight="700" fill="#fff">election vote choices</text>
+<line x1="1520" y1="1032" x2="1712" y2="1032" stroke="#fecaca" stroke-width="1"/>
+<rect x="1524" y="1035" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="1533" y="1046" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="1547" y="1046" font-size="10" fill="#374151">id</text>
+<rect x="1520" y="1052" width="192" height="20" fill="#00000008"/>
+<rect x="1524" y="1055" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1533" y="1066" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1547" y="1066" font-size="10" fill="#374151">candidate_id</text>
+<text x="1547" y="1086" font-size="10" fill="#374151">election_id</text>
+<rect x="1732" y="1002" width="192" height="140" rx="5" fill="#00000018"/>
+<rect x="1730" y="1000" width="192" height="140" rx="5" fill="#fef2f2" stroke="#fecaca" stroke-width="1.5"/>
+<rect x="1730" y="1000" width="192" height="32" rx="5" fill="#b91c1c"/>
+<rect x="1730" y="1026" width="192" height="6" fill="#b91c1c"/>
+<text x="1738" y="1021" font-size="10" font-weight="700" fill="#fff">election ballots</text>
+<line x1="1730" y1="1032" x2="1922" y2="1032" stroke="#fecaca" stroke-width="1"/>
+<rect x="1734" y="1035" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="1743" y="1046" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="1757" y="1046" font-size="10" fill="#374151">id</text>
+<rect x="1730" y="1052" width="192" height="20" fill="#00000008"/>
+<rect x="1734" y="1055" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1743" y="1066" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1757" y="1066" font-size="10" fill="#374151">election_id</text>
+<rect x="1734" y="1075" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="1743" y="1086" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1757" y="1086" font-size="10" fill="#374151">candidate_id</text>
+<rect x="1730" y="1092" width="192" height="20" fill="#00000008"/>
+<text x="1757" y="1106" font-size="10" fill="#374151">vote_count</text>
+<text x="1757" y="1126" font-size="10" fill="#374151">rank</text>
+<rect x="20" y="20" width="188" height="192" rx="8" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="1"/>
+<text x="30" y="38" font-size="11" font-weight="700" fill="#0f172a">Domaines</text>
+<rect x="30" y="52" width="12" height="12" rx="3" fill="#0f766e"/>
+<text x="47" y="62" font-size="9.5" fill="#475569">Core (Tenant / User / Member)</text>
+<rect x="30" y="72" width="12" height="12" rx="3" fill="#1d4ed8"/>
+<text x="47" y="82" font-size="9.5" fill="#475569">Finance (Charges / Paiements)</text>
+<rect x="30" y="92" width="12" height="12" rx="3" fill="#7c3aed"/>
+<text x="47" y="102" font-size="9.5" fill="#475569">Assemblees et Reunions</text>
+<rect x="30" y="112" width="12" height="12" rx="3" fill="#b45309"/>
+<text x="47" y="122" font-size="9.5" fill="#475569">Activites et Entraide</text>
+<rect x="30" y="132" width="12" height="12" rx="3" fill="#be185d"/>
+<text x="47" y="142" font-size="9.5" fill="#475569">Communications et Documents</text>
+<rect x="30" y="152" width="12" height="12" rx="3" fill="#c2410c"/>
+<text x="47" y="162" font-size="9.5" fill="#475569">Gouvernance</text>
+<rect x="30" y="172" width="12" height="12" rx="3" fill="#b91c1c"/>
+<text x="47" y="182" font-size="9.5" fill="#475569">Elections</text>
+<line x1="30" y1="186" x2="198" y2="186" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="30" y="190" width="19" height="13" rx="3" fill="#fef3c7"/>
+<text x="39" y="200" text-anchor="middle" font-size="8" font-weight="700" fill="#b45309">PK</text>
+<text x="53" y="200" font-size="9" fill="#64748b">cle primaire</text>
+<rect x="122" y="190" width="19" height="13" rx="3" fill="#dbeafe"/>
+<text x="131" y="200" text-anchor="middle" font-size="8" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="145" y="200" font-size="9" fill="#64748b">cle etrangere</text>
+<text x="1075" y="1210" text-anchor="middle" font-size="10" fill="#94a3b8">Expatriate365 - Schema BDD - 23 tables</text>
+</svg>
+  </div>
+  <footer>23 tables · 29 relations FK · Généré le 2026-08-24</footer>
+  <script>
+    let scale = 1;
+    const svg = document.querySelector('svg');
+    function zoom(f) { scale *= f; svg.style.transform = 'scale(' + scale + ')'; svg.style.transformOrigin = 'top left'; }
+    function reset() { scale = 1; svg.style.transform = ''; }
+  </script>
+</body>
+</html>
