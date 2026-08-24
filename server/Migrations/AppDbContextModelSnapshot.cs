@@ -1155,69 +1155,6 @@ namespace server.Migrations
                     b.ToTable("MembershipCategories");
                 });
 
-            modelBuilder.Entity("server.Domain.Entities.Notification", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("body");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("created_at");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("is_active");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("is_read");
-
-                    b.Property<DateTime?>("ReadAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("read_at");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("tenant_id");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("title");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("type");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("updated_at");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId")
-                        .HasDatabaseName("IX_notifications_tenant_id");
-
-                    b.HasIndex("UserId", "IsRead")
-                        .HasDatabaseName("IX_notifications_user_unread");
-
-                    b.ToTable("notifications", (string)null);
-                });
-
             modelBuilder.Entity("server.Domain.Entities.Payment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1864,17 +1801,6 @@ namespace server.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("server.Domain.Entities.Notification", b =>
-                {
-                    b.HasOne("server.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("server.Domain.Entities.Payment", b =>

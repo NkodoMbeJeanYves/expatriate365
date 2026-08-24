@@ -17,8 +17,7 @@ public static class ElectionEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            var userId = GetUserId(principal);
-            return Results.Ok(await mediator.Send(new ListElectionsQuery(tenantId.Value, userId, page, limit, status, type)));
+            return Results.Ok(await mediator.Send(new ListElectionsQuery(tenantId.Value, page, limit, status, type)));
         });
 
         group.MapGet("/stats", async (ClaimsPrincipal principal, IMediator mediator) =>
@@ -32,7 +31,6 @@ public static class ElectionEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            if (!IsStaff(principal)) return Results.Forbid();
             var result = await mediator.Send(new CreateElectionCommand(tenantId.Value, dto));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
         });
@@ -41,8 +39,7 @@ public static class ElectionEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            var userId = GetUserId(principal);
-            var result = await mediator.Send(new GetElectionByIdQuery(tenantId.Value, id, userId));
+            var result = await mediator.Send(new GetElectionByIdQuery(tenantId.Value, id));
             return result.IsSuccess
                 ? Results.Ok(new { election = result.Data.Election, candidates = result.Data.Candidates, results = result.Data.Results })
                 : Results.NotFound(new { error = result.ErrorMessage });
@@ -52,7 +49,6 @@ public static class ElectionEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            if (!IsStaff(principal)) return Results.Forbid();
             var result = await mediator.Send(new UpdateElectionCommand(tenantId.Value, id, dto));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
         });
@@ -61,7 +57,6 @@ public static class ElectionEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            if (!IsStaff(principal)) return Results.Forbid();
             var result = await mediator.Send(new OpenElectionCommand(tenantId.Value, id));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
         });
@@ -70,7 +65,6 @@ public static class ElectionEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            if (!IsStaff(principal)) return Results.Forbid();
             var result = await mediator.Send(new CloseElectionCommand(tenantId.Value, id));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
         });
@@ -79,7 +73,6 @@ public static class ElectionEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            if (!IsStaff(principal)) return Results.Forbid();
             var result = await mediator.Send(new PublishResultsCommand(tenantId.Value, id));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
         });
@@ -88,7 +81,6 @@ public static class ElectionEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            if (!IsStaff(principal)) return Results.Forbid();
             var result = await mediator.Send(new AddCandidateCommand(tenantId.Value, id, dto));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
         });
@@ -97,7 +89,6 @@ public static class ElectionEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            if (!IsStaff(principal)) return Results.Forbid();
             var result = await mediator.Send(new RemoveCandidateCommand(tenantId.Value, id, candidateId));
             return result.IsSuccess ? Results.Ok() : Results.BadRequest(new { error = result.ErrorMessage });
         });
@@ -122,17 +113,5 @@ public static class ElectionEndpoints
     {
         var value = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub");
         return Guid.TryParse(value, out var id) ? id : Guid.Empty;
-    }
-
-    private static readonly HashSet<string> StaffRoles =
-    [
-        "super_admin", "president", "treasurer", "secretary",
-        "committee_member", "auditor", "regional_coordinator", "event_manager",
-    ];
-
-    private static bool IsStaff(ClaimsPrincipal principal)
-    {
-        var role = principal.FindFirstValue("role") ?? principal.FindFirstValue(ClaimTypes.Role);
-        return role is not null && StaffRoles.Contains(role);
     }
 }

@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using server.Infrastructure.Persistence;
-using server.Infrastructure.Services;
 
 namespace server.Infrastructure.BackgroundServices;
 
+/// <summary>
+/// Runs once per day at midnight and auto-generates ContributionCharges for every active
+/// ContributionType × active Member combination that does not yet have a charge for the
+/// current billing period.
+/// </summary>
 public class ChargeGenerationBackgroundService(
     IServiceScopeFactory scopeFactory,
     ILogger<ChargeGenerationBackgroundService> logger
@@ -30,7 +34,6 @@ public class ChargeGenerationBackgroundService(
 
         using var scope = scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var notif = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -46,10 +49,10 @@ public class ChargeGenerationBackgroundService(
             return;
         }
 
+        // Collect all tenants present in active types
         var tenantIds = types.Select(t => t.TenantId).Distinct().ToList();
 
         var members = await db.Members
-            .Include(m => m.User)
             .Where(m => tenantIds.Contains(m.TenantId) && m.IsActive)
             .ToListAsync(ct);
 
@@ -64,6 +67,7 @@ public class ChargeGenerationBackgroundService(
 
             foreach (var member in tenantMembers)
             {
+                // Idempotence: skip if a charge for this period already exists
                 var exists = await db.ContributionCharges.AnyAsync(
                     c => c.MemberId == member.Id
                       && c.ContributionTypeId == type.Id
@@ -89,18 +93,6 @@ public class ChargeGenerationBackgroundService(
                 });
 
                 generated++;
-
-                // Notify the member (in-app + email)
-                var memberName = $"{member.User.FirstName} {member.User.LastName}";
-                await notif.NotifyWithEmailAsync(
-                    tenantId: type.TenantId,
-                    userId: member.UserId,
-                    type: "charge_generated",
-                    title: "Nouvelle échéance de cotisation",
-                    body: $"{type.Name} — {type.BaseAmount:N0} FCFA — échéance : {dueDate.Value:dd/MM/yyyy}",
-                    emailSubject: $"Nouvelle échéance : {type.Name}",
-                    emailHtml: EmailTemplates.ChargeGenerated(memberName, type.Name, type.BaseAmount, dueDate.Value.ToString("dd/MM/yyyy")),
-                    ct);
             }
         }
 
@@ -108,11 +100,21 @@ public class ChargeGenerationBackgroundService(
         logger.LogInformation("Charge generation complete: {Count} charge(s) created", generated);
     }
 
+    /// <summary>
+    /// Returns the DueDate for the current billing period of the given frequency.
+    /// Returns null for unsupported/one_time frequencies.
+    /// </summary>
     private static DateOnly? ComputeDueDate(string frequency, DateOnly today) => frequency switch
     {
-        "monthly"   => new DateOnly(today.Year, today.Month, 1),
+        // First day of the current month
+        "monthly" => new DateOnly(today.Year, today.Month, 1),
+
+        // First day of the current quarter (Q1=Jan, Q2=Apr, Q3=Jul, Q4=Oct)
         "quarterly" => new DateOnly(today.Year, ((today.Month - 1) / 3 * 3) + 1, 1),
-        "annual"    => new DateOnly(today.Year, 1, 1),
+
+        // First day of the current year
+        "annual" => new DateOnly(today.Year, 1, 1),
+
         _ => null,
     };
 }

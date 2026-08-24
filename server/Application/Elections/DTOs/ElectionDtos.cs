@@ -4,7 +4,6 @@ public record ElectionDto(
     string Id, string TenantId, string Title, string? Description,
     string Type, string Status, string? StartDate, string? EndDate,
     int MaxChoices, int CandidateCount, int VoteCount,
-    bool HasVoted,
     string CreatedAt, string? UpdatedAt);
 
 public record ElectionCandidateDto(

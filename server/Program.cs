@@ -22,7 +22,6 @@ using server.API.Analytics;
 using server.API.Upload;
 using server.API.Finances;
 using server.API.Tenant;
-using server.API.Notifications;
 using server.Infrastructure.BackgroundServices;
 using server.Infrastructure.Persistence;
 using server.Infrastructure.Services;
@@ -67,8 +66,6 @@ try
 
     builder.Services.AddHostedService<ChargeGenerationBackgroundService>();
     builder.Services.AddSingleton<JwtService>();
-    builder.Services.AddScoped<IEmailService, SmtpEmailService>();
-    builder.Services.AddScoped<INotificationService, NotificationService>();
 
     var jwtSecret = builder.Configuration["Jwt:SecretKey"]
         ?? throw new InvalidOperationException("Jwt:SecretKey not configured");
@@ -134,7 +131,6 @@ try
     app.MapAnalyticsEndpoints();
     app.MapFinanceEndpoints();
     app.MapTenantEndpoints();
-    app.MapNotificationEndpoints();
 
     app.Run();
 }

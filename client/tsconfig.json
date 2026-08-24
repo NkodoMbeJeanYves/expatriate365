@@ -1,0 +1,58 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "ignoreDeprecations": "6.0",
+    "baseUrl": "src",
+    "paths": {
+      "@core/*":          ["app/core/*"],
+      "@models/*":        ["app/core/models/*"],
+      "@service/*":       ["app/core/services/*"],
+      "@store/*":         ["app/core/stores/*"],
+      "@shared/*":        ["app/shared/*"],
+      "@layouts/*":       ["app/layouts/*"],
+      "@env/*":           ["environments/*"],
+      "@auth/*":          ["app/features/auth/*"],
+      "@members/*":       ["app/features/members/*"],
+      "@contributions/*": ["app/features/contributions/*"],
+      "@payments/*":      ["app/features/payments/*"],
+      "@finances/*":      ["app/features/finances/*"],
+      "@events/*":        ["app/features/events/*"],
+      "@welfare/*":       ["app/features/welfare/*"],
+      "@elections/*":     ["app/features/elections/*"],
+      "@meetings/*":      ["app/features/meetings/*"],
+      "@communications/*":["app/features/communications/*"],
+      "@documents/*":     ["app/features/documents/*"],
+      "@analytics/*":     ["app/features/analytics/*"],
+      "@governance/*":    ["app/features/governance/*"],
+      "@admin/*":         ["app/features/admin/*"]
+    }
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}

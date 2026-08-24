@@ -4,14 +4,13 @@ using server.Application.Common;
 using server.Application.Payments.DTOs;
 using server.Application.Payments.Queries;
 using server.Infrastructure.Persistence;
-using server.Infrastructure.Services;
 
 namespace server.Application.Payments.Commands;
 
 public record ConfirmPaymentCommand(Guid TenantId, Guid PaymentId, Guid ConfirmedBy)
     : IRequest<ServiceResult<PaymentDto>>;
 
-public class ConfirmPaymentCommandHandler(AppDbContext db, ILogger<ConfirmPaymentCommandHandler> log, INotificationService notif)
+public class ConfirmPaymentCommandHandler(AppDbContext db, ILogger<ConfirmPaymentCommandHandler> log)
     : IRequestHandler<ConfirmPaymentCommand, ServiceResult<PaymentDto>>
 {
     public async Task<ServiceResult<PaymentDto>> Handle(ConfirmPaymentCommand request, CancellationToken ct)
@@ -42,18 +41,6 @@ public class ConfirmPaymentCommandHandler(AppDbContext db, ILogger<ConfirmPaymen
 
         await db.SaveChangesAsync(ct);
         log.LogInformation("Payment {Id} confirmed by {UserId}", payment.Id, request.ConfirmedBy);
-
-        // Notify the member
-        var memberName = $"{payment.Member.User.FirstName} {payment.Member.User.LastName}";
-        await notif.NotifyWithEmailAsync(
-            tenantId: payment.TenantId,
-            userId: payment.Member.UserId,
-            type: "payment_confirmed",
-            title: "Paiement confirmé",
-            body: $"{payment.Charge.ContributionType.Name} — {payment.Amount:N0} FCFA — reçu {payment.ReceiptNumber}",
-            emailSubject: "Votre paiement a été confirmé",
-            emailHtml: EmailTemplates.PaymentConfirmed(memberName, payment.Charge.ContributionType.Name, payment.Amount, payment.ReceiptNumber),
-            ct);
 
         return ServiceResult<PaymentDto>.Success(ListPaymentsQueryHandler.ToDto(payment));
     }
