@@ -23,7 +23,9 @@ public record MemberDto(
     string? EmergencyContactPhone,
     bool IsActive,
     string CreatedAt,
-    string? UpdatedAt
+    string? UpdatedAt,
+    string? EmailVerifiedAt,
+    string Role
 );
 
 public record MemberListItemDto(
@@ -44,7 +46,7 @@ public record MemberListItemDto(
 public record CreateMemberRequest(
     string FirstName,
     string LastName,
-    string Email,
+    string? Email,
     string? Phone,
     string? CategoryId,
     string JoinedDate,

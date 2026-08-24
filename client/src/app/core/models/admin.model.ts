@@ -28,3 +28,21 @@ export interface InviteUserRequest {
 export interface ChangeRoleRequest {
   role: string;
 }
+
+export interface RoleDto {
+  id: string;
+  name: string;
+  label: string;
+  description?: string;
+  permissions: string[];
+  is_active: boolean;
+}
+
+export interface PermissionDomain {
+  domain: string;
+  permissions: string[];
+}
+
+export interface UpdateRolePermissionsRequest {
+  permissions: string[];
+}

@@ -44,60 +44,52 @@ public class ListFinanceTransactionsQueryHandler(AppDbContext db)
         ListFinanceTransactionsQuery request, CancellationToken ct)
     {
         DateOnly? from = request.From is not null ? DateOnly.Parse(request.From) : null;
-        DateOnly? to = request.To is not null ? DateOnly.Parse(request.To) : null;
+        DateOnly? to   = request.To   is not null ? DateOnly.Parse(request.To)   : null;
 
-        // Payments (cotisations)
-        var paymentsQuery = db.Payments
-            .Include(p => p.Member).ThenInclude(m => m.User)
+        // Project only needed columns — EF Core translates navigation access to JOINs, no Include needed
+        var paymentsQ = db.Payments
             .Where(p => p.TenantId == request.TenantId && p.IsActive)
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(request.Status))
-            paymentsQuery = paymentsQuery.Where(p => p.Status == request.Status);
-        if (from.HasValue)
-            paymentsQuery = paymentsQuery.Where(p => p.PaymentDate >= from.Value);
-        if (to.HasValue)
-            paymentsQuery = paymentsQuery.Where(p => p.PaymentDate <= to.Value);
-
-        var rawPayments = await paymentsQuery.ToListAsync(ct);
-        var payments = rawPayments.Select(p => new FinanceTransactionDto(
-                p.Id.ToString(), "contribution",
-                $"{p.Member.User.FirstName} {p.Member.User.LastName}",
+            .Where(p => request.Status == null || p.Status == request.Status)
+            .Where(p => from == null || p.PaymentDate >= from)
+            .Where(p => to   == null || p.PaymentDate <= to)
+            .Select(p => new TransactionRow(
+                p.Id, "contribution",
+                p.Member.User.FirstName + " " + p.Member.User.LastName,
                 p.Member.MembershipNumber,
                 p.Amount, p.Currency, p.Status,
-                p.PaymentDate.ToString("O"), p.Notes)).ToList();
+                p.PaymentDate, p.Notes));
 
-        // Welfare payments
-        var welfareQuery = db.WelfareRequests
-            .Include(w => w.Member).ThenInclude(m => m.User)
+        var welfareQ = db.WelfareRequests
             .Where(w => w.TenantId == request.TenantId && w.IsActive
-                && w.AmountPaid.HasValue && w.AmountPaid > 0);
-
-        if (from.HasValue)
-            welfareQuery = welfareQuery.Where(w => w.PaidAt != null && DateOnly.FromDateTime(w.PaidAt.Value) >= from.Value);
-        if (to.HasValue)
-            welfareQuery = welfareQuery.Where(w => w.PaidAt != null && DateOnly.FromDateTime(w.PaidAt.Value) <= to.Value);
-
-        var rawWelfare = await welfareQuery.ToListAsync(ct);
-        var welfare = rawWelfare.Select(w => new FinanceTransactionDto(
-                w.Id.ToString(), "welfare",
-                $"{w.Member.User.FirstName} {w.Member.User.LastName}",
+                     && w.AmountPaid.HasValue && w.AmountPaid > 0)
+            .Where(w => from == null || (w.PaidAt != null && DateOnly.FromDateTime(w.PaidAt.Value) >= from))
+            .Where(w => to   == null || (w.PaidAt != null && DateOnly.FromDateTime(w.PaidAt.Value) <= to))
+            .Select(w => new TransactionRow(
+                w.Id, "welfare",
+                w.Member.User.FirstName + " " + w.Member.User.LastName,
                 w.Member.MembershipNumber,
                 -(w.AmountPaid ?? 0), "EUR", "paid",
-                w.PaidAt!.Value.ToString("O"), w.Type)).ToList();
+                w.PaidAt.HasValue ? DateOnly.FromDateTime(w.PaidAt.Value) : DateOnly.MinValue,
+                w.Type));
 
-        // Filter by type
-        IEnumerable<FinanceTransactionDto> all = request.Type switch
-        {
-            "contribution" => payments,
-            "welfare" => welfare,
-            _ => payments.Concat(welfare),
-        };
+        // Fetch only the filtered rows (not the full entity graph)
+        var payments = request.Type == "welfare"  ? [] : await paymentsQ.ToListAsync(ct);
+        var welfare  = request.Type == "contribution" ? [] : await welfareQ.ToListAsync(ct);
 
-        var sorted = all.OrderByDescending(t => t.Date).ToList();
-        var total = sorted.Count;
-        var paged = sorted.Skip((request.Page - 1) * request.Limit).Take(request.Limit).ToList();
+        var sorted = payments.Concat(welfare).OrderByDescending(t => t.Date).ToList();
+        var total  = sorted.Count;
+        var paged  = sorted
+            .Skip((request.Page - 1) * request.Limit)
+            .Take(request.Limit)
+            .Select(t => new FinanceTransactionDto(
+                t.Id.ToString(), t.Type, t.MemberName, t.MembershipNumber,
+                t.Amount, t.Currency, t.Status, t.Date.ToString("O"), t.Notes))
+            .ToList();
 
         return PagedResult<FinanceTransactionDto>.Create(paged, request.Page, request.Limit, total);
     }
+
+    private record TransactionRow(
+        Guid Id, string Type, string MemberName, string MembershipNumber,
+        decimal Amount, string Currency, string Status, DateOnly Date, string? Notes);
 }

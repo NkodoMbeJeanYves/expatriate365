@@ -25,7 +25,7 @@ public class GetPaymentByIdQueryHandler(AppDbContext db)
     }
 }
 
-public record GetPaymentStatsQuery(Guid TenantId) : IRequest<PaymentStatsDto>;
+public record GetPaymentStatsQuery(Guid TenantId, Guid? MemberId = null) : IRequest<PaymentStatsDto>;
 
 public class GetPaymentStatsQueryHandler(AppDbContext db)
     : IRequestHandler<GetPaymentStatsQuery, PaymentStatsDto>
@@ -34,6 +34,7 @@ public class GetPaymentStatsQueryHandler(AppDbContext db)
     {
         var payments = await db.Payments
             .Where(p => p.TenantId == request.TenantId && p.IsActive)
+            .Where(p => request.MemberId == null || p.MemberId == request.MemberId)
             .Select(p => new { p.Status, p.Amount })
             .ToListAsync(ct);
 

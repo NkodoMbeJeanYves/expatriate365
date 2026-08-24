@@ -22,6 +22,28 @@ public class LoginCommandValidator : AbstractValidator<LoginCommand>
 public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginCommandHandler> log)
     : IRequestHandler<LoginCommand, ServiceResult<LoginResponse>>
 {
+    private async Task<string[]> LoadPermissionsAsync(string roleName, CancellationToken ct)
+    {
+        var role = await db.Roles.AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Name == roleName && r.IsActive, ct);
+        if (role is null) return [];
+        try { return System.Text.Json.JsonSerializer.Deserialize<string[]>(role.Permissions) ?? []; }
+        catch { return []; }
+    }
+
+    private async Task<(string? entityType, string? entityId)> ResolveEntityAsync(Guid userId, Guid? tenantId, CancellationToken ct)
+    {
+        if (tenantId is null) return (null, null);
+        var member = await db.Members.AsNoTracking()
+            .FirstOrDefaultAsync(m => m.UserId == userId && m.TenantId == tenantId && m.IsActive, ct);
+        if (member is null) return (null, null);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var isBoardMember = await db.BoardMembers.AnyAsync(
+            b => b.MemberId == member.Id && b.IsActive
+              && b.StartDate <= today && (b.EndDate == null || b.EndDate >= today), ct);
+        return (isBoardMember ? "board_member" : "member", member.Id.ToString());
+    }
+
     public async Task<ServiceResult<LoginResponse>> Handle(LoginCommand request, CancellationToken ct)
     {
         var dto = request.Dto;
@@ -42,12 +64,14 @@ public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginC
         user.LastLoginAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
-        log.LogInformation("Login success: {UserId}", user.Id);
+        var permissions = await LoadPermissionsAsync(user.Role, ct);
+        var (entityType, entityId) = await ResolveEntityAsync(user.Id, user.TenantId, ct);
+        log.LogInformation("Login success: {UserId} role={Role} entityType={EntityType}", user.Id, user.Role, entityType);
         return ServiceResult<LoginResponse>.Success(new LoginResponse(
-            jwt.GenerateAccessToken(user),
+            jwt.GenerateAccessToken(user, permissions, entityType, entityId),
             plain,
             jwt.AccessExpirySeconds,
-            jwt.ToUserInfo(user)
+            jwt.ToUserInfo(user, entityType, entityId)
         ));
     }
 }

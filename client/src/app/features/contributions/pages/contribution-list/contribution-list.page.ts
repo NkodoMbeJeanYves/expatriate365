@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
 import { TenantStore } from '@core/tenant/tenant.store';
 import { AuthStore } from '@core/auth/auth.store';
-import { STAFF_ROLES } from '@core/auth/models/role.model';
+import { PERMISSIONS } from '@core/auth/models/permission.model';
 import { ButtonModule } from 'primeng/button';
 import { TabsModule } from 'primeng/tabs';
 import { SelectModule } from 'primeng/select';
@@ -334,7 +334,7 @@ export class ContributionListPageComponent implements OnInit {
   private readonly tenant = inject(TenantStore);
   private readonly authStore = inject(AuthStore);
 
-  readonly isStaff = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
+  readonly isStaff = computed(() => this.authStore.hasPermission(PERMISSIONS.CONTRIBUTIONS_READ));
   private get memberEntityId(): string | undefined {
     const u = this.authStore.currentUser();
     return u?.entity_type === 'member' ? u.entity_id : undefined;
@@ -414,6 +414,7 @@ export class ContributionListPageComponent implements OnInit {
 
   private openPrintWindow(charges: ContributionCharge[], stats: ContributionStats | null): void {
     const assoc = this.tenant.name() || 'Expatriate365';
+    const logoUrl = this.tenant.logoUrl();
     const symbol = this.tenant.symbol() || 'FCFA';
     const now = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
     const filterLabel = this.selectedStatus
@@ -474,9 +475,12 @@ export class ContributionListPageComponent implements OnInit {
 </head>
 <body>
 <div class="header">
-  <div>
-    <h1>${assoc}</h1>
-    <div style="font-size:14px;font-weight:600;margin-top:4px">Rapport de cotisations</div>
+  <div style="display:flex;align-items:center;gap:12px">
+    ${logoUrl ? `<img src="${logoUrl}" alt="logo" style="height:48px;width:auto;object-fit:contain;border-radius:6px" />` : ''}
+    <div>
+      <h1>${assoc}</h1>
+      <div style="font-size:14px;font-weight:600;margin-top:4px">Rapport de cotisations</div>
+    </div>
   </div>
   <div class="meta">
     <div>Généré le ${now}</div>

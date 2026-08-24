@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using server.Application.Common;
 using server.Application.TenantSettings;
 
 namespace server.API.Tenant;
@@ -27,6 +28,7 @@ public static class TenantEndpoints
                 ? Results.Ok(result.Data)
                 : Results.BadRequest(new { error = result.ErrorMessage });
         })
+        .RequireAuthorization(Permissions.SettingsUpdate)
         .WithName("UpdateTenantSettings")
         .WithOpenApi();
     }

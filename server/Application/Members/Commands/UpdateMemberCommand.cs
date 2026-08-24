@@ -63,7 +63,8 @@ public class UpdateMemberCommandHandler(AppDbContext db)
             member.PhotoUrl, member.Address, member.Profession,
             member.DateOfBirth?.ToString("yyyy-MM-dd"),
             member.Gender, member.EmergencyContactName, member.EmergencyContactPhone,
-            member.IsActive, member.CreatedAt.ToString("O"), member.UpdatedAt?.ToString("O")
+            member.IsActive, member.CreatedAt.ToString("O"), member.UpdatedAt?.ToString("O"),
+            member.User.EmailVerifiedAt?.ToString("O"), member.User.Role
         ));
     }
 }

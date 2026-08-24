@@ -14,6 +14,7 @@ import { authInterceptor } from '@core/http/auth.interceptor';
 import { errorInterceptor } from '@core/http/error.interceptor';
 import { loadingInterceptor } from '@core/http/loading.interceptor';
 import { AuthService } from '@core/auth/auth.service';
+import { AuthStore } from '@core/auth/auth.store';
 import { ThemeService } from '@core/theme/theme.service';
 import { TenantService } from '@core/tenant/tenant.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,12 +37,16 @@ export const appConfig: ApplicationConfig = {
       const themeService  = inject(ThemeService);
       const translate     = inject(TranslateService);
       const authService   = inject(AuthService);
+      const authStore     = inject(AuthStore);
       const tenantService = inject(TenantService);
 
       themeService.init();
       translate.use(localStorage.getItem('exp365_lang') ?? 'fr');
       await authService.bootstrap();
-      if (localStorage.getItem('exp365_auth')) await tenantService.bootstrap();
+      if (localStorage.getItem('exp365_auth')) {
+        await tenantService.bootstrap();
+        authStore.restoreSession();
+      }
     }),
   ],
 };

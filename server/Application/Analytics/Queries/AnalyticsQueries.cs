@@ -15,9 +15,20 @@ public class GetAnalyticsOverviewQueryHandler(AppDbContext db)
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        var totalMembers = await db.Members.CountAsync(m => m.TenantId == request.TenantId && m.IsActive, ct);
-        var activeMembers = await db.Members.CountAsync(m => m.TenantId == request.TenantId && m.IsActive && m.Status == "active", ct);
-        var newThisMonth = await db.Members.CountAsync(m => m.TenantId == request.TenantId && m.IsActive && m.CreatedAt >= startOfMonth, ct);
+        var memberStats = await db.Members
+            .Where(m => m.TenantId == request.TenantId && m.IsActive)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Total        = g.Count(),
+                Active       = g.Count(m => m.Status == "active"),
+                NewThisMonth = g.Count(m => m.CreatedAt >= startOfMonth),
+            })
+            .FirstOrDefaultAsync(ct);
+
+        var totalMembers  = memberStats?.Total        ?? 0;
+        var activeMembers = memberStats?.Active       ?? 0;
+        var newThisMonth  = memberStats?.NewThisMonth ?? 0;
 
         var financeStats = await db.ContributionCharges
             .Where(c => c.TenantId == request.TenantId && c.IsActive)
@@ -25,8 +36,14 @@ public class GetAnalyticsOverviewQueryHandler(AppDbContext db)
             .Select(g => new { Collected = g.Sum(c => c.AmountPaid), Expected = g.Sum(c => c.BaseAmount + c.PenaltyAmount - c.WaiverAmount) })
             .FirstOrDefaultAsync(ct);
 
-        var totalEvents = await db.Events.CountAsync(e => e.TenantId == request.TenantId && e.IsActive, ct);
-        var upcomingEvents = await db.Events.CountAsync(e => e.TenantId == request.TenantId && e.IsActive && e.StartDate > now, ct);
+        var eventStats = await db.Events
+            .Where(e => e.TenantId == request.TenantId && e.IsActive)
+            .GroupBy(_ => 1)
+            .Select(g => new { Total = g.Count(), Upcoming = g.Count(e => e.StartDate > now) })
+            .FirstOrDefaultAsync(ct);
+
+        var totalEvents    = eventStats?.Total    ?? 0;
+        var upcomingEvents = eventStats?.Upcoming ?? 0;
         var totalMeetings = await db.Meetings.CountAsync(m => m.TenantId == request.TenantId && m.IsActive, ct);
         var totalElections = await db.Elections.CountAsync(e => e.TenantId == request.TenantId && e.IsActive, ct);
 
@@ -113,11 +130,17 @@ public class GetEngagementAnalyticsQueryHandler(AppDbContext db)
 {
     public async Task<EngagementAnalyticsDto> Handle(GetEngagementAnalyticsQuery request, CancellationToken ct)
     {
-        var totalAttendance = await db.MeetingAttendances.CountAsync(a => a.TenantId == request.TenantId && a.IsActive, ct);
-        var presentAttendance = await db.MeetingAttendances.CountAsync(a => a.TenantId == request.TenantId && a.IsActive && a.Status == "present", ct);
+        var attendanceStats = await db.MeetingAttendances
+            .Where(a => a.TenantId == request.TenantId && a.IsActive)
+            .GroupBy(_ => 1)
+            .Select(g => new { Total = g.Count(), Present = g.Count(a => a.Status == "present") })
+            .FirstOrDefaultAsync(ct);
+
+        var totalAttendance   = attendanceStats?.Total   ?? 0;
+        var presentAttendance = attendanceStats?.Present ?? 0;
         var meetingRate = totalAttendance > 0 ? Math.Round((decimal)presentAttendance / totalAttendance * 100, 1) : 0;
 
-        var totalVoters = await db.ElectionVotes.CountAsync(v => v.TenantId == request.TenantId, ct);
+        var totalVoters  = await db.ElectionVotes.CountAsync(v => v.TenantId == request.TenantId, ct);
         var totalMembers = await db.Members.CountAsync(m => m.TenantId == request.TenantId && m.IsActive && m.Status == "active", ct);
         var electionRate = totalMembers > 0 ? Math.Round((decimal)totalVoters / totalMembers * 100, 1) : 0;
 

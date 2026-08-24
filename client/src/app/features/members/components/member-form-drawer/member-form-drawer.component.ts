@@ -1,11 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectionStrategy, Component,
-  effect,
+  computed, effect,
   inject, input, model, OnInit, output, signal,
   viewChild,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TenantStore } from '@core/tenant/tenant.store';
+import { AuthStore } from '@core/auth/auth.store';
+import { PERMISSIONS } from '@core/auth/models/permission.model';
 import { APP_CONFIG } from '@core/config/app-config.token';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ToastService } from '@service/toast.service';
@@ -16,6 +19,9 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { MembersApiService } from '../../services/members-api.service';
 import { MembersStore } from '../../store/members.store';
+import { AdminApiService } from '@admin/services/admin-api.service';
+import { ROLES } from '@core/auth/models/role.model';
+import { RolesApiService } from '@service/roles-api.service';
 
 @Component({
   selector: 'app-member-form-drawer',
@@ -84,9 +90,27 @@ import { MembersStore } from '../../store/members.store';
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">{{ 'members.email' | translate }} *</label>
-          <input pInputText formControlName="email" type="email" class="w-full" />
+          <label class="text-sm font-medium">{{ 'members.email' | translate }}</label>
+          <input pInputText formControlName="email" type="email" readonly
+            class="w-full bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+            [placeholder]="emailPreview()" />
+          @if (!memberId()) {
+            <p class="text-xs text-gray-400">{{ 'members.email_auto_hint' | translate }}</p>
+          }
         </div>
+
+        @if (isMemberAdmin()) {
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">{{ 'members.role' | translate }}</label>
+            <p-select
+              formControlName="role"
+              [options]="roleOptions()"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="w-full" />
+          </div>
+        }
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1">
@@ -101,6 +125,7 @@ import { MembersStore } from '../../store/members.store';
               optionLabel="label"
               optionValue="value"
               [placeholder]="'common.none' | translate"
+              appendTo="body"
               styleClass="w-full" />
           </div>
         </div>
@@ -137,6 +162,7 @@ import { MembersStore } from '../../store/members.store';
             optionLabel="name"
             optionValue="id"
             [placeholder]="'common.none' | translate"
+            appendTo="body"
             styleClass="w-full" />
         </div>
 
@@ -183,13 +209,31 @@ export class MemberFormDrawerComponent implements OnInit {
 
   readonly store = inject(MembersStore);
   private readonly api = inject(MembersApiService);
+  private readonly adminApi = inject(AdminApiService);
+  private readonly rolesApi = inject(RolesApiService);
   private readonly translate = inject(TranslateService);
   private readonly http = inject(HttpClient);
   private readonly config = inject(APP_CONFIG);
   private readonly toast = inject(ToastService);
+  private readonly tenantStore = inject(TenantStore);
+  private readonly authStore = inject(AuthStore);
+
+  readonly isMemberAdmin = computed(() => this.authStore.hasPermission(PERMISSIONS.MEMBERS_CREATE));
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+
+  private readonly _firstName = signal('');
+  private readonly _lastName  = signal('');
+
+  readonly emailPreview = computed(() => {
+    const first = this.normalizeNamePart(this._firstName());
+    const last  = this.normalizeNamePart(this._lastName());
+    if (!first && !last) return 'prenom.nom@association.pays';
+    const slug    = this.tenantStore.settings().slug || 'org';
+    const country = (this.tenantStore.settings().country_code || 'MU').toLowerCase();
+    return `${first || 'prenom'}.${last || 'nom'}@${slug}.${country}`;
+  });
   readonly photoUrl = signal<string | null>(null);
   readonly photoPreview = signal<string | null>(null);
   readonly photoUploading = signal(false);
@@ -202,10 +246,15 @@ export class MemberFormDrawerComponent implements OnInit {
     ];
   }
 
+  readonly roleOptions = signal<{ label: string; value: string }[]>([
+    { label: 'Membre', value: 'member' }, // fallback
+  ]);
+
   readonly form = new FormGroup({
     first_name: new FormControl('', [Validators.required]),
     last_name: new FormControl('', [Validators.required]),
-    email: new FormControl('', [Validators.required, Validators.email]),
+    email: new FormControl({ value: '', disabled: true }),
+    role: new FormControl('member'),
     phone: new FormControl(''),
     gender: new FormControl(''),
     date_of_birth: new FormControl<Date | null>(null),
@@ -235,6 +284,12 @@ export class MemberFormDrawerComponent implements OnInit {
 
   ngOnInit(): void {
     this.store.loadCategories();
+    this.form.get('first_name')!.valueChanges.subscribe(v => this._firstName.set(v ?? ''));
+    this.form.get('last_name')!.valueChanges.subscribe(v => this._lastName.set(v ?? ''));
+    this.rolesApi.list().subscribe({
+      next: (roles) => this.roleOptions.set(roles.map(r => ({ label: r.label, value: r.name }))),
+      error: () => {}, // keep fallback
+    });
   }
 
   onPhotoSelected(event: Event): void {
@@ -262,6 +317,15 @@ export class MemberFormDrawerComponent implements OnInit {
     this.photoPreview.set(null);
   }
 
+  normalizeNamePart(s: string): string {
+    return s.toLowerCase()
+      .normalize('NFD').replace(/\p{Mn}/gu, '')
+      .replace(/[\s\-_]+/g, '.')
+      .replace(/[^a-z0-9.]/g, '')
+      .replace(/\.{2,}/g, '.')
+      .replace(/^\.+|\.+$/g, '');
+  }
+
   private loadMember(id: string): void {
     this.api.getById(id).subscribe({
       next: (m) => {
@@ -269,7 +333,7 @@ export class MemberFormDrawerComponent implements OnInit {
         this.form.patchValue({
           first_name: m.first_name,
           last_name: m.last_name,
-          email: m.email,
+          role: m.role ?? 'member',
           phone: m.phone ?? '',
           gender: m.gender ?? '',
           date_of_birth: m.date_of_birth ? new Date(m.date_of_birth) : null,
@@ -312,7 +376,7 @@ export class MemberFormDrawerComponent implements OnInit {
           is_active: true,
         })
       : this.api.create({
-          first_name: v.first_name!, last_name: v.last_name!, email: v.email!,
+          first_name: v.first_name!, last_name: v.last_name!,
           phone: v.phone || undefined, gender: v.gender || undefined,
           date_of_birth: toDateStr(v.date_of_birth),
           profession: v.profession || undefined,
@@ -326,14 +390,23 @@ export class MemberFormDrawerComponent implements OnInit {
         });
 
     obs.subscribe({
-      next: () => {
-        this.loading.set(false);
-        if (id) {
-          this.toast.success('Membre mis à jour.');
+      next: (member) => {
+        const selectedRole = v.role || 'member';
+        const applyRole$ = selectedRole !== 'member'
+          ? this.adminApi.changeRole(member.user_id, { role: selectedRole })
+          : null;
+
+        const finish = () => {
+          this.loading.set(false);
+          this.toast.success(id ? 'Membre mis à jour.' : 'Membre créé avec succès.');
+          this.saved.emit();
+        };
+
+        if (applyRole$) {
+          applyRole$.subscribe({ next: finish, error: finish });
         } else {
-          this.toast.success('Membre créé avec succès.');
+          finish();
         }
-        this.saved.emit();
       },
       error: (err) => {
         this.loading.set(false);

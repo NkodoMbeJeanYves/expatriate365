@@ -22,6 +22,9 @@ using server.API.Analytics;
 using server.API.Upload;
 using server.API.Finances;
 using server.API.Tenant;
+using server.API.Roles;
+using Microsoft.AspNetCore.Authorization;
+using server.Infrastructure.Auth;
 using server.Infrastructure.BackgroundServices;
 using server.Infrastructure.Persistence;
 using server.Infrastructure.Services;
@@ -86,6 +89,8 @@ try
             };
         });
 
+    builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+    builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
     builder.Services.AddAuthorization();
 
     var app = builder.Build();
@@ -106,6 +111,9 @@ try
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
+
+        await DbSeeder.SeedSuperAdminAsync(db);
+        await RoleSeeder.SeedRolesAsync(db);
 
         if (args.Contains("--reseed"))
             await DbSeeder.ReseedAsync(db);
@@ -131,6 +139,7 @@ try
     app.MapAnalyticsEndpoints();
     app.MapFinanceEndpoints();
     app.MapTenantEndpoints();
+    app.MapRoleEndpoints();
 
     app.Run();
 }

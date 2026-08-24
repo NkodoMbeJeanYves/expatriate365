@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { APP_CONFIG } from '@core/config/app-config.token';
 import { PagedResult } from '@core/api/api-types';
 import {
-  CreateMemberRequest, Member, MemberFilters, MemberListItem,
+  CreateCategoryRequest, CreateMemberRequest, Member, MemberFilters, MemberListItem,
   MembershipCategory, UpdateMemberRequest,
 } from '@core/models/member.model';
 
@@ -45,6 +45,22 @@ export class MembersApiService {
 
   categories(): Observable<MembershipCategory[]> {
     return this.http.get<MembershipCategory[]>(`${this.base}/categories`);
+  }
+
+  createCategory(body: CreateCategoryRequest): Observable<MembershipCategory> {
+    return this.http.post<MembershipCategory>(`${this.base}/categories`, body);
+  }
+
+  updateCategory(id: string, body: CreateCategoryRequest): Observable<MembershipCategory> {
+    return this.http.put<MembershipCategory>(`${this.base}/categories/${id}`, body);
+  }
+
+  deleteCategory(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/categories/${id}`);
+  }
+
+  sendActivation(id: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/${id}/send-activation`, {});
   }
 
   exportCsv(status?: string): void {

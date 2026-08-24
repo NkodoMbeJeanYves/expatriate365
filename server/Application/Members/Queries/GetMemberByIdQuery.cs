@@ -30,7 +30,8 @@ public class GetMemberByIdQueryHandler(AppDbContext db)
             m.PhotoUrl, m.Address, m.Profession,
             m.DateOfBirth?.ToString("yyyy-MM-dd"),
             m.Gender, m.EmergencyContactName, m.EmergencyContactPhone,
-            m.IsActive, m.CreatedAt.ToString("O"), m.UpdatedAt?.ToString("O")
+            m.IsActive, m.CreatedAt.ToString("O"), m.UpdatedAt?.ToString("O"),
+            m.User.EmailVerifiedAt?.ToString("O"), m.User.Role
         ));
     }
 }

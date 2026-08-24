@@ -12,6 +12,7 @@ export interface ElectionDto {
   vote_count: number;
   created_at: string;
   updated_at?: string;
+  has_voted: boolean;
 }
 
 export interface ElectionCandidateDto {

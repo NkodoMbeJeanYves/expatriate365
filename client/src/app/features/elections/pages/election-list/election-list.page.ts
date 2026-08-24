@@ -8,6 +8,7 @@ import { SelectModule } from 'primeng/select';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
 import { ElectionDto, ELECTION_STATUSES, ELECTION_TYPES } from '@models/election.model';
+import { AuthStore } from '@core/auth/auth.store';
 import { ElectionsStore } from '../../store/elections.store';
 import { ElectionsApiService } from '../../services/elections-api.service';
 import { ElectionFormDrawerComponent } from '../../components/election-form-drawer/election-form-drawer.component';
@@ -107,6 +108,14 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
                 </div>
               }
 
+              <!-- Bannière "déjà voté" -->
+              @if (e.status === 'open' && e.has_voted) {
+                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium">
+                  <i class="pi pi-check-circle"></i>
+                  {{ 'elections.already_voted_full' | translate }}
+                </div>
+              }
+
               <!-- Actions -->
               <div class="flex gap-1 border-t border-gray-50 pt-3 flex-wrap">
                 <p-button icon="pi pi-users" size="small" severity="secondary" [text]="true"
@@ -116,8 +125,16 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
                     [pTooltip]="'elections.results' | translate" (onClick)="openResults(e)" />
                 }
                 @if (e.status === 'open') {
-                  <p-button icon="pi pi-check-square" size="small" severity="success" [text]="true"
-                    [pTooltip]="'elections.vote' | translate" (onClick)="openVote(e)" />
+                  @if (!e.has_voted) {
+                    @if (e.type === 'board' && !authStore.isBoardMember()) {
+                      <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-gray-400 bg-gray-100 dark:bg-gray-700">
+                        <i class="pi pi-lock text-xs"></i> {{ 'elections.board_only' | translate }}
+                      </span>
+                    } @else {
+                      <p-button icon="pi pi-check-square" size="small" severity="success" [text]="true"
+                        [pTooltip]="'elections.vote' | translate" (onClick)="openVote(e)" />
+                    }
+                  }
                   <p-button icon="pi pi-stop-circle" size="small" severity="warn" [text]="true"
                     [pTooltip]="'elections.close_election' | translate" (onClick)="closeElection(e)" />
                 }
@@ -150,6 +167,7 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
 })
 export class ElectionListPage implements OnInit {
   protected readonly store = inject(ElectionsStore);
+  protected readonly authStore = inject(AuthStore);
   private readonly api = inject(ElectionsApiService);
   private readonly translate = inject(TranslateService);
   private readonly toast = inject(ToastService);

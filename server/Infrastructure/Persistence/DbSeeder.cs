@@ -468,6 +468,52 @@ public static class DbSeeder
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+    public static async Task SeedSuperAdminAsync(AppDbContext db)
+    {
+        const string email = "super_admin@expatriate365.mu";
+        if (await db.Users.AnyAsync(u => u.Email == email))
+        {
+            Console.WriteLine("[Seeder] Super admin already exists — skipping.");
+            return;
+        }
+
+        var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.IsActive);
+
+        var superAdmin = new User
+        {
+            Id        = Guid.NewGuid(),
+            TenantId  = tenant?.Id,
+            Email     = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+            FirstName = "Jean Yves",
+            LastName  = "Nkodo Mbe",
+            Role      = "super_admin",
+            EmailVerifiedAt = DateTime.UtcNow,
+            Status    = "active",
+            IsActive  = true,
+        };
+        db.Users.Add(superAdmin);
+
+        if (tenant is not null)
+        {
+            var seq = await db.Members.CountAsync(m => m.TenantId == tenant.Id) + 1;
+            var member = new Member
+            {
+                Id               = Guid.NewGuid(),
+                TenantId         = tenant.Id,
+                UserId           = superAdmin.Id,
+                MembershipNumber = $"ADM-{seq:D4}",
+                Status           = "active",
+                JoinedDate       = DateOnly.FromDateTime(DateTime.UtcNow),
+                IsActive         = true,
+            };
+            db.Members.Add(member);
+        }
+
+        await db.SaveChangesAsync();
+        Console.WriteLine("[Seeder] Super admin seeded: " + email);
+    }
+
     private static User User(string email, string first, string last, string role, Guid tenantId, string pwdHash) =>
         new()
         {

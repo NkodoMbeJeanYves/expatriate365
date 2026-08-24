@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Payment, PagedPaymentsResult, PaymentStats } from '@models/payment.model';
 import { PaginationMeta } from '@shared/models/pagination.model';
 import { PaymentsApiService } from '../services/payments-api.service';
+import { AuthStore } from '@core/auth/auth.store';
 
 interface PaymentsState {
   payments: Payment[];
@@ -17,6 +18,16 @@ interface PaymentsState {
 @Injectable({ providedIn: 'root' })
 export class PaymentsStore {
   private readonly api = inject(PaymentsApiService);
+  private readonly authStore = inject(AuthStore);
+
+  /** entity_id of the caller when they are not a board_member; undefined otherwise */
+  private readonly _ownMemberId = computed(() => {
+    const u = this.authStore.user();
+    return u?.entity_type !== 'board_member' ? u?.entity_id : undefined;
+  });
+
+  /** true when the caller can see all members' data */
+  readonly isBoardMember = computed(() => this.authStore.user()?.entity_type === 'board_member');
 
   private readonly _state = signal<PaymentsState>({
     payments: [],
@@ -47,7 +58,8 @@ export class PaymentsStore {
         const state = this._state();
         const status = params.status ?? state.statusFilter;
         const page = params.page ?? state.pagination.page;
-        return this.api.getPayments(page, state.pagination.limit, undefined, status || undefined).pipe(
+        const memberId = this._ownMemberId();
+        return this.api.getPayments(page, state.pagination.limit, memberId, status || undefined).pipe(
           tap((res: PagedPaymentsResult) =>
             this._state.update(s => ({ ...s, payments: res.data, pagination: res.pagination, loading: false }))
           ),

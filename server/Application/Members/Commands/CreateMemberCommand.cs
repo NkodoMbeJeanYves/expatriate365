@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using server.Application.Common;
 using server.Application.Members.DTOs;
+using server.Application.Members.Services;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
 
@@ -17,7 +18,6 @@ public class CreateMemberCommandValidator : AbstractValidator<CreateMemberComman
     {
         RuleFor(x => x.Dto.FirstName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Dto.LastName).NotEmpty().MaximumLength(100);
-        RuleFor(x => x.Dto.Email).NotEmpty().EmailAddress();
         RuleFor(x => x.Dto.JoinedDate).NotEmpty();
     }
 }
@@ -30,8 +30,12 @@ public class CreateMemberCommandHandler(AppDbContext db, ILogger<CreateMemberCom
         var dto = request.Dto;
         var tenantId = request.TenantId;
 
+        var email = string.IsNullOrWhiteSpace(dto.Email)
+            ? await MemberEmailGenerator.GenerateAsync(dto.FirstName, dto.LastName, tenantId, db, ct)
+            : dto.Email.ToLowerInvariant();
+
         var existingUser = await db.Users
-            .FirstOrDefaultAsync(u => u.Email == dto.Email.ToLowerInvariant(), ct);
+            .FirstOrDefaultAsync(u => u.Email == email, ct);
 
         User user;
         if (existingUser is not null)
@@ -46,7 +50,7 @@ public class CreateMemberCommandHandler(AppDbContext db, ILogger<CreateMemberCom
             {
                 Id = Guid.NewGuid(),
                 TenantId = tenantId,
-                Email = dto.Email.ToLowerInvariant(),
+                Email = email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
@@ -99,7 +103,7 @@ public class CreateMemberCommandHandler(AppDbContext db, ILogger<CreateMemberCom
             member.PhotoUrl, member.Address, member.Profession,
             member.DateOfBirth?.ToString("yyyy-MM-dd"),
             member.Gender, member.EmergencyContactName, member.EmergencyContactPhone,
-            member.IsActive, member.CreatedAt.ToString("O"), null
+            member.IsActive, member.CreatedAt.ToString("O"), null, user.EmailVerifiedAt?.ToString("O"), user.Role
         ));
     }
 }

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using MediatR;
+using server.Application.Common;
 using server.Application.Documents.Commands;
 using server.Application.Documents.DTOs;
 using server.Application.Documents.Queries;
@@ -17,7 +18,7 @@ public static class DocumentEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             return Results.Ok(await mediator.Send(new GetDocumentStatsQuery(tenantId.Value)));
-        });
+        }).RequireAuthorization(Permissions.DocumentsRead);
 
         group.MapGet("/", async (ClaimsPrincipal principal, IMediator mediator,
             int page = 1, int limit = 20, string? type = null, string? category = null, string? search = null) =>
@@ -25,7 +26,7 @@ public static class DocumentEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             return Results.Ok(await mediator.Send(new ListDocumentsQuery(tenantId.Value, page, limit, type, category, search)));
-        });
+        }).RequireAuthorization(Permissions.DocumentsRead);
 
         group.MapPost("/", async (CreateDocumentRequest request, ClaimsPrincipal principal, IMediator mediator) =>
         {
@@ -36,7 +37,7 @@ public static class DocumentEndpoints
             return result.IsSuccess
                 ? Results.Created($"/api/v1/documents/{result.Data!.Id}", result.Data)
                 : Results.BadRequest(new { error = result.ErrorMessage });
-        });
+        }).RequireAuthorization(Permissions.DocumentsUpload);
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateDocumentRequest request,
             ClaimsPrincipal principal, IMediator mediator) =>
@@ -47,7 +48,7 @@ public static class DocumentEndpoints
             return result.IsSuccess
                 ? Results.Ok(result.Data)
                 : Results.BadRequest(new { error = result.ErrorMessage });
-        });
+        }).RequireAuthorization(Permissions.DocumentsManage);
 
         group.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
         {
@@ -57,7 +58,7 @@ public static class DocumentEndpoints
             return result.IsSuccess
                 ? Results.NoContent()
                 : Results.NotFound(new { error = result.ErrorMessage });
-        });
+        }).RequireAuthorization(Permissions.DocumentsManage);
     }
 
     private static Guid? GetTenantId(ClaimsPrincipal principal)

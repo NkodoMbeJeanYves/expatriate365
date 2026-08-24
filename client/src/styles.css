@@ -25,3 +25,56 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #d1d5db transparent;
 }
+
+/* ─── Dark mode — page content overrides ─── */
+/* Cards and panels that use bg-white without dark: variant */
+.dark main .bg-white,
+.dark main [class~="bg-white"] {
+  background-color: rgb(31 41 55) !important; /* gray-800 */
+}
+
+/* Light gray surfaces (table headers, filter areas) */
+.dark main .bg-gray-50 {
+  background-color: rgb(17 24 39) !important; /* gray-900 */
+}
+
+.dark main .bg-gray-100 {
+  background-color: rgb(31 41 55) !important; /* gray-800 */
+}
+
+/* Stat tiles with color tints */
+.dark main .bg-green-50  { background-color: rgb(6 30 18 / 0.6) !important; }
+.dark main .bg-red-50    { background-color: rgb(30 6 6 / 0.6)  !important; }
+.dark main .bg-orange-50 { background-color: rgb(30 18 6 / 0.6) !important; }
+.dark main .bg-indigo-50 { background-color: rgb(10 10 30 / 0.6) !important; }
+.dark main .bg-blue-50   { background-color: rgb(6 12 30 / 0.6) !important; }
+.dark main .bg-amber-50  { background-color: rgb(30 24 6 / 0.6) !important; }
+.dark main .bg-yellow-50 { background-color: rgb(30 28 6 / 0.6) !important; }
+.dark main .bg-emerald-50 { background-color: rgb(2 20 14 / 0.6) !important; }
+.dark main .bg-teal-50   { background-color: rgb(2 20 18 / 0.6) !important; }
+.dark main .bg-purple-50 { background-color: rgb(18 6 30 / 0.6) !important; }
+
+/* Primary text in content */
+.dark main .text-gray-800 { color: rgb(229 231 235) !important; /* gray-200 */ }
+.dark main .text-gray-700 { color: rgb(209 213 219) !important; /* gray-300 */ }
+.dark main .text-gray-600 { color: rgb(156 163 175) !important; /* gray-400 */ }
+.dark main .text-gray-500 { color: rgb(107 114 128) !important; /* gray-500 */ }
+
+/* Borders */
+.dark main .border-gray-100 { border-color: rgb(55 65 81) !important;  /* gray-700 */ }
+.dark main .border-gray-200 { border-color: rgb(55 65 81) !important;  /* gray-700 */ }
+
+/* Table dividers */
+.dark main .divide-gray-50  > * + * { border-color: rgb(55 65 81) !important; }
+.dark main .divide-gray-100 > * + * { border-color: rgb(55 65 81) !important; }
+
+/* Drawer / dialog footer bar */
+.dark .absolute.bottom-0.bg-white {
+  background-color: rgb(31 41 55) !important; /* gray-800 */
+  border-color: rgb(55 65 81) !important;
+}
+
+/* Scrollbar dark */
+.dark * {
+  scrollbar-color: #374151 transparent;
+}

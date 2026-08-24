@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using server.Application.Common;
 using server.Application.Payments.Commands;
 using server.Application.Payments.DTOs;
 using server.Application.Payments.Queries;
@@ -22,17 +23,19 @@ public static class PaymentEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            var result = await mediator.Send(new ListPaymentsQuery(tenantId.Value, page, limit, member_id, status, from, to));
+            var enforcedMemberId = EnforceOwnMemberId(principal, member_id);
+            var result = await mediator.Send(new ListPaymentsQuery(tenantId.Value, page, limit, enforcedMemberId, status, from, to));
             return Results.Ok(result);
-        });
+        }).RequireAuthorization(Permissions.PaymentsRead);
 
         group.MapGet("/stats", async (ClaimsPrincipal principal, IMediator mediator) =>
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            var result = await mediator.Send(new GetPaymentStatsQuery(tenantId.Value));
+            var enforcedMemberId = ParseEnforcedMemberId(principal);
+            var result = await mediator.Send(new GetPaymentStatsQuery(tenantId.Value, enforcedMemberId));
             return Results.Ok(result);
-        });
+        }).RequireAuthorization(Permissions.PaymentsRead);
 
         group.MapGet("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
         {
@@ -40,7 +43,7 @@ public static class PaymentEndpoints
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new GetPaymentByIdQuery(tenantId.Value, id));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorMessage });
-        });
+        }).RequireAuthorization(Permissions.PaymentsRead);
 
         group.MapPost("/", async (ClaimsPrincipal principal, IMediator mediator, RecordPaymentRequest dto) =>
         {
@@ -48,7 +51,7 @@ public static class PaymentEndpoints
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new RecordPaymentCommand(tenantId.Value, dto));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
-        });
+        }).RequireAuthorization(Permissions.PaymentsCreate);
 
         group.MapPost("/{id:guid}/confirm", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
         {
@@ -57,7 +60,7 @@ public static class PaymentEndpoints
             var userId = GetUserId(principal);
             var result = await mediator.Send(new ConfirmPaymentCommand(tenantId.Value, id, userId ?? Guid.Empty));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
-        });
+        }).RequireAuthorization(Permissions.PaymentsValidate);
 
         group.MapPost("/{id:guid}/reverse", async (Guid id, ClaimsPrincipal principal, IMediator mediator, ReversePaymentRequest dto) =>
         {
@@ -66,7 +69,7 @@ public static class PaymentEndpoints
             var userId = GetUserId(principal);
             var result = await mediator.Send(new ReversePaymentCommand(tenantId.Value, id, userId ?? Guid.Empty, dto));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
-        });
+        }).RequireAuthorization(Permissions.PaymentsRefund);
 
         group.MapPost("/{id:guid}/receipt", async (
             Guid id,
@@ -100,6 +103,7 @@ public static class PaymentEndpoints
 
             return Results.Ok(new { receipt_file_url = payment.ReceiptFileUrl });
         })
+        .RequireAuthorization(Permissions.PaymentsReceiptPrint)
         .DisableAntiforgery();
     }
 
@@ -114,5 +118,18 @@ public static class PaymentEndpoints
         var value = principal.FindFirstValue(ClaimTypes.NameIdentifier)
                  ?? principal.FindFirstValue("sub");
         return Guid.TryParse(value, out var id) ? id : null;
+    }
+
+    private static string? EnforceOwnMemberId(ClaimsPrincipal principal, string? requestedMemberId)
+    {
+        var entityType = principal.FindFirstValue("entity_type");
+        if (entityType == "board_member") return requestedMemberId;
+        return principal.FindFirstValue("entity_id");
+    }
+
+    private static Guid? ParseEnforcedMemberId(ClaimsPrincipal principal)
+    {
+        var raw = EnforceOwnMemberId(principal, null);
+        return Guid.TryParse(raw, out var id) ? id : null;
     }
 }

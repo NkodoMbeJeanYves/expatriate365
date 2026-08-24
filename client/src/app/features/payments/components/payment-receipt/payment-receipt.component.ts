@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Payment, PAYMENT_METHODS } from '@models/payment.model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
+import { TenantStore } from '@core/tenant/tenant.store';
 
 @Component({
   selector: 'app-payment-receipt',
@@ -14,9 +15,14 @@ import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-md mx-auto print:shadow-none print:border-0" id="receipt">
         <!-- Header -->
         <div class="flex items-center justify-between mb-6">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-            <i class="pi pi-check text-white text-sm"></i>
-          </div>
+          @if (tenantStore.logoUrl()) {
+            <img [src]="tenantStore.logoUrl()!" [alt]="tenantStore.name()"
+                 class="h-10 w-auto object-contain rounded-lg" />
+          } @else {
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+              <i class="pi pi-check text-white text-sm"></i>
+            </div>
+          }
           <div class="text-right">
             <p class="text-xs text-gray-400 uppercase tracking-wider">{{ 'payments.receipt_number' | translate }}</p>
             <p class="text-sm font-bold text-gray-900">{{ payment()!.receipt_number }}</p>
@@ -75,6 +81,7 @@ import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
 export class PaymentReceiptComponent {
   payment = input<Payment | null>(null);
   now = new Date();
+  readonly tenantStore = inject(TenantStore);
 
   methodLabel() {
     return PAYMENT_METHODS.find(m => m.value === this.payment()?.payment_method)?.label ?? this.payment()?.payment_method ?? '';

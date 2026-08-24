@@ -17,10 +17,16 @@ public class JwtService(IConfiguration config)
     private readonly int _accessExpiry = int.Parse(config["Jwt:AccessTokenExpiryMinutes"] ?? "15");
     private readonly int _refreshExpiry = int.Parse(config["Jwt:RefreshTokenExpiryDays"] ?? "30");
 
-    public string GenerateAccessToken(User user)
+    public string GenerateAccessToken(
+        User user,
+        string[]? permissions = null,
+        string? entityType = null,
+        string? entityId = null)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var permissionsJson = System.Text.Json.JsonSerializer.Serialize(permissions ?? []);
 
         var claims = new List<Claim>
         {
@@ -29,9 +35,14 @@ public class JwtService(IConfiguration config)
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new("full_name", user.FullName),
             new("role", user.Role),
+            new("permissions", permissionsJson),
         };
         if (user.TenantId.HasValue)
             claims.Add(new("tenant_id", user.TenantId.Value.ToString()));
+        if (entityType is not null)
+            claims.Add(new("entity_type", entityType));
+        if (entityId is not null)
+            claims.Add(new("entity_id", entityId));
 
         var token = new JwtSecurityToken(
             issuer: _issuer,
@@ -72,14 +83,14 @@ public class JwtService(IConfiguration config)
         ClockSkew = TimeSpan.Zero,
     };
 
-    public UserInfo ToUserInfo(User user) => new(
+    public UserInfo ToUserInfo(User user, string? entityType = null, string? entityId = null) => new(
         user.Id.ToString(),
         user.Email,
         user.FullName,
         [user.Role],
         user.TenantId?.ToString(),
-        "user",
-        user.Id.ToString(),
+        entityType ?? "user",
+        entityId ?? user.Id.ToString(),
         user.EmailVerifiedAt?.ToString("O")
     );
 

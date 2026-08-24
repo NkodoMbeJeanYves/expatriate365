@@ -13,20 +13,17 @@ public class ListBoardMembersQueryHandler(AppDbContext db)
 {
     public async Task<List<BoardMemberDto>> Handle(ListBoardMembersQuery request, CancellationToken ct)
     {
-        var raw = await db.BoardMembers
-            .Include(b => b.Member).ThenInclude(m => m.User)
+        return await db.BoardMembers
             .Where(b => b.TenantId == request.TenantId && b.IsActive)
             .OrderBy(b => b.StartDate)
-            .ToListAsync(ct);
-
-        return raw.Select(b => new BoardMemberDto(
+            .Select(b => new BoardMemberDto(
                 b.Id.ToString(), b.TenantId.ToString(),
                 b.MemberId.ToString(),
-                $"{b.Member.User.FirstName} {b.Member.User.LastName}",
+                b.Member.User.FirstName + " " + b.Member.User.LastName,
                 b.Member.MembershipNumber,
-                b.Role, b.StartDate.ToString("O"), b.EndDate != null ? b.EndDate.Value.ToString("O") : null,
-                b.Notes, b.CreatedAt.ToString("O"), b.UpdatedAt != null ? b.UpdatedAt.Value.ToString("O") : null))
-            .ToList();
+                b.Role, b.StartDate.ToString(), b.EndDate != null ? b.EndDate.Value.ToString() : null,
+                b.Notes, b.CreatedAt.ToString(), b.UpdatedAt != null ? b.UpdatedAt.Value.ToString() : null))
+            .ToListAsync(ct);
     }
 }
 
@@ -70,8 +67,13 @@ public class GetGovernanceStatsQueryHandler(AppDbContext db)
     public async Task<GovernanceStatsDto> Handle(GetGovernanceStatsQuery request, CancellationToken ct)
     {
         var boardCount = await db.BoardMembers.CountAsync(b => b.TenantId == request.TenantId && b.IsActive, ct);
-        var resTotal = await db.Resolutions.CountAsync(r => r.TenantId == request.TenantId && r.IsActive, ct);
-        var resAdopted = await db.Resolutions.CountAsync(r => r.TenantId == request.TenantId && r.IsActive && r.Status == "adopted", ct);
-        return new GovernanceStatsDto(boardCount, resTotal, resAdopted);
+
+        var resStats = await db.Resolutions
+            .Where(r => r.TenantId == request.TenantId && r.IsActive)
+            .GroupBy(_ => 1)
+            .Select(g => new { Total = g.Count(), Adopted = g.Count(r => r.Status == "adopted") })
+            .FirstOrDefaultAsync(ct);
+
+        return new GovernanceStatsDto(boardCount, resStats?.Total ?? 0, resStats?.Adopted ?? 0);
     }
 }

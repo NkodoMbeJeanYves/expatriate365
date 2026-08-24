@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using server.Application.Common;
 using server.Infrastructure.Persistence;
 
 namespace server.API.Notifications;
@@ -39,7 +40,7 @@ public static class NotificationEndpoints
                 .ToListAsync();
 
             return Results.Ok(new { data = items, unread_count = unreadCount, pagination = new { page, limit, total } });
-        });
+        }).RequireAuthorization(Permissions.NotificationsReadOwn);
 
         // Mark one as read
         group.MapPost("/{id:guid}/read", async (Guid id, ClaimsPrincipal principal, AppDbContext db) =>
@@ -51,7 +52,7 @@ public static class NotificationEndpoints
             n.ReadAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
             return Results.Ok(new { success = true });
-        });
+        }).RequireAuthorization(Permissions.NotificationsReadOwn);
 
         // Mark all as read
         group.MapPost("/read-all", async (ClaimsPrincipal principal, AppDbContext db) =>
@@ -64,7 +65,7 @@ public static class NotificationEndpoints
             foreach (var n in unread) { n.IsRead = true; n.ReadAt = now; }
             await db.SaveChangesAsync();
             return Results.Ok(new { marked = unread.Count });
-        });
+        }).RequireAuthorization(Permissions.NotificationsReadOwn);
     }
 
     private static Guid GetUserId(ClaimsPrincipal principal)

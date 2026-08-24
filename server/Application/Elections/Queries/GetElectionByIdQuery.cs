@@ -6,7 +6,7 @@ using server.Infrastructure.Persistence;
 
 namespace server.Application.Elections.Queries;
 
-public record GetElectionByIdQuery(Guid TenantId, Guid Id)
+public record GetElectionByIdQuery(Guid TenantId, Guid Id, Guid? VoterId = null)
     : IRequest<ServiceResult<(ElectionDto Election, List<ElectionCandidateDto> Candidates, List<ElectionResultDto> Results)>>;
 
 public class GetElectionByIdQueryHandler(AppDbContext db)
@@ -23,6 +23,9 @@ public class GetElectionByIdQueryHandler(AppDbContext db)
 
         if (e is null)
             return ServiceResult<(ElectionDto, List<ElectionCandidateDto>, List<ElectionResultDto>)>.Failure("Élection introuvable.");
+
+        var hasVoted = request.VoterId.HasValue &&
+            e.Votes.Any(v => v.VoterId == request.VoterId.Value && v.IsActive);
 
         var totalVotes = e.Votes.Count;
         var candidates = e.Candidates.OrderBy(c => c.DisplayOrder).Select(c =>
@@ -45,6 +48,6 @@ public class GetElectionByIdQueryHandler(AppDbContext db)
         }).ToList();
 
         return ServiceResult<(ElectionDto, List<ElectionCandidateDto>, List<ElectionResultDto>)>
-            .Success((ListElectionsQueryHandler.ToDto(e), candidates, results));
+            .Success((ListElectionsQueryHandler.ToDto(e, hasVoted), candidates, results));
     }
 }

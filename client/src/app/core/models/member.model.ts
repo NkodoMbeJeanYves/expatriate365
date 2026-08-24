@@ -22,6 +22,8 @@ export interface Member {
   is_active: boolean;
   created_at: string;
   updated_at?: string;
+  email_verified_at?: string;
+  role: string;
 }
 
 export interface MemberListItem {
@@ -51,10 +53,18 @@ export interface MembershipCategory {
   is_active: boolean;
 }
 
+export interface CreateCategoryRequest {
+  name: string;
+  description?: string;
+  contribution_rate: number;
+  voting_rights: boolean;
+  welfare_eligible: boolean;
+}
+
 export interface CreateMemberRequest {
   first_name: string;
   last_name: string;
-  email: string;
+  email?: string;
   phone?: string;
   category_id?: string;
   joined_date: string;

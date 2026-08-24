@@ -14,7 +14,43 @@
     "analytics": "Analytics",
     "governance": "Governance",
     "settings": "Settings",
-    "admin": "Administration"
+    "admin": "Administration",
+    "roles": "Roles & Permissions",
+    "member_categories": "Member categories"
+  },
+  "roles": {
+    "title": "Roles & Permissions",
+    "subtitle": "Define the permissions granted to each association role",
+    "select_role_hint": "Select a role to edit its permissions",
+    "select_all": "Select all",
+    "deselect_all": "Deselect all",
+    "domain_members": "Members",
+    "domain_categories": "Categories",
+    "domain_contributions": "Contributions",
+    "domain_payments": "Payments",
+    "domain_votes": "Votes",
+    "domain_events": "Events",
+    "domain_documents": "Documents",
+    "domain_announcements": "Announcements",
+    "domain_notifications": "Notifications",
+    "domain_dashboard": "Dashboard & Reports",
+    "domain_settings": "Settings",
+    "domain_roles": "Roles",
+    "domain_users": "Users",
+    "label_super_admin": "Super Administrator",
+    "label_president": "President",
+    "label_vice_president": "Vice-President",
+    "label_secretary_general": "Secretary General",
+    "label_deputy_secretary": "Deputy Secretary",
+    "label_treasurer": "Treasurer",
+    "label_deputy_treasurer": "Deputy Treasurer",
+    "label_auditor": "Auditor",
+    "label_advisor": "Advisor",
+    "label_communication_officer": "Communication Officer",
+    "label_events_coordinator": "Events Coordinator",
+    "label_welfare_officer": "Welfare Officer",
+    "label_it_officer": "IT Officer",
+    "label_member": "Member"
   },
   "auth": {
     "login": "Login",
@@ -43,7 +79,7 @@
     "add": "Add",
     "confirm": "Confirm",
     "back": "Back",
-    "loading": "Loadingâ€¦",
+    "loading": "Loading...",
     "no_data": "No data to display",
     "yes": "Yes",
     "no": "No",
@@ -82,7 +118,8 @@
     "inactive_label": "Inactive",
     "suspended": "Suspended",
     "title": "Title",
-    "create": "Create"
+    "create": "Create",
+    "uploading": "Uploading…"
   },
   "errors": {
     "required": "This field is required",
@@ -157,7 +194,18 @@
     "add_member": "Add member",
     "no_members": "No members found",
     "confirm_activate": "Activate this member?",
-    "confirm_suspend": "Suspend this member?"
+    "confirm_suspend": "Suspend this member?",
+    "send_activation": "Send activation email",
+    "email_auto_hint": "Email automatically generated from name",
+    "role": "Role",
+    "categories_title": "Member categories",
+    "categories_subtitle": "Manage membership categories and their conditions",
+    "new_category": "New category",
+    "edit_category": "Edit category",
+    "no_categories": "No categories found",
+    "contribution_rate": "Monthly contribution",
+    "voting_rights": "Voting rights",
+    "welfare_eligible": "Welfare eligible"
   },
   "contributions": {
     "title": "Contributions",
@@ -321,6 +369,9 @@
     "vote_count": "{{count}} votes",
     "nominate": "Nominate",
     "vote": "Vote",
+    "already_voted": "Already voted",
+    "already_voted_full": "You have already voted in this election",
+    "board_only": "Board members only",
     "results": "Results",
     "statement": "Statement",
     "rank": "Rank",
@@ -515,6 +566,9 @@
     "currency_symbol": "Displayed symbol",
     "currency_symbol_hint": "You can customize the displayed symbol independently of the currency code",
     "preview": "Preview",
-    "saved": "Settings saved successfully"
+    "saved": "Settings saved successfully",
+    "logo": "Association logo",
+    "upload_logo": "Change logo",
+    "logo_hint": "Accepted formats: JPG, PNG, WebP, SVG — max 5 MB"
   }
 }

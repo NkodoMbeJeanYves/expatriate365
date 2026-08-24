@@ -18,6 +18,9 @@ import { MemberFormDrawerComponent } from '../../components/member-form-drawer/m
 import { MemberStatus } from '@core/models/member.model';
 import { MemberStatusBadgeComponent } from '../../components/member-status-badge/member-status-badge.component';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { AuthStore } from '@core/auth/auth.store';
+import { PERMISSIONS } from '@core/auth/models/permission.model';
+import { ToastService } from '@service/toast.service';
 
 @Component({
   selector: 'app-member-list',
@@ -49,11 +52,13 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
             size="small"
             (click)="exportCsv()"
             class="hidden sm:inline-flex" />
-          <p-button
-            icon="pi pi-plus"
-            [label]="'members.new' | translate"
-            size="small"
-            (click)="openDrawer()" />
+          @if (isMemberAdmin()) {
+            <p-button
+              icon="pi pi-plus"
+              [label]="'members.new' | translate"
+              size="small"
+              (click)="openDrawer()" />
+          }
         </div>
       </div>
 
@@ -131,8 +136,15 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
                     <div class="flex gap-1">
                       <p-button icon="pi pi-eye" severity="secondary" [text]="true" size="small"
                         [routerLink]="['/members', m.id]" [pTooltip]="'common.view' | translate" />
-                      <p-button icon="pi pi-pencil" severity="secondary" [text]="true" size="small"
-                        (click)="openDrawer(m.id)" [pTooltip]="'common.edit' | translate" />
+                      @if (isSuperAdmin() && m.status === 'pending') {
+                        <p-button icon="pi pi-send" severity="info" [text]="true" size="small"
+                          [loading]="activating() === m.id"
+                          (click)="sendActivation(m.id)" [pTooltip]="'members.send_activation' | translate" />
+                      }
+                      @if (isMemberAdmin()) {
+                        <p-button icon="pi pi-pencil" severity="secondary" [text]="true" size="small"
+                          (click)="openDrawer(m.id)" [pTooltip]="'common.edit' | translate" />
+                      }
                     </div>
                   </td>
                 </tr>
@@ -162,7 +174,9 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
                 <span class="text-xs text-gray-400">{{ m.category_name ?? ('common.none' | translate) }}</span>
                 <div class="flex gap-1">
                   <p-button icon="pi pi-eye" severity="secondary" [text]="true" size="small" [routerLink]="['/members', m.id]" />
-                  <p-button icon="pi pi-pencil" severity="secondary" [text]="true" size="small" (click)="openDrawer(m.id)" />
+                  @if (isMemberAdmin()) {
+                    <p-button icon="pi pi-pencil" severity="secondary" [text]="true" size="small" (click)="openDrawer(m.id)" />
+                  }
                 </div>
               </div>
             </div>
@@ -180,7 +194,9 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
       <!-- Mobile FAB -->
       <div class="fixed bottom-6 right-6 sm:hidden flex flex-col gap-2">
         <p-button icon="pi pi-download" severity="secondary" [rounded]="true" (click)="exportCsv()" [pTooltip]="'common.export' | translate" />
-        <p-button icon="pi pi-plus" [rounded]="true" (click)="openDrawer()" />
+        @if (isMemberAdmin()) {
+          <p-button icon="pi pi-plus" [rounded]="true" (click)="openDrawer()" />
+        }
       </div>
 
     </div>
@@ -195,6 +211,13 @@ export class MemberListPageComponent implements OnInit {
   readonly store = inject(MembersStore);
   private readonly api = inject(MembersApiService);
   private readonly translate = inject(TranslateService);
+  private readonly authStore = inject(AuthStore);
+  private readonly toast = inject(ToastService);
+
+  readonly isMemberAdmin = computed(() => this.authStore.hasPermission(PERMISSIONS.MEMBERS_CREATE));
+  readonly isSuperAdmin  = computed(() => this.authStore.hasPermission(PERMISSIONS.MEMBERS_SEND_ACTIVATION));
+
+  readonly activating = signal<string | null>(null);
 
   drawerVisible = false;
   readonly editingMemberId = signal<string | null>(null);
@@ -255,6 +278,18 @@ export class MemberListPageComponent implements OnInit {
 
   exportCsv(): void {
     this.api.exportCsv(this.selectedStatus() || undefined);
+  }
+
+  sendActivation(id: string): void {
+    this.activating.set(id);
+    this.api.sendActivation(id).subscribe({
+      next: () => {
+        this.activating.set(null);
+        this.toast.success('Email d\'activation envoyé.');
+        this.store.loadMembers(this.store.filters());
+      },
+      error: () => this.activating.set(null),
+    });
   }
 
   initials(m: { first_name: string; last_name: string }): string {

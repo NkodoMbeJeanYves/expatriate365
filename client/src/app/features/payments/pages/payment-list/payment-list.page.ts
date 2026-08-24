@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, v
 import { FormsModule } from '@angular/forms';
 import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
 import { AuthStore } from '@core/auth/auth.store';
-import { STAFF_ROLES } from '@core/auth/models/role.model';
+import { PERMISSIONS } from '@core/auth/models/permission.model';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { PaymentsStore } from '../../store/payments.store';
@@ -72,7 +72,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
             <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               <tr>
                 <th class="text-left px-4 py-3">{{ 'payments.receipt_number' | translate }}</th>
-                <th class="text-left px-4 py-3">{{ 'common.member' | translate }}</th>
+                @if (isBoardMember()) { <th class="text-left px-4 py-3">{{ 'common.member' | translate }}</th> }
                 <th class="text-left px-4 py-3">{{ 'contributions.title' | translate }}</th>
                 <th class="text-left px-4 py-3">{{ 'payments.method' | translate }}</th>
                 <th class="text-right px-4 py-3">{{ 'common.amount' | translate }}</th>
@@ -94,10 +94,12 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
                       <p class="text-sm font-mono font-medium text-gray-900">{{ p.receipt_number }}</p>
                       <p class="text-xs text-gray-400">{{ p.payment_date }}</p>
                     </td>
-                    <td class="px-4 py-3">
-                      <p class="text-sm font-medium text-gray-900">{{ p.member_name }}</p>
-                      <p class="text-xs text-gray-400">{{ p.membership_number }}</p>
-                    </td>
+                    @if (isBoardMember()) {
+                      <td class="px-4 py-3">
+                        <p class="text-sm font-medium text-gray-900">{{ p.member_name }}</p>
+                        <p class="text-xs text-gray-400">{{ p.membership_number }}</p>
+                      </td>
+                    }
                     <td class="px-4 py-3 text-sm text-gray-600">{{ p.contribution_type_name }}</td>
                     <td class="px-4 py-3 text-sm text-gray-600">{{ methodLabel(p.payment_method) }}</td>
                     <td class="px-4 py-3 text-right text-sm font-semibold text-gray-900">{{ p.amount | appCurrency }}</td>
@@ -208,7 +210,8 @@ export class PaymentListPageComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly authStore = inject(AuthStore);
 
-  readonly isStaff = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
+  readonly isStaff = computed(() => this.authStore.hasPermission(PERMISSIONS.PAYMENTS_READ));
+  readonly isBoardMember = computed(() => this.authStore.user()?.entity_type === 'board_member');
 
   formDrawer = viewChild.required<PaymentFormDrawerComponent>('formDrawer');
 

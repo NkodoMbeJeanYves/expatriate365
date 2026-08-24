@@ -14,7 +14,43 @@
     "analytics": "Analytiques",
     "governance": "Gouvernance",
     "settings": "Paramètres",
-    "admin": "Administration"
+    "admin": "Administration",
+    "roles": "Rôles & Permissions",
+    "member_categories": "Categories membres"
+  },
+  "roles": {
+    "title": "Rôles & Permissions",
+    "subtitle": "Définissez les permissions accordées à chaque rôle de l'association",
+    "select_role_hint": "Sélectionnez un rôle pour modifier ses permissions",
+    "select_all": "Tout sélectionner",
+    "deselect_all": "Tout désélectionner",
+    "domain_members": "Membres",
+    "domain_categories": "Catégories",
+    "domain_contributions": "Cotisations",
+    "domain_payments": "Paiements",
+    "domain_votes": "Votes",
+    "domain_events": "Événements",
+    "domain_documents": "Documents",
+    "domain_announcements": "Annonces",
+    "domain_notifications": "Notifications",
+    "domain_dashboard": "Tableau de bord & Rapports",
+    "domain_settings": "Paramètres",
+    "domain_roles": "Rôles",
+    "domain_users": "Utilisateurs",
+    "label_super_admin": "Super Administrateur",
+    "label_president": "Président",
+    "label_vice_president": "Vice-Président",
+    "label_secretary_general": "Secrétaire Général",
+    "label_deputy_secretary": "Secrétaire Adjoint",
+    "label_treasurer": "Trésorier",
+    "label_deputy_treasurer": "Trésorier Adjoint",
+    "label_auditor": "Commissaire aux Comptes",
+    "label_advisor": "Conseiller",
+    "label_communication_officer": "Responsable Communication",
+    "label_events_coordinator": "Coordinateur Événements",
+    "label_welfare_officer": "Responsable Solidarité",
+    "label_it_officer": "Responsable Informatique",
+    "label_member": "Membre"
   },
   "auth": {
     "login": "Connexion",
@@ -43,7 +79,7 @@
     "add": "Ajouter",
     "confirm": "Confirmer",
     "back": "Retour",
-    "loading": "Chargementâ€¦",
+    "loading": "Chargement...",
     "no_data": "Aucune donnée à afficher",
     "yes": "Oui",
     "no": "Non",
@@ -82,7 +118,8 @@
     "inactive_label": "Inactif",
     "suspended": "Suspendu",
     "title": "Titre",
-    "create": "Créer"
+    "create": "Créer",
+    "uploading": "Envoi en cours…"
   },
   "errors": {
     "required": "Ce champ est obligatoire",
@@ -157,7 +194,18 @@
     "add_member": "Ajouter un membre",
     "no_members": "Aucun membre trouvé",
     "confirm_activate": "Activer ce membre ?",
-    "confirm_suspend": "Suspendre ce membre ?"
+    "confirm_suspend": "Suspendre ce membre ?",
+    "send_activation": "Envoyer email d'activation",
+    "email_auto_hint": "Email genere automatiquement a partir du nom",
+    "role": "Role",
+    "categories_title": "Categories de membres",
+    "categories_subtitle": "Gerez les categories et leurs conditions d'adhesion",
+    "new_category": "Nouvelle categorie",
+    "edit_category": "Modifier la categorie",
+    "no_categories": "Aucune categorie trouvee",
+    "contribution_rate": "Cotisation mensuelle",
+    "voting_rights": "Droit de vote",
+    "welfare_eligible": "Eligible solidarite"
   },
   "contributions": {
     "title": "Cotisations",
@@ -321,6 +369,9 @@
     "vote_count": "{{count}} voix",
     "nominate": "Se porter candidat",
     "vote": "Voter",
+    "already_voted": "Déjà voté",
+    "already_voted_full": "Vous avez déjà voté pour cette élection",
+    "board_only": "Réservé au bureau",
     "results": "Résultats",
     "statement": "Programme",
     "rank": "Rang",
@@ -515,6 +566,9 @@
     "currency_symbol": "Symbole affiché",
     "currency_symbol_hint": "Vous pouvez personnaliser le symbole affiché indépendamment du code devise",
     "preview": "Aperçu",
-    "saved": "Paramètres enregistrés avec succès"
+    "saved": "Paramètres enregistrés avec succès",
+    "logo": "Logo de l'association",
+    "upload_logo": "Changer le logo",
+    "logo_hint": "Formats acceptés : JPG, PNG, WebP, SVG — max 5 Mo"
   }
 }

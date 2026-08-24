@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
@@ -6,7 +6,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { SelectModule } from 'primeng/select';
-import { DrawerModule } from 'primeng/drawer';
+import { Drawer, DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
@@ -123,53 +123,75 @@ import { AdminApiService } from '../../services/admin-api.service';
     </div>
 
     <!-- Drawer: inviter -->
-    <p-drawer [visible]="showInvite()" [header]="'admin.invite_user' | translate"
-      position="right" styleClass="!w-full md:!w-[480px]"
-      (visibleChange)="showInvite.set(false)">
-      <form [formGroup]="inviteForm" (ngSubmit)="submitInvite()" class="flex flex-col gap-4 p-2">
-        <div class="grid grid-cols-2 gap-4">
-          <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">{{ 'members.first_name' | translate }}</label>
-            <input pInputText formControlName="first_name" />
-          </div>
-          <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">{{ 'members.last_name' | translate }}</label>
-            <input pInputText formControlName="last_name" />
-          </div>
+    <p-drawer #inviteDrawer [visible]="showInvite()" [header]="'admin.invite_user' | translate"
+      position="right" styleClass="w-full sm:w-[480px]"
+      (visibleChange)="showInvite.set($event)">
+      <div class="flex flex-col h-full">
+        <div class="flex-1 overflow-y-auto">
+          <form [formGroup]="inviteForm" (ngSubmit)="submitInvite()" class="flex flex-col gap-4 p-2">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">{{ 'members.first_name' | translate }}</label>
+                <input pInputText formControlName="first_name" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">{{ 'members.last_name' | translate }}</label>
+                <input pInputText formControlName="last_name" />
+              </div>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-medium">{{ 'admin.user_email' | translate }}</label>
+              <input pInputText type="email" formControlName="email" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-medium">{{ 'members.phone' | translate }}</label>
+              <input pInputText formControlName="phone" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-medium">{{ 'admin.user_role' | translate }}</label>
+              <p-select formControlName="role" [options]="roleOptions" optionLabel="label" optionValue="value" appendTo="body" />
+            </div>
+            <p class="text-xs text-gray-400">
+              L'utilisateur recevra ses identifiants pour se connecter.
+            </p>
+            @if (inviteError()) { <p class="text-red-500 text-sm">{{ inviteError() }}</p> }
+          </form>
         </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">{{ 'admin.user_email' | translate }}</label>
-          <input pInputText type="email" formControlName="email" />
+        <div class="flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <button type="button" (click)="inviteDrawerRef()?.close($event)"
+            class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium
+                   text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" (click)="submitInvite()" [disabled]="inviteForm.invalid || inviteSaving()"
+            class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50">
+            {{ inviteSaving() ? ('common.loading' | translate) : ('admin.invite_user' | translate) }}
+          </button>
         </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">{{ 'members.phone' | translate }}</label>
-          <input pInputText formControlName="phone" />
-        </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">{{ 'admin.user_role' | translate }}</label>
-          <p-select formControlName="role" [options]="roleOptions" optionLabel="label" optionValue="value" />
-        </div>
-        <p class="text-xs text-gray-400">
-          L'utilisateur recevra ses identifiants pour se connecter.
-        </p>
-        @if (inviteError()) { <p class="text-red-500 text-sm">{{ inviteError() }}</p> }
-        <div class="flex justify-end gap-2">
-          <p-button type="button" severity="secondary" [label]="'common.cancel' | translate" (click)="showInvite.set(false)" />
-          <p-button type="submit" [label]="'admin.invite_user' | translate" [loading]="inviteSaving()" [disabled]="inviteForm.invalid" />
-        </div>
-      </form>
+      </div>
     </p-drawer>
 
     <!-- Drawer: changer rôle -->
-    <p-drawer [visible]="showRoleEditor()" [header]="'Rôle — ' + (editingUser()?.full_name ?? '')"
-      position="right" styleClass="!w-full md:!w-[360px]"
-      (visibleChange)="showRoleEditor.set(false)">
-      <div class="flex flex-col gap-4 p-2">
-        <p-select [options]="roleOptions" [(ngModel)]="selectedRole"
-          optionLabel="label" optionValue="value" placeholder="Choisir un rôle" />
-        <div class="flex justify-end gap-2">
-          <p-button severity="secondary" [label]="'common.cancel' | translate" (click)="showRoleEditor.set(false)" />
-          <p-button [label]="'common.save' | translate" [loading]="roleSaving()" (click)="submitRole()" />
+    <p-drawer #roleDrawer [visible]="showRoleEditor()" [header]="'Rôle — ' + (editingUser()?.full_name ?? '')"
+      position="right" styleClass="w-full sm:w-[360px]"
+      (visibleChange)="showRoleEditor.set($event)">
+      <div class="flex flex-col h-full">
+        <div class="flex-1 overflow-y-auto">
+          <div class="flex flex-col gap-4 p-2">
+            <p-select [options]="roleOptions" [(ngModel)]="selectedRole"
+              optionLabel="label" optionValue="value" placeholder="Choisir un rôle" appendTo="body" />
+          </div>
+        </div>
+        <div class="flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <button type="button" (click)="roleDrawerRef()?.close($event)"
+            class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium
+                   text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" (click)="submitRole()" [disabled]="roleSaving()"
+            class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50">
+            {{ roleSaving() ? ('common.loading' | translate) : ('common.save' | translate) }}
+          </button>
         </div>
       </div>
     </p-drawer>
@@ -181,6 +203,9 @@ export class AdminUserListPage implements OnInit {
   private readonly confirm = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
   private readonly translate = inject(TranslateService);
+
+  readonly inviteDrawerRef = viewChild<Drawer>('inviteDrawer');
+  readonly roleDrawerRef   = viewChild<Drawer>('roleDrawer');
 
   readonly showInvite = signal(false);
   readonly inviteSaving = signal(false);
