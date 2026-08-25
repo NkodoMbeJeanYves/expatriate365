@@ -27,8 +27,9 @@ public class UpdateRolePermissionsCommandHandler(AppDbContext db, ILogger<Update
         if (invalid.Count > 0)
             return ServiceResult<bool>.Failure($"Permissions inconnues : {string.Join(", ", invalid)}");
 
-        role.Permissions = JsonSerializer.Serialize(request.Dto.Permissions.Distinct().ToArray());
-        role.UpdatedAt   = DateTime.UtcNow;
+        role.Permissions  = JsonSerializer.Serialize(request.Dto.Permissions.Distinct().ToArray());
+        role.IsCustomized = true;
+        role.UpdatedAt    = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
         log.LogInformation("Permissions updated for role {RoleName}: {Count} permissions", role.Name, request.Dto.Permissions.Length);

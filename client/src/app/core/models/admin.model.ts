@@ -36,6 +36,7 @@ export interface RoleDto {
   description?: string;
   permissions: string[];
   is_active: boolean;
+  is_customized: boolean;
 }
 
 export interface PermissionDomain {

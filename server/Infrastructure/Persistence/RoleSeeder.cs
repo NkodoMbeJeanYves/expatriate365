@@ -261,6 +261,12 @@ public static class RoleSeeder
         ),
     ];
 
+    public static string? GetDefaultPermissions(string roleName)
+    {
+        var match = Roles.FirstOrDefault(r => r.name == roleName);
+        return match == default ? null : match.permissions;
+    }
+
     public static async Task SeedRolesAsync(AppDbContext db)
     {
         foreach (var (name, label, description, permissions) in Roles)
@@ -270,21 +276,23 @@ public static class RoleSeeder
             {
                 db.Roles.Add(new Role
                 {
-                    Id          = Guid.NewGuid(),
-                    Name        = name,
-                    Label       = label,
-                    Description = description,
-                    Permissions = permissions,
-                    IsActive    = true,
+                    Id           = Guid.NewGuid(),
+                    Name         = name,
+                    Label        = label,
+                    Description  = description,
+                    Permissions  = permissions,
+                    IsCustomized = false,
+                    IsActive     = true,
                 });
             }
             else
             {
-                // Update permissions on existing roles so re-seeding propagates changes
+                // Always update label/description; preserve permissions when admin has customized them
                 existing.Label       = label;
                 existing.Description = description;
-                existing.Permissions = permissions;
                 existing.UpdatedAt   = DateTime.UtcNow;
+                if (!existing.IsCustomized)
+                    existing.Permissions = permissions;
             }
         }
 

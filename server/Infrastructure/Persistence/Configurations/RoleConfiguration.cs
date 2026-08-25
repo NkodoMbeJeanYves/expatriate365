@@ -14,7 +14,8 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.Property(r => r.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
         builder.Property(r => r.Label).HasColumnName("label").HasMaxLength(200).IsRequired();
         builder.Property(r => r.Description).HasColumnName("description").HasMaxLength(500);
-        builder.Property(r => r.Permissions).HasColumnName("permissions").HasMaxLength(2000).HasDefaultValue("[]");
+        builder.Property(r => r.Permissions).HasColumnName("permissions").HasColumnType("TEXT").HasDefaultValue("[]");
+        builder.Property(r => r.IsCustomized).HasColumnName("is_customized").HasDefaultValue(false);
         builder.Property(r => r.IsActive).HasColumnName("is_active");
         builder.Property(r => r.CreatedAt).HasColumnName("created_at");
         builder.Property(r => r.UpdatedAt).HasColumnName("updated_at");

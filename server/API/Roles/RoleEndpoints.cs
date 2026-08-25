@@ -42,5 +42,18 @@ public static class RoleEndpoints
             .RequireAuthorization(Permissions.RolesUpdate)
             .WithName("UpdateRolePermissions")
             .WithOpenApi();
+
+        // POST /api/v1/roles/{id}/reset — restore seeder default permissions
+        group.MapPost("/{id:guid}/reset",
+            async (Guid id, IMediator mediator) =>
+            {
+                var result = await mediator.Send(new ResetRolePermissionsCommand(id));
+                return result.IsSuccess
+                    ? Results.NoContent()
+                    : Results.BadRequest(new { error = result.ErrorMessage });
+            })
+            .RequireAuthorization(Permissions.RolesUpdate)
+            .WithName("ResetRolePermissions")
+            .WithOpenApi();
     }
 }

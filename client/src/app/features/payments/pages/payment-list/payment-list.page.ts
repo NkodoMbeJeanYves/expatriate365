@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, v
 import { FormsModule } from '@angular/forms';
 import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
 import { AuthStore } from '@core/auth/auth.store';
+import { TenantStore } from '@core/tenant/tenant.store';
 import { PERMISSIONS } from '@core/auth/models/permission.model';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
@@ -9,7 +10,7 @@ import { PaymentsStore } from '../../store/payments.store';
 import { PaymentsApiService } from '../../services/payments-api.service';
 import { PaymentFormDrawerComponent } from '../../components/payment-form-drawer/payment-form-drawer.component';
 import { PaymentReceiptComponent } from '../../components/payment-receipt/payment-receipt.component';
-import { Payment, PAYMENT_METHODS } from '@models/payment.model';
+import { Payment, PaymentStats, PAYMENT_METHODS } from '@models/payment.model';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -30,11 +31,20 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
           <h1 class="text-2xl font-bold text-gray-900">{{ 'payments.title' | translate }}</h1>
           <p class="text-sm text-gray-500 mt-0.5">{{ 'payments.subtitle' | translate }}</p>
         </div>
-        <button (click)="openForm()"
-          class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium shadow-sm transition-colors">
-          <i class="pi pi-plus text-sm"></i>
-          {{ 'payments.new' | translate }}
-        </button>
+        <div class="flex gap-2">
+          @if (isBoardMember()) {
+            <button (click)="printReport()" [disabled]="printing()"
+              class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 bg-white shadow-sm disabled:opacity-50">
+              <i [class]="printing() ? 'pi pi-spin pi-spinner text-sm' : 'pi pi-print text-sm'"></i>
+              <span class="hidden sm:inline">{{ 'payments.print_report' | translate }}</span>
+            </button>
+          }
+          <button (click)="openForm()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium shadow-sm transition-colors">
+            <i class="pi pi-plus text-sm"></i>
+            {{ 'payments.new' | translate }}
+          </button>
+        </div>
       </div>
 
       <!-- Stats -->
@@ -61,9 +71,16 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
       <!-- Table -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <!-- Filters -->
-        <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">
-          <p-select [options]="statusOptions" [(ngModel)]="selectedStatus" (onChange)="onStatusChange()"
+        <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3 flex-wrap">
+          <p-select [options]="statusOptions" [(ngModel)]="selectedStatus" (onChange)="onFilterChange()"
             optionLabel="label" optionValue="value" placeholder="Tous les statuts" styleClass="w-full sm:w-48" />
+          <input type="date" [(ngModel)]="filterFrom" (change)="onFilterChange()"
+            class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 w-full sm:w-40" />
+          <input type="date" [(ngModel)]="filterTo" (change)="onFilterChange()"
+            class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 w-full sm:w-40" />
+          @if (filterFrom || filterTo) {
+            <button (click)="clearDates()" class="text-xs text-gray-400 hover:text-gray-600 underline self-center">Réinitialiser</button>
+          }
         </div>
 
         <!-- Desktop table -->
@@ -209,14 +226,18 @@ export class PaymentListPageComponent implements OnInit {
   private readonly api = inject(PaymentsApiService);
   private readonly translate = inject(TranslateService);
   private readonly authStore = inject(AuthStore);
+  private readonly tenant = inject(TenantStore);
 
   readonly isStaff = computed(() => this.authStore.hasPermission(PERMISSIONS.PAYMENTS_READ));
   readonly isBoardMember = computed(() => this.authStore.user()?.entity_type === 'board_member');
+  readonly printing = signal(false);
 
   formDrawer = viewChild.required<PaymentFormDrawerComponent>('formDrawer');
 
   selectedPayment = signal<Payment | null>(null);
   selectedStatus = '';
+  filterFrom = '';
+  filterTo = '';
   receiptVisible = false;
   reverseVisible = false;
   reverseReason = '';
@@ -233,6 +254,14 @@ export class PaymentListPageComponent implements OnInit {
   ngOnInit() {
     this.store.loadPayments({});
     this.store.loadStats();
+  }
+
+  private currentFilters() {
+    return {
+      status: this.selectedStatus || undefined,
+      from: this.filterFrom || undefined,
+      to: this.filterTo || undefined,
+    };
   }
 
   methodLabel(method: string) {
@@ -258,13 +287,143 @@ export class PaymentListPageComponent implements OnInit {
     return `${base} ${map[status] ?? 'bg-gray-100 text-gray-600'}`;
   }
 
-  onStatusChange() {
+  onFilterChange() {
     this.store.setStatusFilter(this.selectedStatus);
-    this.store.loadPayments({ status: this.selectedStatus, page: 1 });
+    this.store.loadPayments({ page: 1, ...this.currentFilters() });
+  }
+
+  clearDates() {
+    this.filterFrom = '';
+    this.filterTo = '';
+    this.onFilterChange();
   }
 
   changePage(page: number) {
-    this.store.loadPayments({ page });
+    this.store.loadPayments({ page, ...this.currentFilters() });
+  }
+
+  printReport(): void {
+    this.printing.set(true);
+    const f = this.currentFilters();
+    const memberId = this.store['_ownMemberId']?.();
+    this.api.getPayments(1, 10000, memberId, f.status, f.from, f.to).subscribe({
+      next: (res) => { this.printing.set(false); this.openPrintWindow(res.data, this.store.stats()); },
+      error: () => this.printing.set(false),
+    });
+  }
+
+  private openPrintWindow(payments: Payment[], stats: PaymentStats | null): void {
+    const assoc = this.tenant.name() || 'Expatriate365';
+    const logoUrl = this.tenant.logoUrl();
+    const symbol = this.tenant.symbol() || 'FCFA';
+    const now = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+    const fmt = (n: number) => n.toLocaleString('fr-FR') + ' ' + symbol;
+
+    const filterParts: string[] = [];
+    if (this.selectedStatus) filterParts.push(`Statut : <strong>${this.statusLabel(this.selectedStatus)}</strong>`);
+    if (this.filterFrom) filterParts.push(`Du : <strong>${this.filterFrom}</strong>`);
+    if (this.filterTo) filterParts.push(`Au : <strong>${this.filterTo}</strong>`);
+
+    const statusBadge = (s: string) => {
+      const map: Record<string, [string, string]> = {
+        confirmed: ['#d1fae5', '#065f46'],
+        pending:   ['#fef3c7', '#92400e'],
+        reversed:  ['#fee2e2', '#991b1b'],
+      };
+      const [bg, color] = map[s] ?? ['#f3f4f6', '#374151'];
+      const labels: Record<string, string> = {
+        confirmed: this.translate.instant('payments.status_confirmed'),
+        pending:   this.translate.instant('payments.status_pending'),
+        reversed:  this.translate.instant('payments.status_reversed'),
+      };
+      return `<span style="background:${bg};color:${color};padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600">${labels[s] ?? s}</span>`;
+    };
+
+    const rows = payments.map(p => `
+      <tr>
+        <td><strong>${p.receipt_number}</strong><br><small style="color:#6b7280">${p.payment_date}</small></td>
+        <td>${p.member_name}<br><small style="color:#6b7280">${p.membership_number}</small></td>
+        <td>${p.contribution_type_name}</td>
+        <td>${this.methodLabel(p.payment_method)}</td>
+        <td class="num">${fmt(p.amount)}</td>
+        <td style="text-align:center">${statusBadge(p.status)}</td>
+      </tr>`).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Rapport de paiements — ${assoc}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #111827; padding: 24px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #059669; padding-bottom: 12px; margin-bottom: 20px; }
+  .header h1 { font-size: 20px; font-weight: 700; color: #059669; }
+  .header .meta { text-align: right; font-size: 11px; color: #6b7280; }
+  .filters { font-size: 11px; color: #6b7280; margin-bottom: 16px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; }
+  .stat .label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; }
+  .stat .value { font-size: 16px; font-weight: 700; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: #f9fafb; padding: 8px 10px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+  tbody tr { border-bottom: 1px solid #f3f4f6; }
+  tbody tr:nth-child(even) { background: #fafafa; }
+  tbody td { padding: 8px 10px; font-size: 11px; vertical-align: middle; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .footer { margin-top: 24px; font-size: 10px; color: #9ca3af; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 10px; }
+  @media print { body { padding: 0; } @page { margin: 1.5cm; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div style="display:flex;align-items:center;gap:12px">
+    ${logoUrl ? `<img src="${logoUrl}" alt="logo" style="height:48px;width:auto;object-fit:contain;border-radius:6px" />` : ''}
+    <div>
+      <h1>${assoc}</h1>
+      <div style="font-size:14px;font-weight:600;margin-top:4px">Rapport de paiements</div>
+    </div>
+  </div>
+  <div class="meta">
+    <div>Généré le ${now}</div>
+    <div style="margin-top:4px">${payments.length} enregistrement(s)</div>
+  </div>
+</div>
+
+${filterParts.length ? `<div class="filters">${filterParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
+
+${stats ? `
+<div class="stats">
+  <div class="stat"><div class="label">Confirmés</div><div class="value" style="color:#059669">${fmt(stats.total_confirmed)}</div></div>
+  <div class="stat"><div class="label">En attente</div><div class="value" style="color:#d97706">${fmt(stats.total_pending)}</div></div>
+  <div class="stat"><div class="label">Nb transactions</div><div class="value" style="color:#111827">${stats.total_count}</div></div>
+  <div class="stat"><div class="label">Annulés</div><div class="value" style="color:#dc2626">${stats.reversed_count}</div></div>
+</div>` : ''}
+
+<table>
+  <thead>
+    <tr>
+      <th>Reçu / Date</th>
+      <th>Membre</th>
+      <th>Plan de cotisation</th>
+      <th>Mode</th>
+      <th class="num">Montant</th>
+      <th style="text-align:center">Statut</th>
+    </tr>
+  </thead>
+  <tbody>${rows || '<tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af">Aucun paiement</td></tr>'}</tbody>
+</table>
+
+<div class="footer">Rapport généré par Expatriate365 — ${now}</div>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { w.print(); }, 400);
   }
 
   openForm() {

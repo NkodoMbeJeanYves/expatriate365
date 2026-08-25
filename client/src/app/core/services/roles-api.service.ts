@@ -20,4 +20,8 @@ export class RolesApiService {
   updatePermissions(roleId: string, dto: UpdateRolePermissionsRequest): Observable<void> {
     return this.http.put<void>(`${this.base}/${roleId}/permissions`, dto);
   }
+
+  resetPermissions(roleId: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/${roleId}/reset`, {});
+  }
 }

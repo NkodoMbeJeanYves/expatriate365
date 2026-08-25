@@ -48,7 +48,7 @@ export class PaymentsStore {
   readonly statusFilter = computed(() => this._state().statusFilter);
   readonly totalPages = computed(() => Math.ceil(this._state().pagination.total / this._state().pagination.limit));
 
-  private readonly paymentsTrigger$ = new Subject<{ page?: number; status?: string }>();
+  private readonly paymentsTrigger$ = new Subject<{ page?: number; status?: string; from?: string; to?: string }>();
   private readonly statsTrigger$ = new Subject<void>();
 
   constructor() {
@@ -59,7 +59,7 @@ export class PaymentsStore {
         const status = params.status ?? state.statusFilter;
         const page = params.page ?? state.pagination.page;
         const memberId = this._ownMemberId();
-        return this.api.getPayments(page, state.pagination.limit, memberId, status || undefined).pipe(
+        return this.api.getPayments(page, state.pagination.limit, memberId, status || undefined, params.from, params.to).pipe(
           tap((res: PagedPaymentsResult) =>
             this._state.update(s => ({ ...s, payments: res.data, pagination: res.pagination, loading: false }))
           ),
@@ -83,7 +83,7 @@ export class PaymentsStore {
     ).subscribe();
   }
 
-  loadPayments(params: { page?: number; status?: string }): void { this.paymentsTrigger$.next(params); }
+  loadPayments(params: { page?: number; status?: string; from?: string; to?: string }): void { this.paymentsTrigger$.next(params); }
   loadStats(): void { this.statsTrigger$.next(); }
 
   setStatusFilter(statusFilter: string): void {

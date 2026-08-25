@@ -92,7 +92,7 @@ import { AdminApiService } from '../../services/admin-api.service';
                     <div class="text-xs text-gray-400">{{ user.email }}</div>
                   </td>
                   <td class="px-4 py-3">
-                    <p-tag [value]="user.role" severity="info" />
+                    <p-tag [value]="('roles.label_' + user.role) | translate" severity="info" />
                   </td>
                   <td class="px-4 py-3">
                     <p-tag [value]="user.status"
@@ -219,7 +219,12 @@ export class AdminUserListPage implements OnInit {
   filterRole: string | null = null;
   filterStatus: string | null = null;
 
-  readonly roleOptions = Object.values(ROLES).map(r => ({ label: r, value: r }));
+  get roleOptions() {
+    return Object.values(ROLES).map(r => ({
+      label: this.translate.instant('roles.label_' + r),
+      value: r,
+    }));
+  }
   get statusOptions() {
     return [
       { label: this.translate.instant('admin.status_active'),    value: 'active'    },
