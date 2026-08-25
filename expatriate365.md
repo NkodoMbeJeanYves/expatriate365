@@ -2211,6 +2211,14 @@ Members earn points for: on-time payment, event attendance, volunteer work, refe
 
 ---
 
+
+imprimer des rapports de paiements comme c'est le cas des cotisations (il faut ajouter un filtre sur les dates)
+rendre les permissions dynamiques (elles sont fixes actuellements)
+afficher les roles et permissions en fonction de la langue (menu deroulant, fonction de l'utilisateur)
+afficher le logo sur les rapport
+
+
+
 *This specification represents the complete blueprint for the CommunityHub SaaS platform.*
 *Document owner: Product & Architecture Team | Review cycle: Quarterly*
 *Version 1.0 — 2026-08-20*

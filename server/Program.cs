@@ -28,6 +28,7 @@ using server.Infrastructure.Auth;
 using server.Infrastructure.BackgroundServices;
 using server.Infrastructure.Persistence;
 using server.Infrastructure.Services;
+using Microsoft.Extensions.FileProviders;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -103,7 +104,14 @@ try
 
     app.UseSerilogRequestLogging();
     app.UseCors();
-    app.UseStaticFiles();
+    // app.UseStaticFiles();
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(
+            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")),
+        RequestPath = ""
+    });
+
     app.UseAuthentication();
     app.UseAuthorization();
 
@@ -119,6 +127,9 @@ try
             await DbSeeder.ReseedAsync(db);
         else if (args.Contains("--seed"))
             await DbSeeder.SeedAsync(db);
+
+        await DbSeeder.SeedSuperAdminAsync(db);
+        await RoleSeeder.SeedRolesAsync(db);
     }
 
     app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
