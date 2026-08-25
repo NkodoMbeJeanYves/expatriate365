@@ -21,12 +21,12 @@ public class RefreshTokenCommandHandler(AppDbContext db, JwtService jwt, ILogger
         catch { return []; }
     }
 
-    private async Task<(string? entityType, string? entityId)> ResolveEntityAsync(Guid userId, Guid? tenantId, CancellationToken ct)
+    private async Task<(string? entityType, string? entityId)> ResolveEntityAsync(Guid userId, Guid? tenantId, string role, CancellationToken ct)
     {
-        if (tenantId is null) return (null, null);
+        if (tenantId is null) return (role, userId.ToString());
         var member = await db.Members.AsNoTracking()
             .FirstOrDefaultAsync(m => m.UserId == userId && m.TenantId == tenantId && m.IsActive, ct);
-        if (member is null) return (null, null);
+        if (member is null) return (role, userId.ToString());
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var isBoardMember = await db.BoardMembers.AnyAsync(
             b => b.MemberId == member.Id && b.IsActive
@@ -52,7 +52,7 @@ public class RefreshTokenCommandHandler(AppDbContext db, JwtService jwt, ILogger
         await db.SaveChangesAsync(ct);
 
         var permissions = await LoadPermissionsAsync(user.Role, ct);
-        var (entityType, entityId) = await ResolveEntityAsync(user.Id, user.TenantId, ct);
+        var (entityType, entityId) = await ResolveEntityAsync(user.Id, user.TenantId, user.Role, ct);
         log.LogInformation("Token refreshed for user {UserId} entityType={EntityType}", user.Id, entityType);
         return ServiceResult<LoginResponse>.Success(new LoginResponse(
             jwt.GenerateAccessToken(user, permissions, entityType, entityId),

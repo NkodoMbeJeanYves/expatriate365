@@ -267,29 +267,37 @@ export class MemberFormDrawerComponent implements OnInit {
     emergency_contact_phone: new FormControl(''),
   });
 
+  private _referenceLoaded = false;
+
   constructor() {
     effect(() => {
       const id = this.memberId();
-      if (this.visible() && id) {
-        this.loadMember(id);
-      } else if (this.visible() && !id) {
-        this.form.reset({ joined_date: new Date() });
-        this.error.set(null);
-        this.photoUrl.set(null);
-        this.photoPreview.set(null);
-        this.photoError.set(null);
+      if (this.visible()) {
+        // Load reference data once on first open
+        if (!this._referenceLoaded) {
+          this._referenceLoaded = true;
+          this.store.loadCategories();
+          this.rolesApi.list().subscribe({
+            next: (roles) => this.roleOptions.set(roles.map(r => ({ label: r.label, value: r.name }))),
+            error: () => {},
+          });
+        }
+        if (id) {
+          this.loadMember(id);
+        } else {
+          this.form.reset({ joined_date: new Date() });
+          this.error.set(null);
+          this.photoUrl.set(null);
+          this.photoPreview.set(null);
+          this.photoError.set(null);
+        }
       }
     });
   }
 
   ngOnInit(): void {
-    this.store.loadCategories();
     this.form.get('first_name')!.valueChanges.subscribe(v => this._firstName.set(v ?? ''));
     this.form.get('last_name')!.valueChanges.subscribe(v => this._lastName.set(v ?? ''));
-    this.rolesApi.list().subscribe({
-      next: (roles) => this.roleOptions.set(roles.map(r => ({ label: r.label, value: r.name }))),
-      error: () => {}, // keep fallback
-    });
   }
 
   onPhotoSelected(event: Event): void {

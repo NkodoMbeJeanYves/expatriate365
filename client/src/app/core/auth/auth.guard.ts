@@ -16,8 +16,8 @@ export function hasRoleGuard(roles: Role[]): CanActivateFn {
     const router = inject(Router);
     if (!store.isAuthenticated()) return router.createUrlTree(['/auth/login']);
     if (store.hasAnyRole(roles)) return true;
-    // Members land on their default page instead of forbidden
-    if (store.hasAnyRole([ROLES.MEMBER])) return router.createUrlTree(['/payments']);
+    // Members land on their own dashboard instead of forbidden
+    if (store.hasAnyRole([ROLES.MEMBER])) return router.createUrlTree(['/member-dashboard']);
     return router.createUrlTree(['/forbidden']);
   };
 }

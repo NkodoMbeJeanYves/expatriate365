@@ -18,6 +18,7 @@ export const routes: Routes = [
     loadComponent: () => import('@layouts/main-layout/main-layout').then((m) => m.MainLayoutComponent),
     children: [
       { path: 'dashboard', canActivate: [hasRoleGuard(STAFF_ROLES)], loadComponent: () => import('@analytics/pages/dashboard/dashboard.page').then((m) => m.DashboardPageComponent) },
+      { path: 'member-dashboard', loadComponent: () => import('./features/member-dashboard/member-dashboard.page').then((m) => m.MemberDashboardPage) },
       { path: 'members', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@members/members.routes').then((m) => m.MEMBERS_ROUTES) },
       { path: 'contributions', loadChildren: () => import('@contributions/contributions.routes').then((m) => m.CONTRIBUTIONS_ROUTES) },
       { path: 'payments', loadChildren: () => import('@payments/payments.routes').then((m) => m.PAYMENTS_ROUTES) },

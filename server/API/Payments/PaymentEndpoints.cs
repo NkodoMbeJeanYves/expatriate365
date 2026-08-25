@@ -123,7 +123,7 @@ public static class PaymentEndpoints
     private static string? EnforceOwnMemberId(ClaimsPrincipal principal, string? requestedMemberId)
     {
         var entityType = principal.FindFirstValue("entity_type");
-        if (entityType == "board_member") return requestedMemberId;
+        if (entityType is "board_member" or "super_admin") return requestedMemberId;
         return principal.FindFirstValue("entity_id");
     }
 

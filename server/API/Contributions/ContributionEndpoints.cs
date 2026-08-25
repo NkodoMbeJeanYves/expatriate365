@@ -112,7 +112,7 @@ public static class ContributionEndpoints
     private static Guid? EnforcedMemberId(ClaimsPrincipal principal)
     {
         var entityType = principal.FindFirstValue("entity_type");
-        if (entityType == "board_member") return null;
+        if (entityType is "board_member" or "super_admin") return null;
         var raw = principal.FindFirstValue("entity_id");
         return Guid.TryParse(raw, out var id) ? id : null;
     }

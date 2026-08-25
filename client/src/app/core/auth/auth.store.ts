@@ -75,6 +75,7 @@ export class AuthStore {
   }
 
   loadBoardMemberStatus(): void {
+    if (!this._state().user?.tenant_id) { this.isBoardMember.set(false); return; }
     this.http.get<{ is_board_member: boolean }>(
       `${environment.apiUrl}/api/v1/governance/board/me`
     ).subscribe({ next: r => this.isBoardMember.set(r.is_board_member), error: () => this.isBoardMember.set(false) });

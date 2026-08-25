@@ -89,8 +89,8 @@ public class JwtService(IConfiguration config)
         user.FullName,
         [user.Role],
         user.TenantId?.ToString(),
-        entityType ?? "user",
-        entityId ?? user.Id.ToString(),
+        entityType,
+        entityId,
         user.EmailVerifiedAt?.ToString("O")
     );
 

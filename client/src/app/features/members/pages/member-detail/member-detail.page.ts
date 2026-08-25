@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, inject, OnInit, signal,
+  ChangeDetectionStrategy, Component, computed, inject, OnInit, signal,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SlicePipe } from '@angular/common';
@@ -8,6 +8,7 @@ import { CardModule } from 'primeng/card';
 import { AvatarModule } from 'primeng/avatar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { Member } from '@core/models/member.model';
+import { AuthStore } from '@core/auth/auth.store';
 import { MembersApiService } from '../../services/members-api.service';
 import { MemberStatusBadgeComponent } from '../../components/member-status-badge/member-status-badge.component';
 import { MemberFormDrawerComponent } from '../../components/member-form-drawer/member-form-drawer.component';
@@ -59,12 +60,13 @@ import { TranslatePipe } from '@ngx-translate/core';
                 }
               </div>
             </div>
-            <!-- Edit button — inline on desktop, FAB on mobile -->
-            <p-button
-              icon="pi pi-pencil"
-              [label]="'common.edit' | translate"
-              (click)="drawerVisible = true"
-              class="hidden sm:inline-flex" />
+            @if (canEdit()) {
+              <p-button
+                icon="pi pi-pencil"
+                [label]="'common.edit' | translate"
+                (click)="drawerVisible = true"
+                class="hidden sm:inline-flex" />
+            }
           </div>
         </div>
 
@@ -136,26 +138,31 @@ import { TranslatePipe } from '@ngx-translate/core';
         <div class="text-center py-12 text-gray-400">{{ 'common.no_data' | translate }}</div>
       }
 
-      <!-- Mobile FAB edit -->
-      @if (member()) {
-        <div class="fixed bottom-6 right-6 sm:hidden">
-          <p-button icon="pi pi-pencil" [rounded]="true" (click)="drawerVisible = true" />
-        </div>
+      @if (canEdit()) {
+        <!-- Mobile FAB edit -->
+        @if (member()) {
+          <div class="fixed bottom-6 right-6 sm:hidden">
+            <p-button icon="pi pi-pencil" [rounded]="true" (click)="drawerVisible = true" />
+          </div>
+        }
+
+        <app-member-form-drawer
+          [(visible)]="drawerVisible"
+          [memberId]="memberId"
+          (saved)="reload()" />
       }
     </div>
-
-    <app-member-form-drawer
-      [(visible)]="drawerVisible"
-      [memberId]="memberId"
-      (saved)="reload()" />
   `,
 })
 export class MemberDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly api = inject(MembersApiService);
+  private readonly api   = inject(MembersApiService);
+  private readonly auth  = inject(AuthStore);
 
-  readonly member = signal<Member | null>(null);
+  readonly member  = signal<Member | null>(null);
   readonly loading = signal(true);
+  readonly canEdit = computed(() => this.auth.hasPermission('members.update'));
+
   drawerVisible = false;
   memberId!: string;
 

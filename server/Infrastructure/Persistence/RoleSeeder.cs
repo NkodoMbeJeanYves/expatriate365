@@ -248,7 +248,7 @@ public static class RoleSeeder
             "Membre",
             "Membre ordinaire de l'association",
             P([
-                Permissions.MembersReadOwn, Permissions.MembersUpdateOwn,
+                Permissions.MembersReadOwn,
                 Permissions.ContributionsReadOwn,
                 Permissions.PaymentsReadOwn, Permissions.PaymentsReceiptPrint,
                 Permissions.VotesRead, Permissions.VotesCast, Permissions.VotesResults,
