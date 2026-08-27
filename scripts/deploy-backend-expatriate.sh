@@ -14,12 +14,14 @@
 # Prérequis :
 #   - dotnet installé localement
 #   - SSH configuré vers le VPS
-#   - deploy-${APP_NAME}-api.sh généré sur le VPS par setup-vps-expatriate.sh
+#   - setup-vps-expatriate.sh exécuté une fois sur le VPS (nginx, systemd, user, env file)
+#   - scripts/vps-deploy-api.sh présent localement (uploadé automatiquement à chaque déploiement)
 # =============================================================================
 set -euo pipefail
 
 # ─── Paramètres — modifiables ─────────────────────────────────────────────────
 APP_NAME="expatriate365"                       # doit correspondre à APP_NAME saisi lors du setup
+APP_DLL="server.dll"                           # DLL principale du projet
 DOMAIN="acm365hub.poweryoursaas.com"           # domaine SSH du VPS
 PROJECT="server/server.csproj"
 PUBLISH_DIR="./publish/api"
@@ -27,6 +29,8 @@ ZIP_LOCAL="./publish/${APP_NAME}-api.zip"
 ZIP_REMOTE="/tmp/${APP_NAME}-api.zip"
 SCHEMA_LOCAL="./publish/schema.sql"
 SCHEMA_REMOTE="/tmp/${APP_NAME}-schema.sql"
+DEPLOY_SCRIPT_LOCAL="scripts/vps-deploy-api.sh"
+DEPLOY_SCRIPT_REMOTE="/usr/local/bin/deploy-${APP_NAME}-api.sh"
 
 # ─── Modes ────────────────────────────────────────────────────────────────────
 SCHEMA_MODE=false
@@ -92,6 +96,22 @@ if [[ "$SCHEMA_MODE" == true ]]; then
   echo "→ Transfert du schéma SQL vers $DOMAIN..."
   scp "$SCHEMA_LOCAL" root@"$DOMAIN":"$SCHEMA_REMOTE"
 fi
+
+# ─── Upload + instanciation du script de déploiement VPS ─────────────────────
+echo "→ Mise à jour du script de déploiement sur le VPS..."
+if [ ! -f "$DEPLOY_SCRIPT_LOCAL" ]; then
+  echo "[✗] $DEPLOY_SCRIPT_LOCAL introuvable — exécutez ce script depuis la racine du projet"
+  exit 1
+fi
+# Instancier les placeholders localement, puis uploader
+_tmp_deploy=$(mktemp /tmp/vps-deploy-api-XXXX.sh)
+sed -e "s|__APP_NAME__|${APP_NAME}|g" \
+    -e "s|__APP_DLL__|${APP_DLL}|g" \
+    "$DEPLOY_SCRIPT_LOCAL" > "$_tmp_deploy"
+scp "$_tmp_deploy" root@"$DOMAIN":"$DEPLOY_SCRIPT_REMOTE"
+ssh root@"$DOMAIN" "chmod +x ${DEPLOY_SCRIPT_REMOTE}"
+rm -f "$_tmp_deploy"
+echo "[✓] Script de déploiement mis à jour : ${DEPLOY_SCRIPT_REMOTE}"
 
 # ─── 6. Déploiement ──────────────────────────────────────────────────────────
 REMOTE_ARGS=""
