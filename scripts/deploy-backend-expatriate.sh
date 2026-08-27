@@ -25,9 +25,13 @@ ZIP_REMOTE="/tmp/${APP_NAME}-api.zip"
 SCHEMA_LOCAL="./publish/schema.sql"
 SCHEMA_REMOTE="/tmp/${APP_NAME}-schema.sql"
 
-# ─── Mode : --schema-only ou EF Core (défaut) ────────────────────────────────
+# ─── Modes ────────────────────────────────────────────────────────────────────
 SCHEMA_MODE=false
-[[ "${1:-}" == "--schema-only" ]] && SCHEMA_MODE=true
+SEED_MODE=false
+for arg in "$@"; do
+  [[ "$arg" == "--schema-only" ]] && SCHEMA_MODE=true
+  [[ "$arg" == "--seed"        ]] && SEED_MODE=true
+done
 
 # ─── Vérification du répertoire ──────────────────────────────────────────────
 if [ ! -f "$PROJECT" ]; then
@@ -85,13 +89,13 @@ if [[ "$SCHEMA_MODE" == true ]]; then
 fi
 
 # ─── 6. Déploiement ──────────────────────────────────────────────────────────
-if [[ "$SCHEMA_MODE" == true ]]; then
-  echo "→ Déploiement sur le VPS (mode --schema-only)..."
-  ssh root@"$DOMAIN" "bash /usr/local/bin/deploy-${APP_NAME}-api.sh --schema-only"
-else
-  echo "→ Déploiement sur le VPS (mode migrations EF Core)..."
-  ssh root@"$DOMAIN" "bash /usr/local/bin/deploy-${APP_NAME}-api.sh"
-fi
+REMOTE_ARGS=""
+[[ "$SCHEMA_MODE" == true ]] && REMOTE_ARGS="$REMOTE_ARGS --schema-only"
+[[ "$SEED_MODE"   == true ]] && REMOTE_ARGS="$REMOTE_ARGS --seed"
+
+echo "→ Déploiement sur le VPS${REMOTE_ARGS:+ (args:$REMOTE_ARGS)}..."
+# shellcheck disable=SC2086
+ssh root@"$DOMAIN" "bash /usr/local/bin/deploy-${APP_NAME}-api.sh $REMOTE_ARGS"
 
 echo ""
 echo "✓ Backend déployé sur https://$DOMAIN/api/v1"
