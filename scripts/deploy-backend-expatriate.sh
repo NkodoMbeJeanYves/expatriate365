@@ -37,7 +37,7 @@ if [ ! -f "$PROJECT" ]; then
 fi
 
 # ─── 1. Build ─────────────────────────────────────────────────────────────────
-echo "→ Build du backend (.NET — $PROJECT)..."
+echo "→ Fichier existant Pas de Build du backend (.NET — $PROJECT)..."
 # rm -rf "$PUBLISH_DIR"
 # dotnet publish "$PROJECT" \
 #   -c Release \
@@ -52,16 +52,16 @@ if [ ! -f "$PUBLISH_DIR/server.dll" ]; then
 fi
 
 # ─── 3. Génération du schema SQL (mode --schema-only uniquement) ──────────────
-# if [[ "$SCHEMA_MODE" == true ]]; then
-#   echo "→ Génération du schéma SQL idempotent (dotnet ef migrations script)..."
-#   mkdir -p publish
-#   (cd server && dotnet ef migrations script --idempotent -o "../${SCHEMA_LOCAL}")
-#   if [ ! -f "$SCHEMA_LOCAL" ]; then
-#     echo "[✗] Génération du schéma SQL échouée — $SCHEMA_LOCAL introuvable"
-#     exit 1
-#   fi
-#   echo "[✓] Schéma généré : $SCHEMA_LOCAL"
-# fi
+if [[ "$SCHEMA_MODE" == true ]]; then
+  echo "→ Génération du schéma SQL idempotent (dotnet ef migrations script)..."
+  mkdir -p publish
+  (cd server && dotnet ef migrations script --idempotent -o "../${SCHEMA_LOCAL}")
+  if [ ! -f "$SCHEMA_LOCAL" ]; then
+    echo "[✗] Génération du schéma SQL échouée — $SCHEMA_LOCAL introuvable"
+    exit 1
+  fi
+  echo "[✓] Schéma généré : $SCHEMA_LOCAL"
+fi
 
 # ─── 4. Archive ──────────────────────────────────────────────────────────────
 echo "→ Création de l'archive $ZIP_LOCAL..."
