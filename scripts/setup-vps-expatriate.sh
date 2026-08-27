@@ -360,10 +360,11 @@ fi
 section "7. MySQL — Base $DB_NAME"
 
 _mysql_root() {
-    if mysql --user=root --execute="SELECT 1;" 2>/dev/null; then
-        mysql --user=root "$@"
-    elif mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" --execute="SELECT 1;" 2>/dev/null; then
-        mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" "$@"
+    # Passage du mot de passe via variable d'environnement — jamais en argument de commande
+    if MYSQL_PWD="" mysql --user=root --execute="SELECT 1;" 2>/dev/null; then
+        MYSQL_PWD="" mysql --user=root "$@"
+    elif MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root --execute="SELECT 1;" 2>/dev/null; then
+        MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root "$@"
     else
         error "Connexion MySQL root impossible. Vérifiez le mot de passe root MySQL saisi."
     fi
@@ -387,7 +388,7 @@ SQL
     log "MySQL installé et sécurisé."
 fi
 
-mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" <<SQL
+MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root <<SQL
 CREATE DATABASE IF NOT EXISTS ${DB_NAME}
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
@@ -736,8 +737,11 @@ echo "→ Permissions…"
 chown -R "\${APP_NAME}:\${APP_NAME}" "\${API_DIR}"
 chmod -R 755 "\${API_DIR}"
 
-# ── Schéma de base de données ─────────────────────────────────────────────────
-export \$(grep -v '^#' "\${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//' | xargs)
+# ── Chargement des variables d'environnement (sans les afficher) ──────────────
+set -a
+# shellcheck source=/dev/null
+source <(grep -v '^#' "\${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//')
+set +a
 
 if [[ "\${SCHEMA_MODE}" == true ]]; then
     # ── Mode SQL dump ─────────────────────────────────────────────────────────
@@ -755,9 +759,8 @@ if [[ "\${SCHEMA_MODE}" == true ]]; then
     DB_NAME_VAL=\$(echo "\${ConnectionStrings__MySql}" | grep -oP 'Database=\K[^;]+')
     DB_USER_VAL=\$(echo "\${ConnectionStrings__MySql}" | grep -oP 'User=\K[^;]+')
     DB_PASS_VAL=\$(echo "\${ConnectionStrings__MySql}" | grep -oP 'Password=\K[^;]+')
-    mysql --host="\${DB_HOST}" --port="\${DB_PORT:-3306}" \
-          --user="\${DB_USER_VAL}" --password="\${DB_PASS_VAL}" \
-          "\${DB_NAME_VAL}" < "\${SCHEMA_FILE}" \
+    MYSQL_PWD="\${DB_PASS_VAL}" mysql --host="\${DB_HOST}" --port="\${DB_PORT:-3306}" \
+          --user="\${DB_USER_VAL}" "\${DB_NAME_VAL}" < "\${SCHEMA_FILE}" \
         && echo "[✓] Schéma appliqué avec succès." \
         || echo "[✗] Erreur lors de l'application du schéma."
     rm -f "\${SCHEMA_FILE}"
@@ -797,7 +800,7 @@ systemctl is-enabled "${APP_NAME}-api" &>/dev/null \
 
 echo ""
 info "Connexion MySQL (test) :"
-mysql --user="${DB_USER}" --password="${DB_PASSWORD}" "${DB_NAME}" \
+MYSQL_PWD="${DB_PASSWORD}" mysql --user="${DB_USER}" "${DB_NAME}" \
     -e "SELECT 'OK' AS connexion;" 2>/dev/null \
     && log "Connexion MySQL $DB_USER : OK" \
     || warn "Connexion MySQL $DB_USER : ÉCHEC"
@@ -842,8 +845,8 @@ cat <<SUMMARY
        journalctl -u ${APP_NAME}-api --since "5 min ago"
 
   ──────────────────────────────────────────────────────
-  Clé JWT (à conserver en lieu sûr) :
-  ${JWT_KEY}
+  Clé JWT : stockée dans /etc/${APP_NAME}/env (chmod 600)
+  Pour la consulter : grep Jwt__Key /etc/${APP_NAME}/env
   ──────────────────────────────────────────────────────
 
 SUMMARY
