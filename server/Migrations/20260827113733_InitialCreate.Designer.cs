@@ -12,8 +12,8 @@ using server.Infrastructure.Persistence;
 namespace server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260824141844_AddRoles")]
-    partial class AddRoles
+    [Migration("20260827113733_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1436,6 +1436,12 @@ namespace server.Migrations
                         .HasColumnType("tinyint(1)")
                         .HasColumnName("is_active");
 
+                    b.Property<bool>("IsCustomized")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_customized");
+
                     b.Property<string>("Label")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1451,8 +1457,7 @@ namespace server.Migrations
                     b.Property<string>("Permissions")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(2000)
-                        .HasColumnType("varchar(2000)")
+                        .HasColumnType("TEXT")
                         .HasDefaultValue("[]")
                         .HasColumnName("permissions");
 

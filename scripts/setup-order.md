@@ -88,14 +88,21 @@ Ce script :
 
 ---
 
-## Étape 4 — Seed (base vide uniquement — EFFACE toutes les données)
+## Étape 4 — Seed
+
+Le seed est **automatiquement exécuté par `deploy-backend-expatriate.sh`** à chaque déploiement.
+
+Il effectue un **reset total** (toutes les tables vidées dans l'ordre inverse des FK), puis réinsère :
+- 13 rôles système + permissions
+- Le super admin (email/password depuis `Seed__SuperAdminEmail` / `Seed__SuperAdminPassword` dans `/etc/<APP_NAME>/env`)
+- Les données de démo ACM (tenant, membres, cotisations, événements, etc.)
+
+Pour relancer le seed manuellement sans redéployer le backend :
 
 ```bash
 ssh root@acm365hub.poweryoursaas.com \
-  "cd /var/www/expatriate365/api && \
-   set -a && source <(grep -v '^#' /etc/expatriate365/env | grep -v '^_DEPLOY' | sed 's/\r//') && set +a && \
-   dotnet server.dll seed && \
-   systemctl restart expatriate365-api"
+  "set -a && source <(grep -v '^#' /etc/expatriate365/env | grep -v '^_DEPLOY' | sed 's/\r//') && set +a && \
+   dotnet /var/www/expatriate365/api/server.dll --seed"
 ```
 
 ---
