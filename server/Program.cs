@@ -117,19 +117,18 @@ try
 
     {
         using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var db     = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         db.Database.Migrate();
 
-        await DbSeeder.SeedSuperAdminAsync(db);
-        await RoleSeeder.SeedRolesAsync(db);
+        if (args.Contains("--seed"))
+        {
+            await DbSeeder.ResetAndSeedAsync(db, config);
+            Console.WriteLine("[Seeder] --seed complete. Exiting.");
+            return;
+        }
 
-        if (args.Contains("--reseed"))
-            await DbSeeder.ReseedAsync(db);
-        else if (args.Contains("--seed"))
-            await DbSeeder.SeedAsync(db);
-
-        await DbSeeder.SeedSuperAdminAsync(db);
-        await RoleSeeder.SeedRolesAsync(db);
+        await DbSeeder.BootstrapAsync(db, config);
     }
 
     app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));

@@ -196,6 +196,31 @@ else
     fi
 fi
 [[ ${#JWT_KEY} -lt 32 ]] && error "La clé JWT doit faire au moins 32 caractères."
+next "Super admin — email et mot de passe du compte administrateur global"
+
+# ── Super admin ───────────────────────────────────────────────────────────────
+echo ""
+info "─── Super Admin (1/2) — Email ────────────────────────────────────────────"
+info "  Compte administrateur global (aucun tenant, accès complet)."
+info "  Utilisé pour se connecter à l'application au premier démarrage."
+_SAVED_SADMIN_EMAIL=$(_env_get "Seed__SuperAdminEmail")
+[[ -n "$_SAVED_SADMIN_EMAIL" ]] && info "  Valeur actuelle : $_SAVED_SADMIN_EMAIL"
+read -rp "  Email super admin [Entrée = conserver / défaut super_admin@${DOMAIN}] : " SEED_ADMIN_EMAIL
+SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-${_SAVED_SADMIN_EMAIL:-super_admin@${DOMAIN}}}"
+
+echo ""
+info "─── Super Admin (2/2) — Mot de passe ─────────────────────────────────────"
+info "  Mot de passe initial du compte super_admin."
+info "  Minimum 8 caractères. La saisie est masquée."
+_SAVED_SADMIN_PASS=$(_env_get "Seed__SuperAdminPassword")
+if [[ -n "$_SAVED_SADMIN_PASS" ]]; then
+    info "  Mot de passe super admin : déjà défini (masqué) — Entrée pour conserver."
+    read -rsp "  Mot de passe [Entrée = conserver] : " SEED_ADMIN_PASSWORD; echo
+    SEED_ADMIN_PASSWORD="${SEED_ADMIN_PASSWORD:-$_SAVED_SADMIN_PASS}"
+else
+    read -rsp "  Mot de passe super admin : " SEED_ADMIN_PASSWORD; echo
+fi
+[[ ${#SEED_ADMIN_PASSWORD} -lt 8 ]] && error "Le mot de passe super admin doit faire au moins 8 caractères."
 next "Configuration SMTP — 5 champs (email, hôte, port, identifiant, mot de passe)"
 
 # ── SMTP ──────────────────────────────────────────────────────────────────────
@@ -449,6 +474,10 @@ Cors__AllowedOrigins=https://${DOMAIN}
 
 # Frontend (liens dans les emails)
 FrontendBaseUrl=https://${DOMAIN}
+
+# Super Admin seed
+Seed__SuperAdminEmail=${SEED_ADMIN_EMAIL}
+Seed__SuperAdminPassword=${SEED_ADMIN_PASSWORD}
 
 # Email SMTP
 Email__SmtpHost=${SMTP_HOST}
@@ -771,6 +800,15 @@ else
         echo "[WARN] Migration EF non exécutée en mode publié — utilisez --schema-only si Pomelo indisponible"
 fi
 
+# ── Seed (reset + repopulation) ───────────────────────────────────────────────
+echo "→ Seed de la base de données (--seed)…"
+set -a
+# shellcheck source=/dev/null
+source <(grep -v '^#' "\${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//')
+set +a
+dotnet "\${API_DIR}/\${APP_DLL}" --seed
+echo "[✓] Seed terminé."
+
 # ── Démarrage ─────────────────────────────────────────────────────────────────
 echo "→ Démarrage du service \${APP_NAME}-api…"
 systemctl start "\${APP_NAME}-api"
@@ -833,19 +871,16 @@ cat <<SUMMARY
   2. Déployer le frontend :
        bash scripts/deploy-frontend-expatriate.sh
 
-  3. Seed super-admin (base vide uniquement) :
-       ssh root@${DOMAIN} "cd /var/www/${APP_NAME}/api && \\
-         export \$(grep -v '^#' /etc/${APP_NAME}/env | grep -v '^_DEPLOY' | sed 's/\\r//' | xargs) && \\
-         dotnet ${APP_DLL} seed && \\
-         systemctl restart ${APP_NAME}-api"
+  3. Le seed (reset total + super_admin + données de démo) est automatiquement
+       exécuté à chaque déploiement backend via deploy-${APP_NAME}-api.sh.
 
   4. Vérifications :
        curl https://${DOMAIN}/api/v1/health
        journalctl -u ${APP_NAME}-api --since "5 min ago"
 
   ──────────────────────────────────────────────────────
-  Clé JWT : stockée dans /etc/${APP_NAME}/env (chmod 600)
-  Pour la consulter : grep Jwt__Key /etc/${APP_NAME}/env
+  Clé JWT        : grep Jwt__Key /etc/${APP_NAME}/env
+  Super admin    : ${SEED_ADMIN_EMAIL} (mot de passe masqué)
   ──────────────────────────────────────────────────────
 
 SUMMARY
