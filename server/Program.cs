@@ -119,7 +119,17 @@ try
         using var scope = app.Services.CreateScope();
         var db     = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-        db.Database.Migrate();
+        await ApplyMigrationsAsync(db);
+
+        if (args.Contains("--reset"))
+        {
+            Console.WriteLine("[Reset] Dropping and recreating schema...");
+            await db.Database.EnsureDeletedAsync();
+            await db.Database.MigrateAsync();
+            await DbSeeder.BootstrapAsync(db, config);
+            Console.WriteLine("[Reset] Done — schema recreated, roles and super_admin seeded. Exiting.");
+            return;
+        }
 
         if (args.Contains("--seed"))
         {
@@ -160,4 +170,73 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+static async Task ApplyMigrationsAsync(AppDbContext db)
+{
+    var pending = (await db.Database.GetPendingMigrationsAsync()).ToList();
+    if (pending.Count == 0)
+    {
+        Console.WriteLine("[Migration] Already up to date.");
+        return;
+    }
+
+    // Check whether tables already exist (kept database scenario)
+    var tablesExist = await DatabaseHasTablesAsync(db);
+    if (tablesExist)
+    {
+        // Tables exist but migration history doesn't know about them.
+        // Mark all pending migrations as applied without running their SQL.
+        Console.WriteLine("[Migration] Tables already exist — marking pending migrations as applied.");
+        foreach (var migration in pending)
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (`MigrationId` varchar(150) NOT NULL, `ProductVersion` varchar(32) NOT NULL, CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`));");
+            await db.Database.ExecuteSqlRawAsync(
+                $"INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`) VALUES ('{migration}', '10.0.0');");
+        }
+        Console.WriteLine($"[Migration] {pending.Count} migration(s) marked as applied.");
+    }
+    else
+    {
+        Console.WriteLine($"[Migration] Applying {pending.Count} pending migration(s)...");
+        await db.Database.MigrateAsync();
+        Console.WriteLine("[Migration] Done.");
+    }
+}
+
+static async Task<bool> DatabaseHasTablesAsync(AppDbContext db)
+{
+    // Compare tables present in the DB against tables declared in the EF model.
+    // If all model tables are found, the schema is considered complete.
+    var modelTables = db.Model.GetEntityTypes()
+        .Select(e => e.GetTableName())
+        .Where(t => t is not null)
+        .Select(t => t!)
+        .Distinct()
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    var conn = db.Database.GetDbConnection();
+    await conn.OpenAsync();
+    try
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE();";
+        using var reader = await cmd.ExecuteReaderAsync();
+        var existingTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while (await reader.ReadAsync())
+            existingTables.Add(reader.GetString(0));
+
+        var missing = modelTables.Except(existingTables).ToList();
+        if (missing.Count > 0)
+            Console.WriteLine($"[Migration] Tables manquantes : {string.Join(", ", missing)}");
+
+        return missing.Count == 0;
+    }
+    finally
+    {
+        await conn.CloseAsync();
+    }
 }

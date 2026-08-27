@@ -413,7 +413,52 @@ SQL
     log "MySQL installé et sécurisé."
 fi
 
-MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root <<SQL
+# ── Choix : base existante ou nouvelle ───────────────────────────────────────
+DB_EXISTS=false
+if MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root --execute "USE ${DB_NAME};" 2>/dev/null; then
+    DB_EXISTS=true
+fi
+
+FRESH_DB=false
+if [[ "$DB_EXISTS" == true ]]; then
+    echo ""
+    warn "La base de données '${DB_NAME}' existe déjà sur ce serveur."
+    echo ""
+    echo "  [1] Conserver la base existante (garder les données actuelles)"
+    echo "  [2] Repartir sur une base vide   (DROP + CREATE — TOUTES LES DONNÉES SERONT PERDUES)"
+    echo ""
+    read -rp "  Votre choix [1] : " _DB_CHOICE
+    _DB_CHOICE="${_DB_CHOICE:-1}"
+    if [[ "$_DB_CHOICE" == "2" ]]; then
+        echo ""
+        warn "⚠  Vous allez SUPPRIMER définitivement la base '${DB_NAME}' et toutes ses données."
+        read -rp "  Tapez le nom de la base pour confirmer : " _DB_CONFIRM
+        if [[ "$_DB_CONFIRM" == "${DB_NAME}" ]]; then
+            FRESH_DB=true
+            log "Confirmation reçue — la base sera recréée."
+        else
+            warn "Nom incorrect — la base existante sera conservée."
+        fi
+    fi
+else
+    log "La base '${DB_NAME}' n'existe pas encore — elle sera créée."
+fi
+
+# ── Création / recréation de la base ─────────────────────────────────────────
+if [[ "$FRESH_DB" == true ]]; then
+    MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root <<SQL
+DROP DATABASE IF EXISTS ${DB_NAME};
+CREATE DATABASE ${DB_NAME}
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost'
+    IDENTIFIED BY '${DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';
+FLUSH PRIVILEGES;
+SQL
+    log "Base ${DB_NAME} recréée (vide) + utilisateur ${DB_USER} configuré."
+else
+    MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root <<SQL
 CREATE DATABASE IF NOT EXISTS ${DB_NAME}
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
@@ -422,7 +467,8 @@ CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost'
 GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 SQL
-log "Base $DB_NAME + utilisateur $DB_USER configurés."
+    log "Base ${DB_NAME} conservée + utilisateur ${DB_USER} configuré."
+fi
 next "Étape 8/16 — Création de l'utilisateur système $APP_NAME"
 
 # =============================================================================
@@ -801,14 +847,32 @@ else
         echo "[WARN] Migration EF non exécutée en mode publié — utilisez --schema-only si Pomelo indisponible"
 fi
 
-# ── Seed (reset + repopulation) ───────────────────────────────────────────────
-echo "→ Seed de la base de données (--seed)…"
-set -a
-# shellcheck source=/dev/null
-source <(grep -v '^#' "\${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//')
-set +a
-dotnet "\${API_DIR}/\${APP_DLL}" --seed
-echo "[✓] Seed terminé."
+# ── Seed (reset + repopulation) — uniquement si demandé ──────────────────────
+_HAS_RESET=false
+_HAS_SEED=false
+for _arg in "\$@"; do
+    [[ "\$_arg" == "--reset" ]] && _HAS_RESET=true
+    [[ "\$_arg" == "--seed"  ]] && _HAS_SEED=true
+done
+
+if [[ "\$_HAS_RESET" == true ]] || [[ "\$_HAS_SEED" == true ]]; then
+    set -a
+    # shellcheck source=/dev/null
+    source <(grep -v '^#' "\${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//')
+    set +a
+    if [[ "\$_HAS_RESET" == true ]]; then
+        echo "→ --reset : suppression du schéma et recréation (rôles + super_admin seulement)…"
+        dotnet "\${API_DIR}/\${APP_DLL}" --reset
+        echo "[✓] Reset terminé."
+    fi
+    if [[ "\$_HAS_SEED" == true ]]; then
+        echo "→ --seed : reset total + données de démo…"
+        dotnet "\${API_DIR}/\${APP_DLL}" --seed
+        echo "[✓] Seed terminé."
+    fi
+else
+    echo "→ Base conservée. Options disponibles : --reset (schéma vide) ou --seed (schéma vide + démo)."
+fi
 
 # ── Démarrage ─────────────────────────────────────────────────────────────────
 echo "→ Démarrage du service \${APP_NAME}-api…"

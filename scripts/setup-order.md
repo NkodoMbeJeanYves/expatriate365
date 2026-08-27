@@ -43,7 +43,7 @@ Le script demande interactivement (valeurs modifiables à chaque exécution) :
 
 ## Étape 2 — Déploiement du backend
 
-### Mode migrations EF Core (défaut)
+### Mode migrations EF Core (défaut — conserve les données existantes)
 
 ```bash
 bash scripts/deploy-backend-expatriate.sh
@@ -54,6 +54,22 @@ Ce script :
 2. Crée `./publish/expatriate365-api.zip`
 3. `scp` vers le VPS
 4. Exécute `/usr/local/bin/deploy-expatriate365-api.sh` sur le VPS
+
+### Mode reset schéma (drop + recreate + rôles + super_admin, sans données de démo)
+
+```bash
+bash scripts/deploy-backend-expatriate.sh --reset
+```
+
+Exécute `dotnet server.dll --reset` sur le VPS : drop toutes les tables, recrée le schéma via migrations, insère rôles + super_admin. **Aucune donnée de démo.**
+
+### Mode seed complet (reset schéma + données de démo)
+
+```bash
+bash scripts/deploy-backend-expatriate.sh --seed
+```
+
+Exécute `dotnet server.dll --seed` sur le VPS : même chose que `--reset` + données de démo ACM (membres, cotisations, événements, etc.).
 
 ### Mode schema SQL (alternative — si Pomelo/EF Core indisponible)
 
