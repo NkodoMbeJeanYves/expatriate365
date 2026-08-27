@@ -184,7 +184,7 @@ if [ -d "$API_DIR" ] && [ "$(ls -A $API_DIR)" ]; then
 fi
 mkdir -p "$API_DIR"
 unzip -o /tmp/api-expatriate.zip -d /tmp/api-extract/
-rsync -av --exclude='wwwroot/uploads' --exclude='wwwroot/logos' --exclude='wwwroot/photos' --exclude='wwwroot/documents' --exclude='logs' /tmp/api-extract/api/ "$API_DIR/"
+rsync -av --exclude='wwwroot/uploads' --exclude='wwwroot/logos' --exclude='wwwroot/photos' --exclude='wwwroot/documents' --exclude='logs' /tmp/api-extract/ "$API_DIR/"
 mkdir -p "$API_DIR"/wwwroot/{uploads,logos,photos,documents} "$API_DIR"/logs
 chown -R acm365hub:acm365hub "$API_DIR"
 chmod -R 755 "$API_DIR"

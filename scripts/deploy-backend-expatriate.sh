@@ -38,12 +38,12 @@ fi
 
 # ─── 1. Build ─────────────────────────────────────────────────────────────────
 echo "→ Build du backend (.NET — $PROJECT)..."
-rm -rf "$PUBLISH_DIR"
-dotnet publish "$PROJECT" \
-  -c Release \
-  -o "$PUBLISH_DIR" \
-  --self-contained false \
-  -r linux-x64
+# rm -rf "$PUBLISH_DIR"
+# dotnet publish "$PROJECT" \
+#   -c Release \
+#   -o "$PUBLISH_DIR" \
+#   --self-contained false \
+#   -r linux-x64
 
 # ─── 2. Vérification ─────────────────────────────────────────────────────────
 if [ ! -f "$PUBLISH_DIR/server.dll" ]; then
@@ -52,25 +52,25 @@ if [ ! -f "$PUBLISH_DIR/server.dll" ]; then
 fi
 
 # ─── 3. Génération du schema SQL (mode --schema-only uniquement) ──────────────
-if [[ "$SCHEMA_MODE" == true ]]; then
-  echo "→ Génération du schéma SQL idempotent (dotnet ef migrations script)..."
-  mkdir -p publish
-  (cd server && dotnet ef migrations script --idempotent -o "../${SCHEMA_LOCAL}")
-  if [ ! -f "$SCHEMA_LOCAL" ]; then
-    echo "[✗] Génération du schéma SQL échouée — $SCHEMA_LOCAL introuvable"
-    exit 1
-  fi
-  echo "[✓] Schéma généré : $SCHEMA_LOCAL"
-fi
+# if [[ "$SCHEMA_MODE" == true ]]; then
+#   echo "→ Génération du schéma SQL idempotent (dotnet ef migrations script)..."
+#   mkdir -p publish
+#   (cd server && dotnet ef migrations script --idempotent -o "../${SCHEMA_LOCAL}")
+#   if [ ! -f "$SCHEMA_LOCAL" ]; then
+#     echo "[✗] Génération du schéma SQL échouée — $SCHEMA_LOCAL introuvable"
+#     exit 1
+#   fi
+#   echo "[✓] Schéma généré : $SCHEMA_LOCAL"
+# fi
 
 # ─── 4. Archive ──────────────────────────────────────────────────────────────
 echo "→ Création de l'archive $ZIP_LOCAL..."
-rm -f "$ZIP_LOCAL"
-if command -v zip &>/dev/null; then
-  (cd publish && zip -r "${APP_NAME}-api.zip" api/)
-else
-  powershell.exe -Command "Compress-Archive -Path publish\\api\\* -DestinationPath publish\\${APP_NAME}-api.zip -Force"
-fi
+# rm -f "$ZIP_LOCAL"
+# if command -v zip &>/dev/null; then
+#   (cd publish && zip -r "${APP_NAME}-api.zip" api/)
+# else
+#   powershell.exe -Command "Compress-Archive -Path publish\\api\\* -DestinationPath publish\\${APP_NAME}-api.zip -Force"
+# fi
 
 echo "→ Contenu du zip (premières lignes) :"
 unzip -l "$ZIP_LOCAL" | head -10

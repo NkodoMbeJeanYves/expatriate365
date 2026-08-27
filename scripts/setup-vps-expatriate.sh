@@ -726,7 +726,7 @@ unzip -o "/tmp/\${APP_NAME}-api.zip" -d "/tmp/\${APP_NAME}-api-extract/"
 rsync -av --exclude='wwwroot/uploads' --exclude='wwwroot/logos' \
           --exclude='wwwroot/photos'  --exclude='wwwroot/documents' \
           --exclude='logs' \
-          "/tmp/\${APP_NAME}-api-extract/api/" "\${API_DIR}/"
+          "/tmp/\${APP_NAME}-api-extract/" "\${API_DIR}/"
 
 mkdir -p "\${API_DIR}/wwwroot/{uploads,logos,photos,documents}"
 mkdir -p "\${API_DIR}/logs"
