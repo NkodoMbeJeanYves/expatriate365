@@ -17,7 +17,7 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
             .AddEnvironmentVariables()
             .Build();
 
-        var cs = config.GetConnectionString("Default")
+        var cs = config.GetConnectionString("MySql")
             ?? throw new InvalidOperationException("Connection string 'Default' not found.");
 
         var options = new DbContextOptionsBuilder<AppDbContext>()

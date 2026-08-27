@@ -58,7 +58,7 @@ try
     builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
         p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
-    var cs = builder.Configuration.GetConnectionString("Default")
+    var cs = builder.Configuration.GetConnectionString("MySql")
         ?? throw new InvalidOperationException("Connection string 'Default' not found.");
     builder.Services.AddDbContext<AppDbContext>(o =>
         o.UseMySql(cs, ServerVersion.AutoDetect(cs)));

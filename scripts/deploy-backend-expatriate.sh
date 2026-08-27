@@ -69,7 +69,7 @@ rm -f "$ZIP_LOCAL"
 if command -v zip &>/dev/null; then
   (cd publish && zip -r "${APP_NAME}-api.zip" api/)
 else
-  powershell.exe -Command "Compress-Archive -Path publish\\api -DestinationPath publish\\${APP_NAME}-api.zip -Force"
+  powershell.exe -Command "Compress-Archive -Path publish\\api\\* -DestinationPath publish\\${APP_NAME}-api.zip -Force"
 fi
 
 echo "→ Contenu du zip (premières lignes) :"

@@ -6,7 +6,7 @@ export interface QuickLoginAccount {
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5000',
+  apiUrl: 'http://localhost:5001',
   quickLoginAccounts: [
     { label: 'Super Admin', email: 'super_admin@expatriate365.mu', password: 'Admin@123' },
     { label: 'Président',  email: 'jean.nkodo@acm.mu',   password: 'Password123!' },

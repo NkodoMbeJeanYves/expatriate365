@@ -102,6 +102,7 @@ echo "  Base MySQL    : $DB_NAME"
 echo "  DLL           : $APP_DLL"
 echo "  .NET channel  : $DOTNET_CHANNEL"
 echo ""
+info "Ces paramètres seront sauvegardés dans /etc/${APP_NAME}/env et utilisés par les scripts de déploiement. Confirmer ces paramètres ? (oui/non)"
 read -rp "Confirmer ces paramètres ? (oui/non) : " CONFIRM_PARAMS
 [[ "$CONFIRM_PARAMS" != "oui" ]] && { warn "Annulé. Relancez le script."; exit 0; }
 

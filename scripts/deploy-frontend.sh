@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# School365 — Déploiement du frontend Angular
+# acm365hub — Déploiement du frontend Angular
 #
 # Depuis votre machine Windows (Git Bash / WSL), à la racine du projet :
 #
@@ -8,34 +8,34 @@
 #        cd client && npm run build && cd ..
 #
 #   2. Créer l'archive :
-#        tar -czf /tmp/frontend.tar.gz -C client/dist/client/browser .
+#        tar -czf /tmp/frontend-expatriate.tar.gz -C client/dist/client/browser .
 #
 #   3. Transférer le script et l'archive :
-#        scp /tmp/frontend.tar.gz root@school365hub.poweryoursaas.com:/tmp/
-#        scp scripts/deploy-frontend.sh root@school365hub.poweryoursaas.com:/tmp/
+#        scp /tmp/frontend-expatriate.tar.gz root@acm365hub.poweryoursaas.com:/tmp/
+#        scp scripts/deploy-frontend.sh root@acm365hub.poweryoursaas.com:/tmp/
 #
 #   4. Se connecter et exécuter :
-#        ssh root@school365hub.poweryoursaas.com
+#        ssh root@acm365hub.poweryoursaas.com
 #        sed -i 's/\r//' /tmp/deploy-frontend.sh
 #        bash /tmp/deploy-frontend.sh
 # =============================================================================
 set -euo pipefail
 
-REMOTE_DIR="/var/www/school365/frontend"
-ARCHIVE="/tmp/frontend.tar.gz"
-TMP_EXTRACT="/tmp/frontend-extract"
+REMOTE_DIR="/var/www/acm365hub/frontend"
+ARCHIVE="/tmp/frontend-expatriate.tar.gz"
+TMP_EXTRACT="/tmp/frontend-expatriate-extract"
 
-# ─── Vérification de l'environnement VPS ─────────────────────────────────────
-if [ ! -d "/var/www/school365" ]; then
-  echo "[✗] Répertoire /var/www/school365 introuvable — ce script doit tourner sur le VPS après setup"
+# Vérification VPS
+if [ ! -d "/var/www/acm365hub" ]; then
+  echo "[✗] Répertoire /var/www/acm365hub introuvable — ce script doit tourner sur le VPS après setup"
   exit 1
 fi
 
 echo "→ Vérification de l'archive..."
 if [ ! -f "$ARCHIVE" ]; then
   echo "[✗] Archive introuvable : $ARCHIVE"
-  echo "    Depuis Windows : tar -czf /tmp/frontend.tar.gz -C client/dist/client/browser ."
-  echo "    Puis : scp /tmp/frontend.tar.gz root@VOTRE_VPS:/tmp/"
+  echo "    Depuis Windows : tar -czf /tmp/frontend-expatriate.tar.gz -C client/dist/client/browser ."
+  echo "    Puis : scp /tmp/frontend-expatriate.tar.gz root@VOTRE_VPS:/tmp/"
   exit 1
 fi
 
@@ -58,4 +58,4 @@ echo "→ Nettoyage..."
 rm -rf "$TMP_EXTRACT" "$ARCHIVE"
 
 echo ""
-echo "✓ Frontend déployé — $(ls $REMOTE_DIR | wc -l) fichiers dans $REMOTE_DIR"
+echo "✓ Frontend acm365hub déployé — $(ls $REMOTE_DIR | wc -l) fichiers dans $REMOTE_DIR"
