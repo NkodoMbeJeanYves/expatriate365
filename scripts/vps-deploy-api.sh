@@ -70,7 +70,7 @@ chmod -R 755 "${API_DIR}"
 # ── Chargement des variables d'environnement (sans les afficher) ──────────────
 set -a
 # shellcheck source=/dev/null
-source <(grep -v '^#' "${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//')
+source <(grep -v '^#' "${ENV_FILE}" | { grep -v '^_DEPLOY' || true; } | sed 's/\r//')
 set +a
 echo "[DEBUG] source ENV_FILE : OK"
 echo "[DEBUG] ASPNETCORE_URLS=${ASPNETCORE_URLS:-<non défini>}"
@@ -110,7 +110,7 @@ fi
 if [[ "${_HAS_RESET}" == true ]] || [[ "${_HAS_SEED}" == true ]]; then
     set -a
     # shellcheck source=/dev/null
-    source <(grep -v '^#' "${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//')
+    source <(grep -v '^#' "${ENV_FILE}" | { grep -v '^_DEPLOY' || true; } | sed 's/\r//')
     set +a
     echo "[DEBUG] post-source ASPNETCORE_URLS=${ASPNETCORE_URLS:-<non défini>}"
     if [[ "${_HAS_RESET}" == true ]]; then
