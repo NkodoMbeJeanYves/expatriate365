@@ -61,7 +61,8 @@ APP_NAME="${APP_NAME:-expatriate365}"
 
 # ── Lecture env existant (basé sur APP_NAME) ──────────────────────────────────
 _env_get() {
-    [[ -f "/etc/${APP_NAME}/env" ]] && grep -E "^${1}=" "/etc/${APP_NAME}/env" 2>/dev/null | head -1 | cut -d= -f2- || true
+    # Strip surrounding quotes from value so callers get the raw string
+    [[ -f "/etc/${APP_NAME}/env" ]] && grep -E "^${1}=" "/etc/${APP_NAME}/env" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/^["\x27]//;s/["\x27]$//' || true
 }
 
 # ── Domaine ──────────────────────────────────────────────────────────────────
@@ -510,7 +511,7 @@ ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_URLS=http://0.0.0.0:${API_PORT}
 
 # Base de données
-ConnectionStrings__MySql=Server=localhost;Port=3306;Database=${DB_NAME};User=${DB_USER};Password=${DB_PASSWORD};
+ConnectionStrings__MySql="Server=localhost;Port=3306;Database=${DB_NAME};User=${DB_USER};Password=${DB_PASSWORD};"
 
 # JWT
 Jwt__Key=${JWT_KEY}
