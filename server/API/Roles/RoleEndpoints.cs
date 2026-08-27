@@ -15,7 +15,7 @@ public static class RoleEndpoints
         group.MapGet("/", async (IMediator mediator) =>
             Results.Ok(await mediator.Send(new ListRolesQuery())))
             .WithName("ListRoles")
-            .WithOpenApi();
+;
 
         // GET /api/v1/roles/permissions — full permission catalogue grouped by domain
         group.MapGet("/permissions", () =>
@@ -27,8 +27,7 @@ public static class RoleEndpoints
             });
             return Results.Ok(result);
         })
-        .WithName("ListPermissions")
-        .WithOpenApi();
+        .WithName("ListPermissions");
 
         // PUT /api/v1/roles/{id}/permissions — update role permissions (super_admin only)
         group.MapPut("/{id:guid}/permissions",
@@ -41,7 +40,7 @@ public static class RoleEndpoints
             })
             .RequireAuthorization(Permissions.RolesUpdate)
             .WithName("UpdateRolePermissions")
-            .WithOpenApi();
+;
 
         // POST /api/v1/roles/{id}/reset — restore seeder default permissions
         group.MapPost("/{id:guid}/reset",
@@ -54,6 +53,6 @@ public static class RoleEndpoints
             })
             .RequireAuthorization(Permissions.RolesUpdate)
             .WithName("ResetRolePermissions")
-            .WithOpenApi();
+;
     }
 }

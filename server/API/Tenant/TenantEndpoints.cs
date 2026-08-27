@@ -18,7 +18,7 @@ public static class TenantEndpoints
             return result is null ? Results.NotFound(new { error = "Tenant not found" }) : Results.Ok(result);
         })
         .WithName("GetTenantSettings")
-        .WithOpenApi();
+;
 
         g.MapPut("/settings", async (HttpContext ctx, [FromBody] UpdateTenantSettingsRequest body, IMediator mediator) =>
         {
@@ -30,7 +30,7 @@ public static class TenantEndpoints
         })
         .RequireAuthorization(Permissions.SettingsUpdate)
         .WithName("UpdateTenantSettings")
-        .WithOpenApi();
+;
     }
 
     private static Guid GetTenantId(HttpContext ctx)
