@@ -789,7 +789,12 @@ for _arg in "\${@:-}"; do
     esac
 done
 
-echo "→ Arguments : schema=\${SCHEMA_MODE} reset=\${_HAS_RESET} seed=\${_HAS_SEED}"
+echo "[DEBUG] APP_NAME=\${APP_NAME}"
+echo "[DEBUG] APP_DLL=\${APP_DLL}"
+echo "[DEBUG] API_DIR=\${API_DIR}"
+echo "[DEBUG] ENV_FILE=\${ENV_FILE}"
+echo "[DEBUG] Arguments : schema=\${SCHEMA_MODE} reset=\${_HAS_RESET} seed=\${_HAS_SEED}"
+echo "[DEBUG] ENV_FILE exists=\$([ -f \"\${ENV_FILE}\" ] && echo yes || echo NO)"
 
 # ── Arrêt du service ──────────────────────────────────────────────────────────
 echo "→ Arrêt du service \${APP_NAME}-api…"
@@ -825,6 +830,9 @@ set -a
 # shellcheck source=/dev/null
 source <(grep -v '^#' "\${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//')
 set +a
+echo "[DEBUG] source ENV_FILE : OK"
+echo "[DEBUG] ASPNETCORE_URLS=\${ASPNETCORE_URLS:-<non défini>}"
+echo "[DEBUG] ConnectionStrings__MySql=\$(echo \"\${ConnectionStrings__MySql:-<non défini>}\" | sed 's/Password=[^;]*/Password=***/')"
 
 if [[ "\${SCHEMA_MODE}" == true ]]; then
     # ── Mode SQL dump ─────────────────────────────────────────────────────────
@@ -850,6 +858,7 @@ if [[ "\${SCHEMA_MODE}" == true ]]; then
 else
     # ── Mode migrations EF Core (défaut) ─────────────────────────────────────
     echo "→ Migrations EF Core…"
+    echo "[DEBUG] dotnet \${API_DIR}/\${APP_DLL} (exists=\$([ -f \"\${API_DIR}/\${APP_DLL}\" ] && echo yes || echo NO))"
     cd "\${API_DIR}"
     dotnet "\${APP_DLL}" -- ef database update 2>/dev/null || \
         echo "[WARN] Migration EF non exécutée en mode publié — utilisez --schema-only si Pomelo indisponible"
@@ -861,13 +870,16 @@ if [[ "\${_HAS_RESET}" == true ]] || [[ "\${_HAS_SEED}" == true ]]; then
     # shellcheck source=/dev/null
     source <(grep -v '^#' "\${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//')
     set +a
+    echo "[DEBUG] post-source ASPNETCORE_URLS=\${ASPNETCORE_URLS:-<non défini>}"
     if [[ "\$_HAS_RESET" == true ]]; then
         echo "→ --reset : suppression du schéma et recréation (rôles + super_admin seulement)…"
+        echo "[DEBUG] dotnet \${API_DIR}/\${APP_DLL} --reset"
         dotnet "\${API_DIR}/\${APP_DLL}" --reset
         echo "[✓] Reset terminé."
     fi
     if [[ "\$_HAS_SEED" == true ]]; then
         echo "→ --seed : reset total + données de démo…"
+        echo "[DEBUG] dotnet \${API_DIR}/\${APP_DLL} --seed"
         dotnet "\${API_DIR}/\${APP_DLL}" --seed
         echo "[✓] Seed terminé."
     fi
