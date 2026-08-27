@@ -37,7 +37,9 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
-    builder.WebHost.UseUrls("http://*:5000", "https://*:5001");
+    builder.WebHost.UseUrls(
+        Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "http://0.0.0.0:5001"
+    );
 
     builder.Host.UseSerilog((ctx, lc) => lc
         .ReadFrom.Configuration(ctx.Configuration)
