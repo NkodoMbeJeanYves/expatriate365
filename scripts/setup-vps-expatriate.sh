@@ -510,11 +510,11 @@ ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_URLS=http://0.0.0.0:${API_PORT}
 
 # Base de données
-ConnectionStrings__MySql="Server=localhost;Port=3306;Database=${DB_NAME};User=${DB_USER};Password=${DB_PASSWORD};"
+ConnectionStrings__MySql='Server=localhost;Port=3306;Database=${DB_NAME};User=${DB_USER};Password=${DB_PASSWORD};'
 
 # JWT
-Jwt__Key=${JWT_KEY}
-Jwt__Secret=${JWT_KEY}
+Jwt__Key='${JWT_KEY}'
+Jwt__Secret='${JWT_KEY}'
 
 # CORS
 Cors__AllowedOrigins=https://${DOMAIN}
@@ -523,15 +523,15 @@ Cors__AllowedOrigins=https://${DOMAIN}
 FrontendBaseUrl=https://${DOMAIN}
 
 # Super Admin seed
-Seed__SuperAdminEmail=${SEED_ADMIN_EMAIL}
-Seed__SuperAdminPassword=${SEED_ADMIN_PASSWORD}
+Seed__SuperAdminEmail='${SEED_ADMIN_EMAIL}'
+Seed__SuperAdminPassword='${SEED_ADMIN_PASSWORD}'
 
 # Email SMTP
 Email__SmtpHost=${SMTP_HOST}
 Email__SmtpPort=${SMTP_PORT}
 Email__EnableSsl=true
-Email__Username=${SMTP_USER}
-Email__Password=${SMTP_PASSWORD}
+Email__Username='${SMTP_USER}'
+Email__Password='${SMTP_PASSWORD}'
 Email__FromAddress=${SMTP_FROM}
 Email__PortalDomain=${DOMAIN}
 
