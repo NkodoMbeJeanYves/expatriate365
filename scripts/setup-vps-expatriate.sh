@@ -847,16 +847,30 @@ else
 fi
 
 # ── Seed (reset + repopulation) — uniquement si demandé ──────────────────────
-if [[ "\${1:-}" == "--seed" ]] || [[ "\${2:-}" == "--seed" ]]; then
-    echo "→ Seed de la base de données (reset total + repopulation)…"
+_HAS_RESET=false
+_HAS_SEED=false
+for _arg in "\$@"; do
+    [[ "\$_arg" == "--reset" ]] && _HAS_RESET=true
+    [[ "\$_arg" == "--seed"  ]] && _HAS_SEED=true
+done
+
+if [[ "\$_HAS_RESET" == true ]] || [[ "\$_HAS_SEED" == true ]]; then
     set -a
     # shellcheck source=/dev/null
     source <(grep -v '^#' "\${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//')
     set +a
-    dotnet "\${API_DIR}/\${APP_DLL}" --seed
-    echo "[✓] Seed terminé."
+    if [[ "\$_HAS_RESET" == true ]]; then
+        echo "→ --reset : suppression du schéma et recréation (rôles + super_admin seulement)…"
+        dotnet "\${API_DIR}/\${APP_DLL}" --reset
+        echo "[✓] Reset terminé."
+    fi
+    if [[ "\$_HAS_SEED" == true ]]; then
+        echo "→ --seed : reset total + données de démo…"
+        dotnet "\${API_DIR}/\${APP_DLL}" --seed
+        echo "[✓] Seed terminé."
+    fi
 else
-    echo "→ Seed ignoré (base conservée). Relancez avec --seed pour un reset complet."
+    echo "→ Base conservée. Options disponibles : --reset (schéma vide) ou --seed (schéma vide + démo)."
 fi
 
 # ── Démarrage ─────────────────────────────────────────────────────────────────

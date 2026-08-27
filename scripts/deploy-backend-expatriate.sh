@@ -7,6 +7,9 @@
 #
 # Mode schema SQL (si Pomelo/EF Core indisponible, ex: migration .NET 9→10) :
 #   bash scripts/deploy-backend-expatriate.sh --schema-only
+#   bash scripts/deploy-backend-expatriate.sh            # données conservées
+#   bash scripts/deploy-backend-expatriate.sh --reset    # schéma vide + bootstrap
+#   bash scripts/deploy-backend-expatriate.sh --seed     # schéma vide + démo complète
 #
 # Prérequis :
 #   - dotnet installé localement
@@ -28,9 +31,11 @@ SCHEMA_REMOTE="/tmp/${APP_NAME}-schema.sql"
 # ─── Modes ────────────────────────────────────────────────────────────────────
 SCHEMA_MODE=false
 SEED_MODE=false
+RESET_MODE=false
 for arg in "$@"; do
   [[ "$arg" == "--schema-only" ]] && SCHEMA_MODE=true
   [[ "$arg" == "--seed"        ]] && SEED_MODE=true
+  [[ "$arg" == "--reset"       ]] && RESET_MODE=true
 done
 
 # ─── Vérification du répertoire ──────────────────────────────────────────────
@@ -91,6 +96,7 @@ fi
 # ─── 6. Déploiement ──────────────────────────────────────────────────────────
 REMOTE_ARGS=""
 [[ "$SCHEMA_MODE" == true ]] && REMOTE_ARGS="$REMOTE_ARGS --schema-only"
+[[ "$RESET_MODE"  == true ]] && REMOTE_ARGS="$REMOTE_ARGS --reset"
 [[ "$SEED_MODE"   == true ]] && REMOTE_ARGS="$REMOTE_ARGS --seed"
 
 echo "→ Déploiement sur le VPS${REMOTE_ARGS:+ (args:$REMOTE_ARGS)}..."
