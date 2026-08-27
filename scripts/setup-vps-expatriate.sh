@@ -24,16 +24,23 @@ error()   { echo -e "${RED}[✗]${NC} $*"; exit 1; }
 skip()    { echo -e "${YELLOW}[~]${NC} $* — déjà installé, ignoré."; }
 section() {
     _STEP_NAME="$*"
+    (( _STEP_NUM++ )) || true
     local ts; ts=$(date '+%H:%M:%S')
     echo -e "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${CYAN}  $_STEP_NAME${NC}  ${YELLOW}[${ts}]${NC}"
+    echo -e "${CYAN}  [${_STEP_NUM}/${_STEP_TOTAL}] $_STEP_NAME${NC}  ${YELLOW}[${ts}]${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 }
 
 _STEP_NAME="initialisation"
+_STEP_NUM=0
+_STEP_TOTAL=16
 trap 'echo -e "\n${RED}[✗] ÉCHEC — ${_STEP_NAME} (ligne ${LINENO})${NC}" >&2' ERR
 
 [[ $EUID -ne 0 ]] && error "Ce script doit être exécuté en root : sudo bash $0"
+
+next() {
+    echo -e "${CYAN}  ↳ Prochain : $*${NC}"
+}
 
 # =============================================================================
 # SECTION 0 — PARAMÈTRES DU PROJET (identité, modifiables à chaque exécution)
@@ -60,7 +67,9 @@ _env_get() {
 # ── Domaine ──────────────────────────────────────────────────────────────────
 _SAVED_DOMAIN=$(_env_get "FrontendBaseUrl" | sed 's|https://||')
 _DEFAULT_DOMAIN="${_SAVED_DOMAIN:-acm365hub.poweryoursaas.com}"
-info "Domaine public (DNS doit pointer vers ce VPS)"
+info "Domaine public — sera utilisé pour le certificat SSL et la configuration Nginx."
+info "  Le DNS doit déjà pointer vers l'IP de ce VPS (vérifiez avant de continuer)."
+info "  ex: acm365hub.poweryoursaas.com"
 read -rp "  Domaine [$_DEFAULT_DOMAIN] : " DOMAIN
 DOMAIN="${DOMAIN:-$_DEFAULT_DOMAIN}"
 [[ -z "$DOMAIN" ]] && error "Le domaine est obligatoire."
@@ -68,7 +77,10 @@ DOMAIN="${DOMAIN:-$_DEFAULT_DOMAIN}"
 # ── Port interne API ──────────────────────────────────────────────────────────
 _SAVED_PORT=$(_env_get "_DEPLOY_API_PORT")
 _DEFAULT_PORT="${_SAVED_PORT:-5001}"
-info "Port interne de l'API (doit être libre sur ce VPS — school365 utilise 5000)"
+info "Port interne de l'API — utilisé par le service .NET et le reverse proxy Nginx."
+info "  Ce port n'est pas exposé publiquement (Nginx fait le pont)."
+info "  Chaque projet sur ce VPS doit avoir un port différent (school365 = 5000)."
+info "  Vérifiez qu'il est libre : ss -tlnp | grep <port>"
 read -rp "  Port interne [$_DEFAULT_PORT] : " API_PORT
 API_PORT="${API_PORT:-$_DEFAULT_PORT}"
 [[ ! "$API_PORT" =~ ^[0-9]+$ ]] && error "Le port doit être un nombre."
@@ -76,20 +88,29 @@ API_PORT="${API_PORT:-$_DEFAULT_PORT}"
 # ── Nom de la base de données ─────────────────────────────────────────────────
 _SAVED_DB_NAME=$(_env_get "ConnectionStrings__MySql" | sed 's/.*Database=\([^;]*\).*/\1/')
 _DEFAULT_DB_NAME="${_SAVED_DB_NAME:-${APP_NAME}_prod}"
-info "Nom de la base de données MySQL"
+info "Nom de la base de données MySQL qui sera créée pour ce projet."
+info "  Chaque projet doit avoir sa propre base (school365 = school365_prod)."
+info "  Convention recommandée : <APP_NAME>_prod"
 read -rp "  Base de données [$_DEFAULT_DB_NAME] : " DB_NAME
 DB_NAME="${DB_NAME:-$_DEFAULT_DB_NAME}"
 
 # ── DLL principale ────────────────────────────────────────────────────────────
 _SAVED_DLL=$(_env_get "_DEPLOY_APP_DLL")
 _DEFAULT_DLL="${_SAVED_DLL:-server.dll}"
-info "Nom du fichier DLL principal (ex: server.dll)"
+info "Nom du fichier DLL principal — point d'entrée de l'API ASP.NET Core."
+info "  C'est le fichier que systemd lancera avec : dotnet <APP_DLL>"
+info "  Trouvez-le dans votre .csproj : <AssemblyName> ou le nom du projet."
+info "  Pour ce projet : server.dll (défaut)"
 read -rp "  DLL principale [$_DEFAULT_DLL] : " APP_DLL
 APP_DLL="${APP_DLL:-$_DEFAULT_DLL}"
 
 # ── Version .NET ─────────────────────────────────────────────────────────────
 _DEFAULT_DOTNET_CHANNEL="9.0"
-info "Channel .NET requis (9.0, 10.0, …) — vérifiez <TargetFramework> dans votre .csproj"
+info "Channel .NET requis par ce projet."
+info "  Vérifiez <TargetFramework> dans votre .csproj :"
+info "    net9.0  → channel 9.0"
+info "    net10.0 → channel 10.0"
+info "  Ce projet cible net9.0 — répondez 9.0 sauf si vous avez migré."
 read -rp "  Channel .NET [$_DEFAULT_DOTNET_CHANNEL] : " DOTNET_CHANNEL
 DOTNET_CHANNEL="${DOTNET_CHANNEL:-$_DEFAULT_DOTNET_CHANNEL}"
 
@@ -102,9 +123,16 @@ echo "  Base MySQL    : $DB_NAME"
 echo "  DLL           : $APP_DLL"
 echo "  .NET channel  : $DOTNET_CHANNEL"
 echo ""
-info "Ces paramètres seront sauvegardés dans /etc/${APP_NAME}/env et utilisés par les scripts de déploiement. Confirmer ces paramètres ? (oui/non)"
+info "Ces paramètres seront sauvegardés dans /etc/${APP_NAME}/env et utilisés par les scripts de déploiement."
+info "Vérifiez chaque valeur ci-dessus avant de continuer."
+info "Tapez 'oui' pour passer à la saisie des secrets, 'non' pour annuler et corriger."
 read -rp "Confirmer ces paramètres ? (oui/non) : " CONFIRM_PARAMS
 [[ "$CONFIRM_PARAMS" != "oui" ]] && { warn "Annulé. Relancez le script."; exit 0; }
+
+echo ""
+next "Section 1/2 de saisie — identifiants et secrets (DB, JWT, SMTP)"
+info "Aucune modification système n'a encore eu lieu."
+echo ""
 
 # =============================================================================
 # SECTION 1 — IDENTIFIANTS ET SECRETS
@@ -118,33 +146,47 @@ echo ""
 # ── Utilisateur DB ────────────────────────────────────────────────────────────
 _SAVED_DB_USER=$(_env_get "ConnectionStrings__MySql" | sed 's/.*User=\([^;]*\).*/\1/')
 _DEFAULT_DB_USER="${_SAVED_DB_USER:-${APP_NAME}_user}"
-info "Nom d'utilisateur MySQL applicatif"
+info "Nom d'utilisateur MySQL dédié à ce projet (sera créé s'il n'existe pas)."
+info "  Il n'aura accès qu'à la base $DB_NAME — jamais à root."
+info "  Convention recommandée : <APP_NAME>_user"
 read -rp "  Utilisateur DB [$_DEFAULT_DB_USER] : " DB_USER
 DB_USER="${DB_USER:-$_DEFAULT_DB_USER}"
+next "Mot de passe pour cet utilisateur DB"
 
 # ── Mot de passe DB ───────────────────────────────────────────────────────────
 echo ""
 _SAVED_DB_PASS=$(_env_get "ConnectionStrings__MySql" | sed 's/.*Password=\([^;]*\).*/\1/')
+info "Mot de passe de l'utilisateur MySQL '$DB_USER' — sera stocké dans /etc/${APP_NAME}/env."
+info "  Minimum 12 caractères. La saisie est masquée (rien ne s'affiche)."
 if [[ -n "$_SAVED_DB_PASS" ]]; then
-    info "Mot de passe DB : déjà défini (masqué)"
+    info "Mot de passe DB : déjà défini (masqué) — appuyez Entrée pour conserver."
     read -rp "  Mot de passe DB (≥12 car.) [Entrée = conserver] : " -s DB_PASSWORD; echo
     DB_PASSWORD="${DB_PASSWORD:-$_SAVED_DB_PASS}"
 else
     read -rp "  Mot de passe DB (≥12 car.) : " -s DB_PASSWORD; echo
 fi
 [[ ${#DB_PASSWORD} -lt 12 ]] && error "Le mot de passe DB doit faire au moins 12 caractères."
+next "Mot de passe root MySQL (pour créer la base — ne sera pas stocké)"
 
 # ── Mot de passe root MySQL (jamais stocké) ───────────────────────────────────
 echo ""
 warn "Mot de passe root MySQL — toujours demandé, jamais stocké."
+info "  Nécessaire uniquement pour créer la base '$DB_NAME' et l'utilisateur '$DB_USER'."
+info "  C'est le mot de passe défini lors de l'installation initiale de MySQL sur ce VPS."
+info "  La saisie est masquée (rien ne s'affiche)."
 read -rp "  Mot de passe root MySQL : " -s MYSQL_ROOT_PASSWORD; echo
 [[ ${#MYSQL_ROOT_PASSWORD} -lt 12 ]] && error "Le mot de passe root MySQL doit faire au moins 12 caractères."
+next "Clé secrète JWT (signature des tokens d'authentification)"
 
 # ── Clé JWT ───────────────────────────────────────────────────────────────────
 echo ""
 _SAVED_JWT=$(_env_get "Jwt__Key")
+info "Clé secrète JWT — utilisée pour signer et vérifier les tokens d'authentification."
+info "  Minimum 32 caractères. Appuyez Entrée pour laisser le script en générer une."
+info "  IMPORTANT : notez-la après l'installation (affichée dans le résumé final)."
+info "  Changer cette clé invalide tous les tokens actifs (déconnexion forcée de tous les utilisateurs)."
 if [[ -n "$_SAVED_JWT" ]]; then
-    info "Clé JWT : déjà définie (masquée)"
+    info "Clé JWT : déjà définie (masquée) — appuyez Entrée pour conserver."
     read -rp "  Clé JWT (≥32 car.) [Entrée = conserver] : " -s JWT_KEY; echo
     JWT_KEY="${JWT_KEY:-$_SAVED_JWT}"
 else
@@ -155,43 +197,59 @@ else
     fi
 fi
 [[ ${#JWT_KEY} -lt 32 ]] && error "La clé JWT doit faire au moins 32 caractères."
+next "Configuration SMTP — 5 champs (email, hôte, port, identifiant, mot de passe)"
 
 # ── SMTP ──────────────────────────────────────────────────────────────────────
 echo ""
+info "─── SMTP (1/5) — Adresse email expéditrice ───────────────────────────────"
+info "  Email utilisé comme expéditeur dans les emails envoyés par l'application."
+info "  Aussi utilisé comme contact pour le certificat SSL Let's Encrypt."
 _SAVED_SMTP_FROM=$(_env_get "Email__FromAddress")
-[[ -n "$_SAVED_SMTP_FROM" ]] && info "  Email SMTP actuel : $_SAVED_SMTP_FROM"
+[[ -n "$_SAVED_SMTP_FROM" ]] && info "  Valeur actuelle : $_SAVED_SMTP_FROM"
 read -rp "  Email SMTP (From) [Entrée = conserver] : " SMTP_FROM
 SMTP_FROM="${SMTP_FROM:-$_SAVED_SMTP_FROM}"
 
 echo ""
+info "─── SMTP (2/5) — Serveur SMTP ────────────────────────────────────────────"
+info "  Adresse du serveur qui enverra les emails."
 _SAVED_SMTP_HOST=$(_env_get "Email__SmtpHost")
-info "  Serveur SMTP  →  Gmail: smtp.gmail.com | OVH/LWS: ssl0.ovh.net | Office365: smtp.office365.com"
+info "  Gmail: smtp.gmail.com | OVH/LWS: ssl0.ovh.net | Office365: smtp.office365.com"
 [[ -n "$_SAVED_SMTP_HOST" ]] && info "  Valeur actuelle : $_SAVED_SMTP_HOST"
 read -rp "  Hôte SMTP [Entrée = conserver] : " SMTP_HOST
 SMTP_HOST="${SMTP_HOST:-$_SAVED_SMTP_HOST}"
 
 echo ""
+info "─── SMTP (3/5) — Port SMTP ───────────────────────────────────────────────"
+info "  587 = STARTTLS (recommandé pour Gmail, OVH, Office365)."
+info "  465 = SSL/TLS direct (moins courant)."
 _SAVED_SMTP_PORT=$(_env_get "Email__SmtpPort")
-info "  Port SMTP  →  587 = STARTTLS (recommandé) | 465 = SSL/TLS"
 [[ -n "$_SAVED_SMTP_PORT" ]] && info "  Valeur actuelle : $_SAVED_SMTP_PORT"
 read -rp "  Port SMTP [Entrée = conserver / défaut 587] : " SMTP_PORT
 SMTP_PORT="${SMTP_PORT:-${_SAVED_SMTP_PORT:-587}}"
 
 echo ""
+info "─── SMTP (4/5) — Identifiant de connexion ────────────────────────────────"
+info "  Généralement votre adresse email complète (ex: monapp@gmail.com)."
 _SAVED_SMTP_USER=$(_env_get "Email__Username")
-[[ -n "$_SAVED_SMTP_USER" ]] && info "  Identifiant SMTP actuel : $_SAVED_SMTP_USER"
+[[ -n "$_SAVED_SMTP_USER" ]] && info "  Valeur actuelle : $_SAVED_SMTP_USER"
 read -rp "  Identifiant SMTP [Entrée = conserver] : " SMTP_USER
 SMTP_USER="${SMTP_USER:-$_SAVED_SMTP_USER}"
 
 echo ""
+info "─── SMTP (5/5) — Mot de passe SMTP ──────────────────────────────────────"
+info "  Pour Gmail : NE PAS utiliser votre mot de passe principal."
+info "  Créez un App Password sur https://myaccount.google.com/apppasswords"
+info "  Pour OVH/LWS/Office365 : mot de passe de la boîte email."
+info "  La saisie est masquée (rien ne s'affiche)."
 _SAVED_SMTP_PASS=$(_env_get "Email__Password")
 if [[ -n "$_SAVED_SMTP_PASS" ]]; then
-    info "  Mot de passe SMTP : déjà défini (masqué)"
+    info "  Mot de passe SMTP : déjà défini (masqué) — appuyez Entrée pour conserver."
     read -rp "  Mot de passe SMTP [Entrée = conserver] : " -s SMTP_PASSWORD; echo
     SMTP_PASSWORD="${SMTP_PASSWORD:-$_SAVED_SMTP_PASS}"
 else
     read -rp "  Mot de passe SMTP / App Password : " -s SMTP_PASSWORD; echo
 fi
+next "Récapitulatif complet — dernière confirmation avant lancement"
 
 # ── Récapitulatif final ───────────────────────────────────────────────────────
 echo ""
@@ -204,8 +262,15 @@ echo "  DLL           : $APP_DLL"
 echo "  .NET channel  : $DOTNET_CHANNEL"
 echo "  SMTP          : $SMTP_HOST:$SMTP_PORT  (from: $SMTP_FROM)"
 echo ""
+info "Tapez 'oui' pour démarrer l'installation (irréversible), 'non' pour annuler."
 read -rp "Confirmer et lancer l'installation ? (oui/non) : " CONFIRM
 [[ "$CONFIRM" != "oui" ]] && { warn "Installation annulée."; exit 0; }
+
+echo ""
+info "Lancement de l'installation — 16 étapes automatiques."
+info "Les composants déjà présents (MySQL, .NET, UFW) seront détectés et ignorés."
+next "Étape 2/16 — Mise à jour du système"
+echo ""
 
 # =============================================================================
 # 2. MISE À JOUR SYSTÈME
@@ -214,6 +279,7 @@ section "2. Mise à jour du système"
 apt update -y
 DEBIAN_FRONTEND=noninteractive apt upgrade -y
 log "Système mis à jour."
+next "Étape 3/16 — Outils essentiels (curl, nginx, certbot, ufw…)"
 
 # =============================================================================
 # 3. OUTILS ESSENTIELS
@@ -223,6 +289,7 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     curl wget git unzip nginx certbot python3-certbot-nginx ufw \
     software-properties-common apt-transport-https gnupg lsb-release
 log "Outils installés / déjà présents."
+next "Étape 4/16 — Dépendances Chromium (PuppeteerSharp / génération PDF)"
 
 # =============================================================================
 # 4. DÉPENDANCES CHROMIUM
@@ -236,6 +303,7 @@ DEBIAN_FRONTEND=noninteractive apt install -y \
     libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 \
     libxrandr2 libxrender1 libxss1 libxtst6 wget xdg-utils
 log "Dépendances Chromium OK."
+next "Étape 5/16 — Pare-feu UFW"
 
 # =============================================================================
 # 5. PARE-FEU UFW
@@ -255,6 +323,7 @@ else
     ufw --force enable
     log "Pare-feu configuré."
 fi
+next "Étape 6/16 — Installation .NET $DOTNET_CHANNEL (peut prendre 1-2 min)"
 
 # =============================================================================
 # 6. INSTALLATION .NET
@@ -328,6 +397,7 @@ GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 SQL
 log "Base $DB_NAME + utilisateur $DB_USER configurés."
+next "Étape 8/16 — Création de l'utilisateur système $APP_NAME"
 
 # =============================================================================
 # 8. UTILISATEUR SYSTÈME
@@ -352,6 +422,7 @@ chown -R "${APP_NAME}:${APP_NAME}" "/var/www/${APP_NAME}/api"
 chown -R www-data:www-data          "/var/www/${APP_NAME}/frontend"
 chmod -R 755 "/var/www/${APP_NAME}"
 log "Répertoires créés."
+next "Étape 10/16 — Écriture du fichier de secrets /etc/$APP_NAME/env"
 
 # =============================================================================
 # 10. FICHIER DE SECRETS (/etc/$APP_NAME/env)
@@ -402,6 +473,7 @@ chmod 600 "/etc/${APP_NAME}/env"
 chown root:root "/etc/${APP_NAME}/env"
 sed -i 's/\r//' "/etc/${APP_NAME}/env"
 log "Fichier /etc/${APP_NAME}/env créé (chmod 600)."
+next "Étape 11/16 — Configuration Nginx (vhost $DOMAIN)"
 
 # =============================================================================
 # 11. NGINX — Vhost $APP_NAME
@@ -516,6 +588,9 @@ log "Vhost Nginx $DOMAIN configuré (HTTP-only — SSL à l'étape 12)."
 # =============================================================================
 section "12. Certificat SSL Let's Encrypt"
 warn "Assurez-vous que $DOMAIN pointe vers l'IP de ce VPS avant de continuer."
+info "  Vérifiez la propagation DNS : dig $DOMAIN +short"
+info "  La commande doit retourner l'IP de ce VPS."
+info "  Si ce n'est pas encore le cas, répondez 'non' — vous pourrez relancer certbot manuellement."
 echo ""
 read -rp "Lancer certbot maintenant ? (oui/non) : " RUN_CERTBOT
 
@@ -538,6 +613,7 @@ else
     warn "  certbot --nginx -d ${DOMAIN} -d www.${DOMAIN}"
     warn "Puis : systemctl reload nginx"
 fi
+next "Étape 13/16 — Création du service systemd ${APP_NAME}-api"
 
 # =============================================================================
 # 13. SERVICE SYSTEMD
@@ -575,6 +651,7 @@ systemctl daemon-reload
 systemctl enable "${APP_NAME}-api"
 log "Service systemd ${APP_NAME}-api créé et activé."
 warn "Le service ne peut pas démarrer tant que le binaire n'est pas déployé dans /var/www/${APP_NAME}/api/"
+next "Étape 14/16 — Logrotate"
 
 # =============================================================================
 # 14. LOGROTATE
@@ -596,6 +673,7 @@ cat > "/etc/logrotate.d/${APP_NAME}" <<LOGROTATE
 }
 LOGROTATE
 log "Logrotate configuré."
+next "Étape 15/16 — Génération du script de déploiement sur le VPS"
 
 # =============================================================================
 # 15. SCRIPT DE DÉPLOIEMENT SUR LE VPS
@@ -702,6 +780,7 @@ DEPLOY
 
 chmod +x "/usr/local/bin/deploy-${APP_NAME}-api.sh"
 log "Script /usr/local/bin/deploy-${APP_NAME}-api.sh créé."
+next "Étape 16/16 — Vérifications finales (dernière étape)"
 
 # =============================================================================
 # 16. VÉRIFICATIONS FINALES
