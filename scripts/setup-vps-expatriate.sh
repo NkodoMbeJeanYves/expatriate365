@@ -777,11 +777,19 @@ BACKUP_DIR="/var/backups/\${APP_NAME}/api"
 ENV_FILE="/etc/\${APP_NAME}/env"
 SCHEMA_FILE="/tmp/\${APP_NAME}-schema.sql"
 
-# ── Mode : --schema-only ou migrations EF (défaut) ───────────────────────────
+# ── Parsing des arguments ─────────────────────────────────────────────────────
 SCHEMA_MODE=false
-[[ "\${1:-}" == "--schema-only" ]] && SCHEMA_MODE=true
+_HAS_RESET=false
+_HAS_SEED=false
+for _arg in "\${@:-}"; do
+    case "\${_arg}" in
+        --schema-only) SCHEMA_MODE=true ;;
+        --reset)       _HAS_RESET=true  ;;
+        --seed)        _HAS_SEED=true   ;;
+    esac
+done
 
-echo "→ Mode schéma : \${SCHEMA_MODE} (--schema-only pour utiliser un dump SQL)"
+echo "→ Arguments : schema=\${SCHEMA_MODE} reset=\${_HAS_RESET} seed=\${_HAS_SEED}"
 
 # ── Arrêt du service ──────────────────────────────────────────────────────────
 echo "→ Arrêt du service \${APP_NAME}-api…"
@@ -848,14 +856,7 @@ else
 fi
 
 # ── Seed (reset + repopulation) — uniquement si demandé ──────────────────────
-_HAS_RESET=false
-_HAS_SEED=false
-for _arg in "\$@"; do
-    [[ "\$_arg" == "--reset" ]] && _HAS_RESET=true
-    [[ "\$_arg" == "--seed"  ]] && _HAS_SEED=true
-done
-
-if [[ "\$_HAS_RESET" == true ]] || [[ "\$_HAS_SEED" == true ]]; then
+if [[ "\${_HAS_RESET}" == true ]] || [[ "\${_HAS_SEED}" == true ]]; then
     set -a
     # shellcheck source=/dev/null
     source <(grep -v '^#' "\${ENV_FILE}" | grep -v '^_DEPLOY' | sed 's/\r//')
