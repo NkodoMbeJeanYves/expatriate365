@@ -93,7 +93,7 @@ Ce script :
 ```bash
 ssh root@acm365hub.poweryoursaas.com \
   "cd /var/www/expatriate365/api && \
-   export \$(grep -v '^#' /etc/expatriate365/env | grep -v '^_DEPLOY' | sed 's/\r//' | xargs) && \
+   set -a && source <(grep -v '^#' /etc/expatriate365/env | grep -v '^_DEPLOY' | sed 's/\r//') && set +a && \
    dotnet server.dll seed && \
    systemctl restart expatriate365-api"
 ```
