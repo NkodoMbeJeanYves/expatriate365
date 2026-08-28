@@ -307,7 +307,7 @@ export class MemberFormDrawerComponent implements OnInit {
     this.photoError.set(null);
     this.photoUploading.set(true);
     const preview = URL.createObjectURL(file);
-    this.photoPreview.set(preview);
+    this.photoPreview.set(preview + "?t=" + new Date().getTime());
     const fd = new FormData();
     fd.append('file', file);
     this.http.post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/upload`, fd).subscribe({
@@ -337,7 +337,7 @@ export class MemberFormDrawerComponent implements OnInit {
   private loadMember(id: string): void {
     this.api.getById(id).subscribe({
       next: (m) => {
-        if (m.photo_url) { this.photoUrl.set(m.photo_url); this.photoPreview.set(m.photo_url); }
+        if (m.photo_url) { this.photoUrl.set(m.photo_url); this.photoPreview.set(m.photo_url + "?t=" + new Date().getTime()); }
         this.form.patchValue({
           first_name: m.first_name,
           last_name: m.last_name,

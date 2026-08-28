@@ -38,7 +38,7 @@ export class TenantStore {
 
   readonly settings    = computed(() => this._settings());
   readonly name        = computed(() => this._settings().name);
-  readonly logoUrl     = computed(() => this._settings().logo_url ?? null);
+  readonly logoUrl     = computed(() => this._settings().logo_url ? `${this._settings().logo_url}?t=${new Date().getTime()}` : null);
   readonly currency    = computed(() => this._settings().base_currency);
   readonly symbol      = computed(() => this._settings().currency_symbol);
   readonly countryCode = computed(() => this._settings().country_code);
