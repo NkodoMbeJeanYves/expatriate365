@@ -582,17 +582,11 @@ namespace server.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     is_active = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     created_at = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    MemberId1 = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci")
+                    updated_at = table.Column<DateTime>(type: "datetime(6)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_contribution_charges", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_contribution_charges_Members_MemberId1",
-                        column: x => x.MemberId1,
-                        principalTable: "Members",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_contribution_charges_Members_member_id",
                         column: x => x.member_id,
@@ -785,17 +779,11 @@ namespace server.Migrations
                     payment_date = table.Column<DateOnly>(type: "date", nullable: false),
                     is_active = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     created_at = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    MemberId1 = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci")
+                    updated_at = table.Column<DateTime>(type: "datetime(6)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_payments", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_payments_Members_MemberId1",
-                        column: x => x.MemberId1,
-                        principalTable: "Members",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_payments_Members_member_id",
                         column: x => x.member_id,
@@ -913,11 +901,6 @@ namespace server.Migrations
                 table: "contribution_charges",
                 columns: new[] { "member_id", "contribution_type_id", "due_date" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_contribution_charges_MemberId1",
-                table: "contribution_charges",
-                column: "MemberId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_contribution_types_tenant_id",
@@ -1060,11 +1043,6 @@ namespace server.Migrations
                 name: "IX_payments_member_id",
                 table: "payments",
                 column: "member_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_payments_MemberId1",
-                table: "payments",
-                column: "MemberId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_resolutions_tenant_id",

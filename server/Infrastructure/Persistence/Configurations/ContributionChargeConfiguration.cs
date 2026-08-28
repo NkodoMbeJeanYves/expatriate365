@@ -36,7 +36,7 @@ public class ContributionChargeConfiguration : IEntityTypeConfiguration<Contribu
             .IsUnique()
             .HasDatabaseName("IX_contribution_charges_member_type_date");
 
-        b.HasOne(e => e.Member).WithMany().HasForeignKey(e => e.MemberId);
+        b.HasOne(e => e.Member).WithMany(m => m.Charges).HasForeignKey(e => e.MemberId);
         b.HasOne(e => e.ContributionType).WithMany(t => t.Charges).HasForeignKey(e => e.ContributionTypeId);
     }
 }
