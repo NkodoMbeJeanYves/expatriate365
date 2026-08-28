@@ -105,13 +105,44 @@ try
 
     app.UseSerilogRequestLogging();
     app.UseCors();
-    // app.UseStaticFiles();
-    app.UseStaticFiles(new StaticFileOptions
+
+        string[] foldersToEnsure =
     {
-        FileProvider = new PhysicalFileProvider(
-            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")),
-        RequestPath = ""
-    });
+        Path.Combine(builder.Environment.WebRootPath, "uploads"),
+        Path.Combine(builder.Environment.WebRootPath, "photos"),
+        Path.Combine(builder.Environment.WebRootPath, "logos"),
+        Path.Combine(builder.Environment.WebRootPath, "documents")
+    };
+
+    foreach (var folder in foldersToEnsure)
+    {
+        if (!Directory.Exists(folder))
+        {
+            Directory.CreateDirectory(folder);
+        }
+    }
+
+    // ✅ Servir wwwroot par défaut
+    app.UseStaticFiles();
+
+    for (int i = 0; i < foldersToEnsure.Length; i++)
+    {
+        var folder = foldersToEnsure[i];
+        var requestPath = folder switch
+        {
+            var f when f.EndsWith("uploads") => "/uploads",
+            var f when f.EndsWith("photos") => "/photos",
+            var f when f.EndsWith("logos") => "/logos",
+            var f when f.EndsWith("documents") => "/documents",
+            _ => throw new InvalidOperationException($"Unexpected folder: {folder}")
+        };
+
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(folder),
+            RequestPath = requestPath
+        });
+    }
 
     app.UseAuthentication();
     app.UseAuthorization();
