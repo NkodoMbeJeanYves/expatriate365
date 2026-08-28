@@ -1,7 +1,12 @@
-import { QuickLoginAccount } from './environment';
-
 export const environment = {
   production: true,
-  apiUrl: 'https://api.expatriate365.com',
-  quickLoginAccounts: [] as QuickLoginAccount[],
+  apiUrl: 'https://acm365hub.poweryoursaas.com',
+  quickLoginAccounts: [
+    { label: 'Super Admin', email: 'super_admin@expatriate365.mu', password: 'Admin@123' },
+    { label: 'Président', email: 'jean.nkodo@acm.mu', password: 'Password123!' },
+    { label: 'Trésorière', email: 'marie.fotso@acm.mu', password: 'Password123!' },
+    { label: 'Secrétaire', email: 'paul.mvondo@acm.mu', password: 'Password123!' },
+    { label: 'Membre', email: 'alice.biya@acm.mu', password: 'Password123!' },
+  ] as { label: string; email: string; password: string }[],
+  marker: 'PROD_ENV'
 };
