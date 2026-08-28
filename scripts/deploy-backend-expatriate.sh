@@ -2,14 +2,11 @@
 # =============================================================================
 # Expatriate365 — Déploiement du backend ASP.NET Core
 #
-# Mode migrations EF Core (défaut) :
-#   bash scripts/deploy-backend-expatriate.sh
-#
-# Mode schema SQL (si Pomelo/EF Core indisponible, ex: migration .NET 9→10) :
-#   bash scripts/deploy-backend-expatriate.sh --schema-only
-#   bash scripts/deploy-backend-expatriate.sh            # données conservées
-#   bash scripts/deploy-backend-expatriate.sh --reset    # schéma vide + bootstrap
-#   bash scripts/deploy-backend-expatriate.sh --seed     # schéma vide + démo complète
+# Modes :
+#   bash scripts/deploy-backend-expatriate.sh           # migration EF + bootstrap (défaut)
+#   bash scripts/deploy-backend-expatriate.sh --reset   # drop BDD + migration + bootstrap
+#   bash scripts/deploy-backend-expatriate.sh --seed    # drop BDD + migration + démo complète
+#   bash scripts/deploy-backend-expatriate.sh --schema-only  # SQL dump (sans EF Core)
 #
 # Prérequis :
 #   - dotnet installé localement
