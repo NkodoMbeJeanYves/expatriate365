@@ -33,7 +33,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         b.Property(e => e.CreatedAt).HasColumnName("created_at");
         b.Property(e => e.UpdatedAt).HasColumnName("updated_at");
 
-        b.HasOne(e => e.Member).WithMany().HasForeignKey(e => e.MemberId);
+        b.HasOne(e => e.Member).WithMany(m => m.Payments).HasForeignKey(e => e.MemberId);
         b.HasOne(e => e.Charge).WithMany(c => c.Payments).HasForeignKey(e => e.ChargeId);
     }
 }

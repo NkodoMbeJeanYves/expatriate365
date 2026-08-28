@@ -9,18 +9,13 @@ public static class DbSeeder
     private const string SeedTenantSlug = "acm-camerounais-maurice";
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Entry point for --seed : full reset + repopulation
+    // Entry point for --seed : DB already dropped+recreated by Program.cs
     // ─────────────────────────────────────────────────────────────────────────
     public static async Task ResetAndSeedAsync(AppDbContext db, IConfiguration config)
     {
-        Console.WriteLine("[Seeder] --seed: wiping all data in reverse FK order...");
-        await WipeAllAsync(db);
-        Console.WriteLine("[Seeder] All data wiped. Seeding...");
-
         await RoleSeeder.SeedRolesAsync(db);
         await SeedSuperAdminAsync(db, config);
         await SeedDemoDataAsync(db);
-
         Console.WriteLine("[Seeder] Done.");
     }
 
@@ -71,39 +66,6 @@ public static class DbSeeder
         db.Users.Add(superAdmin);
         await db.SaveChangesAsync();
         Console.WriteLine($"[Seeder] Super admin created: {email}");
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Full wipe — reverse FK order
-    // ─────────────────────────────────────────────────────────────────────────
-    private static async Task WipeAllAsync(AppDbContext db)
-    {
-        db.Notifications.RemoveRange(db.Notifications);
-        db.ElectionVoteChoices.RemoveRange(db.ElectionVoteChoices);
-        db.ElectionVotes.RemoveRange(db.ElectionVotes);
-        db.ElectionBallots.RemoveRange(db.ElectionBallots);
-        db.ElectionCandidates.RemoveRange(db.ElectionCandidates);
-        db.Elections.RemoveRange(db.Elections);
-        db.MeetingAttendances.RemoveRange(db.MeetingAttendances);
-        db.MeetingMinutes.RemoveRange(db.MeetingMinutes);
-        db.Meetings.RemoveRange(db.Meetings);
-        db.EventRegistrations.RemoveRange(db.EventRegistrations);
-        db.Events.RemoveRange(db.Events);
-        db.Payments.RemoveRange(db.Payments);
-        db.ContributionCharges.RemoveRange(db.ContributionCharges);
-        db.ContributionTypes.RemoveRange(db.ContributionTypes);
-        db.CommunicationRecipients.RemoveRange(db.CommunicationRecipients);
-        db.Communications.RemoveRange(db.Communications);
-        db.WelfareRequests.RemoveRange(db.WelfareRequests);
-        db.BoardMembers.RemoveRange(db.BoardMembers);
-        db.Resolutions.RemoveRange(db.Resolutions);
-        db.Documents.RemoveRange(db.Documents);
-        db.Members.RemoveRange(db.Members);
-        db.MembershipCategories.RemoveRange(db.MembershipCategories);
-        db.Users.RemoveRange(db.Users);
-        db.Roles.RemoveRange(db.Roles);
-        db.Tenants.RemoveRange(db.Tenants);
-        await db.SaveChangesAsync();
     }
 
     // ─────────────────────────────────────────────────────────────────────────

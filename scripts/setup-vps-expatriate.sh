@@ -2,11 +2,24 @@
 # =============================================================================
 # Expatriate365 — Script de configuration VPS
 # Cible : Ubuntu 22.04 LTS
-# Usage : sudo bash setup-vps-expatriate.sh
 #
 # Ce script peut tourner sur un VPS où un autre projet est déjà installé.
 # Il détecte les composants partagés déjà présents (MySQL, .NET, Nginx, UFW)
 # et ne les réinstalle pas.
+
+# Transférer le script
+# Copier ce script sur le VPS et l'exécuter en root
+# Usage :
+#   1. Copier le script sur le VPS
+#      scp scripts/setup-vps-expatriate.sh root@VOTRE_IP:/tmp/
+#
+#   2. Se connecter au VPS
+#      ssh root@VOTRE_IP
+#      sed -i 's/\r//' /tmp/setup-vps-expatriate.sh
+#     
+#   3. Exécuter le script en root
+#      sudo bash /tmp/setup-vps-expatriate.sh
+# 
 # =============================================================================
 set -euo pipefail
 

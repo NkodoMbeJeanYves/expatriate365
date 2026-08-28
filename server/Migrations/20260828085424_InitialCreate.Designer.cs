@@ -12,7 +12,7 @@ using server.Infrastructure.Persistence;
 namespace server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260827113733_InitialCreate")]
+    [Migration("20260828085424_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -256,9 +256,6 @@ namespace server.Migrations
                         .HasColumnType("char(36)")
                         .HasColumnName("member_id");
 
-                    b.Property<Guid?>("MemberId1")
-                        .HasColumnType("char(36)");
-
                     b.Property<decimal>("PenaltyAmount")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("penalty_amount");
@@ -287,8 +284,6 @@ namespace server.Migrations
 
                     b.HasIndex("MemberId")
                         .HasDatabaseName("IX_contribution_charges_member_id");
-
-                    b.HasIndex("MemberId1");
 
                     b.HasIndex("MemberId", "ContributionTypeId", "DueDate")
                         .IsUnique()
@@ -1272,9 +1267,6 @@ namespace server.Migrations
                         .HasColumnType("char(36)")
                         .HasColumnName("member_id");
 
-                    b.Property<Guid?>("MemberId1")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
                         .HasColumnType("varchar(1000)")
@@ -1334,8 +1326,6 @@ namespace server.Migrations
                     b.HasIndex("ChargeId");
 
                     b.HasIndex("MemberId");
-
-                    b.HasIndex("MemberId1");
 
                     b.ToTable("payments", (string)null);
                 });
@@ -1745,14 +1735,10 @@ namespace server.Migrations
                         .IsRequired();
 
                     b.HasOne("server.Domain.Entities.Member", "Member")
-                        .WithMany()
+                        .WithMany("Charges")
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("server.Domain.Entities.Member", null)
-                        .WithMany("Charges")
-                        .HasForeignKey("MemberId1");
 
                     b.Navigation("ContributionType");
 
@@ -1946,14 +1932,10 @@ namespace server.Migrations
                         .IsRequired();
 
                     b.HasOne("server.Domain.Entities.Member", "Member")
-                        .WithMany()
+                        .WithMany("Payments")
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("server.Domain.Entities.Member", null)
-                        .WithMany("Payments")
-                        .HasForeignKey("MemberId1");
 
                     b.Navigation("Charge");
 
