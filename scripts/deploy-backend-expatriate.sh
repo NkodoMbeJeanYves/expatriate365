@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # Expatriate365 — Déploiement du backend ASP.NET Core
-#
+# Usage (depuis c:\dev\school365, avec Git Bash / WSL) :
 # Modes :
 #   bash scripts/deploy-backend-expatriate.sh           # migration EF + bootstrap (défaut)
 #   bash scripts/deploy-backend-expatriate.sh --reset   # drop BDD + migration + bootstrap

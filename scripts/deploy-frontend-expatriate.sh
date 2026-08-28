@@ -2,11 +2,27 @@
 # =============================================================================
 # Expatriate365 — Déploiement du frontend Angular
 #
-# Usage (depuis la racine du projet, Git Bash / WSL) :
-#   bash scripts/deploy-frontend-expatriate.sh
+# Depuis votre machine Windows (Git Bash / WSL), à la racine du projet :
 #
-# Mode distant (depuis le VPS, archive déjà présente) :
-#   bash /tmp/deploy-frontend-expatriate.sh --remote
+#   1. Déploiement automatique (build + transfert + déploiement en une commande) :
+#        bash scripts/deploy-frontend-expatriate.sh
+#
+# ── OU manuellement étape par étape ──────────────────────────────────────────
+#
+#   1. Builder :
+#        cd client && npm run build && cd ..
+#
+#   2. Créer l'archive :
+#        tar -czf /tmp/expatriate365-frontend.tar.gz -C client/dist/client/browser .
+#
+#   3. Transférer l'archive et le script :
+#        scp /tmp/expatriate365-frontend.tar.gz root@acm365hub.poweryoursaas.com:/tmp/
+#        scp scripts/deploy-frontend-expatriate.sh root@acm365hub.poweryoursaas.com:/tmp/
+#
+#   4. Se connecter et exécuter :
+#        ssh root@acm365hub.poweryoursaas.com
+#        sed -i 's/\r//' /tmp/deploy-frontend-expatriate.sh
+#        bash /tmp/deploy-frontend-expatriate.sh --remote
 # =============================================================================
 set -euo pipefail
 
