@@ -123,8 +123,8 @@ export class DocumentFormDrawerComponent {
   readonly selectedFile = signal<File | null>(null);
   readonly uploadError  = signal<string | null>(null);
 
-  readonly typeOptions     = DOCUMENT_TYPES.map(t => ({ label: t, value: t }));
-  readonly categoryOptions = DOCUMENT_CATEGORIES.map(c => ({ label: c, value: c }));
+  get typeOptions()     { return DOCUMENT_TYPES.map(t => ({ label: this.translate.instant('documents.type_' + t), value: t })); }
+  get categoryOptions() { return DOCUMENT_CATEGORIES.map(c => ({ label: this.translate.instant('documents.category_' + c), value: c })); }
 
   readonly form = this.fb.group({
     title:           ['', Validators.required],

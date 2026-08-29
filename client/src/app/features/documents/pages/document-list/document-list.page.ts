@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { SelectModule } from 'primeng/select';
@@ -121,8 +121,9 @@ import { DocumentFormDrawerComponent } from '../../components/document-form-draw
 })
 export class DocumentListPage implements OnInit {
   protected readonly store = inject(DocumentsStore);
-  private readonly api     = inject(DocumentsApiService);
-  private readonly confirm = inject(ConfirmationService);
+  private readonly api       = inject(DocumentsApiService);
+  private readonly confirm   = inject(ConfirmationService);
+  private readonly translate = inject(TranslateService);
 
   private readonly formDrawer = viewChild.required<DocumentFormDrawerComponent>('formDrawer');
 
@@ -130,8 +131,8 @@ export class DocumentListPage implements OnInit {
   filterType: string | null = null;
   filterCategory: string | null = null;
 
-  readonly typeOptions = DOCUMENT_TYPES.map(t => ({ label: t, value: t }));
-  readonly categoryOptions = DOCUMENT_CATEGORIES.map(c => ({ label: c, value: c }));
+  get typeOptions()     { return DOCUMENT_TYPES.map(t => ({ label: this.translate.instant('documents.type_' + t), value: t })); }
+  get categoryOptions() { return DOCUMENT_CATEGORIES.map(c => ({ label: this.translate.instant('documents.category_' + c), value: c })); }
 
   ngOnInit(): void {
     this.store.load();
