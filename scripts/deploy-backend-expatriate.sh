@@ -13,6 +13,12 @@
 #   - SSH configuré vers le VPS
 #   - setup-vps-expatriate.sh exécuté une fois sur le VPS (nginx, systemd, user, env file)
 #   - scripts/vps-deploy-api.sh présent localement (uploadé automatiquement à chaque déploiement)
+#
+# =============================================================================
+# Apres deploiement effectuer ces 03 commandes
+#   sudo systemctl daemon-reload
+#   sudo systemctl restart expatriate365-api
+#   sudo systemctl status expatriate365-api
 # =============================================================================
 set -euo pipefail
 
