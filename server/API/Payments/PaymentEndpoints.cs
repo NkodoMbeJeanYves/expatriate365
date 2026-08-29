@@ -90,14 +90,14 @@ public static class PaymentEndpoints
 
             var ext = Path.GetExtension(file.FileName);
             var uniqueName = $"receipt_{id}{ext}";
-            var dir = Path.Combine(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"), "uploads", "receipts");
+            var dir = Path.Combine(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"), "attachments", "receipts");
             Directory.CreateDirectory(dir);
             var filePath = Path.Combine(dir, uniqueName);
             await using var stream = File.Create(filePath);
             await file.CopyToAsync(stream);
 
             var baseUrl = $"{request.Scheme}://{request.Host}";
-            payment.ReceiptFileUrl = $"{baseUrl}/uploads/receipts/{uniqueName}";
+            payment.ReceiptFileUrl = $"{baseUrl}/attachments/receipts/{uniqueName}";
             payment.UpdatedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
 
