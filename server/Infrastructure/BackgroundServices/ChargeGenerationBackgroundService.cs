@@ -56,6 +56,23 @@ public class ChargeGenerationBackgroundService(
             .Where(m => tenantIds.Contains(m.TenantId) && m.IsActive)
             .ToListAsync(ct);
 
+        // Pre-load all existing charges for the relevant types/due-dates in one query
+        // to avoid N+1 (one AnyAsync per member×type combination).
+        var typeIds  = types.Select(t => t.Id).ToList();
+        var dueDates = types
+            .Select(t => ComputeDueDate(t.Frequency, today))
+            .Where(d => d.HasValue).Select(d => d!.Value)
+            .Distinct().ToList();
+
+        var existingKeys = await db.ContributionCharges
+            .Where(c => typeIds.Contains(c.ContributionTypeId) && dueDates.Contains(c.DueDate))
+            .Select(c => new { c.MemberId, c.ContributionTypeId, c.DueDate })
+            .ToListAsync(ct);
+
+        var existingSet = existingKeys
+            .Select(c => (c.MemberId, c.ContributionTypeId, c.DueDate))
+            .ToHashSet();
+
         int generated = 0;
 
         foreach (var type in types)
@@ -67,14 +84,7 @@ public class ChargeGenerationBackgroundService(
 
             foreach (var member in tenantMembers)
             {
-                // Idempotence: skip if a charge for this period already exists
-                var exists = await db.ContributionCharges.AnyAsync(
-                    c => c.MemberId == member.Id
-                      && c.ContributionTypeId == type.Id
-                      && c.DueDate == dueDate.Value,
-                    ct);
-
-                if (exists) continue;
+                if (existingSet.Contains((member.Id, type.Id, dueDate.Value))) continue;
 
                 db.ContributionCharges.Add(new Domain.Entities.ContributionCharge
                 {

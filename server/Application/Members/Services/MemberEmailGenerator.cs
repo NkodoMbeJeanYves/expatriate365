@@ -23,15 +23,21 @@ public static class MemberEmailGenerator
         var last  = Normalize(lastName);
         var baseLocal = $"{first}.{last}";
 
-        var candidate = $"{baseLocal}@{domain}";
-        if (!await db.Users.AnyAsync(u => u.Email == candidate, ct))
-            return candidate;
+        // Load all taken addresses for this base in one query to avoid N+1.
+        var prefix = $"{baseLocal}@{domain}";
+        var taken = await db.Users
+            .Where(u => u.Email == prefix || u.Email.StartsWith($"{baseLocal}."))
+            .Select(u => u.Email)
+            .ToListAsync(ct);
 
-        // Find next available sequence
+        if (!taken.Contains(prefix))
+            return prefix;
+
+        var takenSet = taken.ToHashSet(StringComparer.OrdinalIgnoreCase);
         for (int i = 2; i <= 9999; i++)
         {
-            candidate = $"{baseLocal}.{i:D5}@{domain}";
-            if (!await db.Users.AnyAsync(u => u.Email == candidate, ct))
+            var candidate = $"{baseLocal}.{i:D5}@{domain}";
+            if (!takenSet.Contains(candidate))
                 return candidate;
         }
 
