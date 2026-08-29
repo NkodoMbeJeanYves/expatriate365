@@ -195,7 +195,7 @@ export class DocumentFormDrawerComponent {
       const formData = new FormData();
       formData.append('file', this.selectedFile()!);
       this.http.post<{ file_url: string; file_name: string; file_size_bytes: number; mime_type: string }>(
-        `${this.config.apiUrl}/api/v1/upload?folder=documents`, formData
+        `${this.config.apiUrl}/api/v1/attachments?folder=docs`, formData
       ).subscribe({
         next: upload => {
           this.api.create({

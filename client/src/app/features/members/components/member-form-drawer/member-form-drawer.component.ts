@@ -378,7 +378,7 @@ export class MemberFormDrawerComponent implements OnInit {
     const fd = new FormData();
     fd.append('file', file);
     this.http
-      .post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/upload?folder=photos`, fd)
+      .post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/attachments?folder=avatars`, fd)
       .subscribe({
         next: (r) => {
           this.photoUrl.set(r.file_url);

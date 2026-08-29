@@ -109,11 +109,11 @@ try
     var wwwroot = app.Environment.WebRootPath
         ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
 
-    foreach (var sub in new[] { "uploads", "photos", "logos", "documents" })
+    foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
         Directory.CreateDirectory(Path.Combine(wwwroot, sub));
 
     app.UseStaticFiles();
-    foreach (var sub in new[] { "uploads", "photos", "logos", "documents" })
+    foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
     {
         app.UseStaticFiles(new StaticFileOptions
         {

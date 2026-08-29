@@ -212,7 +212,7 @@ export class AdminSettingsPage implements OnInit {
     const formData = new FormData();
     formData.append('file', file);
 
-    this.http.post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/upload?folder=logos`, formData).subscribe({
+    this.http.post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/attachments?folder=branding`, formData).subscribe({
       next: ({ file_url }) => {
         this.tenantStore.patch({ logo_url: file_url });
         this.tenantStore.bumpLogoVersion();

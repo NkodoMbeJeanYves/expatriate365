@@ -16,7 +16,7 @@ public static class UploadEndpoints
 
     public static void MapUploadEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/v1/upload", async (
+        app.MapPost("/api/v1/attachments", async (
             IFormFile file,
             IWebHostEnvironment env,
             IConfiguration config,
@@ -37,8 +37,8 @@ public static class UploadEndpoints
 
             // Lecture explicite depuis la query string (multipart/form-data ne bind pas les params automatiquement)
             var folder = request.Query["folder"].FirstOrDefault();
-            var allowedFolders = new HashSet<string> { "uploads", "logos", "photos", "documents" };
-            var targetFolder = allowedFolders.Contains(folder ?? "") ? folder! : "uploads";
+            var allowedFolders = new HashSet<string> { "attachments", "branding", "avatars", "docs" };
+            var targetFolder = allowedFolders.Contains(folder ?? "") ? folder! : "attachments";
 
             var ext = Path.GetExtension(file.FileName);
             var uniqueName = $"{Guid.NewGuid()}{ext}";

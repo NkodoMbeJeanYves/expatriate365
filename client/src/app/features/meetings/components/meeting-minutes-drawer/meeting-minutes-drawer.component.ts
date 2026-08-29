@@ -130,7 +130,7 @@ export class MeetingMinutesDrawerComponent {
     this.uploading.set(true);
     const fd = new FormData();
     fd.append('file', file);
-    this.http.post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/upload?folder=documents`, fd).subscribe({
+    this.http.post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/attachments?folder=docs`, fd).subscribe({
       next: r => { this.attachmentUrl.set(r.file_url); this.uploading.set(false); },
       error: () => { this.uploadError.set('Échec de l\'envoi du document.'); this.uploading.set(false); },
     });

@@ -500,7 +500,7 @@ fi
 # 9. ARBORESCENCE
 # =============================================================================
 section "9. Arborescence /var/www/$APP_NAME"
-mkdir -p "/var/www/${APP_NAME}/api/wwwroot/{uploads,logos,photos,documents}"
+mkdir -p "/var/www/${APP_NAME}/api/wwwroot/{attachments,branding,avatars,docs}"
 mkdir -p "/var/www/${APP_NAME}/api/logs"
 mkdir -p "/var/www/${APP_NAME}/frontend"
 
@@ -641,23 +641,23 @@ server {
         proxy_read_timeout 86400s;
     }
 
-    location /uploads/ {
-        alias /var/www/${APP_NAME}/api/wwwroot/uploads/;
+    location /attachments/ {
+        alias /var/www/${APP_NAME}/api/wwwroot/attachments/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
-    location /logos/ {
-        alias /var/www/${APP_NAME}/api/wwwroot/logos/;
+    location /branding/ {
+        alias /var/www/${APP_NAME}/api/wwwroot/branding/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
-    location /photos/ {
-        alias /var/www/${APP_NAME}/api/wwwroot/photos/;
+    location /avatars/ {
+        alias /var/www/${APP_NAME}/api/wwwroot/avatars/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
-    location /documents/ {
-        alias /var/www/${APP_NAME}/api/wwwroot/documents/;
+    location /docs/ {
+        alias /var/www/${APP_NAME}/api/wwwroot/docs/;
         expires 7d;
         add_header Cache-Control "public";
     }
@@ -841,12 +841,12 @@ echo "→ Décompression…"
 mkdir -p "\${API_DIR}"
 unzip -o "/tmp/\${APP_NAME}-api.zip" -d "/tmp/\${APP_NAME}-api-extract/"
 
-rsync -av --exclude='wwwroot/uploads' --exclude='wwwroot/logos' \
-          --exclude='wwwroot/photos'  --exclude='wwwroot/documents' \
+rsync -av --exclude='wwwroot/attachments' --exclude='wwwroot/branding' \
+          --exclude='wwwroot/avatars'     --exclude='wwwroot/docs' \
           --exclude='logs' \
           "/tmp/\${APP_NAME}-api-extract/" "\${API_DIR}/"
 
-mkdir -p "\${API_DIR}/wwwroot/{uploads,logos,photos,documents}"
+mkdir -p "\${API_DIR}/wwwroot/{attachments,branding,avatars,docs}"
 mkdir -p "\${API_DIR}/logs"
 
 # ── Permissions ───────────────────────────────────────────────────────────────
