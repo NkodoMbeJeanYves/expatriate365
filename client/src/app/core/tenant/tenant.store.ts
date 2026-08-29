@@ -34,11 +34,15 @@ const DEFAULT: TenantSettings = {
 
 @Injectable({ providedIn: 'root' })
 export class TenantStore {
-  private readonly _settings = signal<TenantSettings>(loadFromStorage() ?? DEFAULT);
+  private readonly _settings    = signal<TenantSettings>(loadFromStorage() ?? DEFAULT);
+  private readonly _logoVersion = signal(0);
 
   readonly settings    = computed(() => this._settings());
   readonly name        = computed(() => this._settings().name);
-  readonly logoUrl     = computed(() => this._settings().logo_url ? `${this._settings().logo_url}?t=${new Date().getTime()}` : null);
+  readonly logoUrl     = computed(() => {
+    const url = this._settings().logo_url;
+    return url ? `${url}?v=${this._logoVersion()}` : null;
+  });
   readonly currency    = computed(() => this._settings().base_currency);
   readonly symbol      = computed(() => this._settings().currency_symbol);
   readonly countryCode = computed(() => this._settings().country_code);
@@ -52,6 +56,10 @@ export class TenantStore {
     const updated = { ...this._settings(), ...partial };
     this._settings.set(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  }
+
+  bumpLogoVersion(): void {
+    this._logoVersion.update(v => v + 1);
   }
 
   clear(): void {

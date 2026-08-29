@@ -174,7 +174,7 @@ export class AdminSettingsPage implements OnInit {
   readonly saving        = signal(false);
   readonly saved         = signal(false);
   readonly error         = signal<string | null>(null);
-  readonly logoPreview   = signal<string | null>(null);
+  readonly logoPreview   = this.tenantStore.logoUrl;
   readonly logoUploading = signal(false);
 
   readonly currencies = CURRENCIES;
@@ -188,32 +188,14 @@ export class AdminSettingsPage implements OnInit {
   });
 
   ngOnInit(): void {
-    // Initialize logo preview from cached store
-    this.logoPreview.set(this.tenantStore.logoUrl());
-
-    // Pre-fill from cached store, then refresh from API
     const cached = this.tenantStore.settings();
-    if (cached.name) {
-      this.form.patchValue({
-        name:            cached.name,
-        country_code:    cached.country_code,
-        base_currency:   cached.base_currency,
-        currency_symbol: cached.currency_symbol,
-      });
-      this.loading.set(false);
-    }
-    this.tenantService.load().subscribe({
-      next: s => {
-        this.form.patchValue({
-          name:            s.name,
-          country_code:    s.country_code,
-          base_currency:   s.base_currency,
-          currency_symbol: s.currency_symbol,
-        });
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
+    this.form.patchValue({
+      name:            cached.name,
+      country_code:    cached.country_code,
+      base_currency:   cached.base_currency,
+      currency_symbol: cached.currency_symbol,
     });
+    this.loading.set(false);
   }
 
   onCurrencyChange(event: any): void {
@@ -232,8 +214,8 @@ export class AdminSettingsPage implements OnInit {
 
     this.http.post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/upload?folder=logos`, formData).subscribe({
       next: ({ file_url }) => {
-        const timestamp = new Date().getTime();
-        this.logoPreview.set(`${file_url}?t=${timestamp}`);
+        this.tenantStore.patch({ logo_url: file_url });
+        this.tenantStore.bumpLogoVersion();
         this.logoUploading.set(false);
         this.tenantApi.updateSettings({ logo_url: file_url }).subscribe();
       },
@@ -245,7 +227,7 @@ export class AdminSettingsPage implements OnInit {
   }
 
   removeLogo(): void {
-    this.logoPreview.set(null);
+    this.tenantStore.patch({ logo_url: undefined });
     this.tenantApi.updateSettings({ logo_url: null as unknown as undefined }).subscribe();
   }
 
