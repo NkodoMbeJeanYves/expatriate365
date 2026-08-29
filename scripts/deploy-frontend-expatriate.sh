@@ -110,7 +110,7 @@ scp "$ARCHIVE_LOCAL" root@"$DOMAIN":"$ARCHIVE_REMOTE"
 
 # ─── 5. Déploiement distant ───────────────────────────────────────────────────
 echo "→ Déploiement sur le VPS..."
-ssh root@"$DOMAIN" "bash -s -- --remote" < "$0"
+sed 's/\r//' "$0" | ssh root@"$DOMAIN" "bash -s -- --remote"
 
 echo ""
 echo "✓ Frontend déployé sur https://$DOMAIN"
