@@ -39,6 +39,11 @@ public static class UploadEndpoints
             var folder = request.Query["folder"].FirstOrDefault();
             var allowedFolders = new HashSet<string> { "uploads", "logos", "photos", "documents" };
             var targetFolder = allowedFolders.Contains(folder ?? "") ? folder! : "uploads";
+Console.WriteLine($"[Upload] User '{principal.Identity?.Name}' uploading to folder '{targetFolder}'");
+
+Console.WriteLine($"[Upload] User '{principal.Identity?.Name}' uploading to folder '{targetFolder}'");
+
+Console.WriteLine($"[Upload] User '{principal.Identity?.Name}' uploading to folder '{targetFolder}'");
 
             var ext = Path.GetExtension(file.FileName);
             var uniqueName = $"{Guid.NewGuid()}{ext}";
@@ -54,8 +59,9 @@ public static class UploadEndpoints
             // URL is always the public domain, not the internal Kestrel host.
             var urlPrefix = config["FileStorage:UrlPrefix"]?.TrimEnd('/')
                 ?? $"{request.Scheme}://{request.Host}";
+                Console.WriteLine($"[Upload] Using URL prefix '{urlPrefix}' for file access: '{request.Scheme}://{request.Host}'");
             var fileUrl = $"{urlPrefix}/{targetFolder}/{uniqueName}";
-
+Console.WriteLine($"[Upload] File saved to '{filePath}', accessible at '{fileUrl}'");
             return Results.Ok(new
             {
                 file_url = fileUrl,

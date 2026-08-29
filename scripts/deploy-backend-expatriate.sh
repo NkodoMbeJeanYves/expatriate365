@@ -19,6 +19,16 @@
 #   sudo systemctl daemon-reload
 #   sudo systemctl restart expatriate365-api
 #   sudo systemctl status expatriate365-api
+#
+# ============================================================================
+# Remettre l'environnement a neuf (backend)
+# sudo lsof -i :5001
+# La commande precedente affichera le PID du processus a supprimer
+# sudo kill -9 <PID>
+# sudo systemctl stop expatriate365-api
+# sudo systemctl restart expatriate365-api
+# Verifier toujour le journal apres un deploiement (backend)
+# journalctl -u expatriate365-api -f
 # =============================================================================
 set -euo pipefail
 
