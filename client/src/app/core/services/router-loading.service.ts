@@ -20,7 +20,6 @@ export class RouterLoadingService {
       ),
       takeUntilDestroyed(),
     ).subscribe(e => {
-      console.log('[RouterLoadingService] Navigation event', e);
       this._loading.set(e instanceof NavigationStart);
     });
   }
