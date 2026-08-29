@@ -1,11 +1,11 @@
 import {
-  ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal,
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, output, signal, viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
-import { DrawerModule } from 'primeng/drawer';
+import { Drawer, DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
@@ -24,9 +24,8 @@ import { APP_CONFIG } from '@core/config/app-config.token';
     InputTextModule, SelectModule, TextareaModule, CheckboxModule, TranslatePipe,
   ],
   template: `
-    <p-drawer [visible]="visible()" [header]="drawerTitle()"
-      position="right" styleClass="!w-full md:!w-[520px]"
-      (visibleChange)="onClose()">
+    <p-drawer #drawerEl [(visible)]="visible" [header]="drawerTitle"
+      position="right" styleClass="!w-full md:!w-[520px]">
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 p-2">
 
@@ -46,7 +45,7 @@ import { APP_CONFIG } from '@core/config/app-config.token';
           </div>
         </div>
 
-        @if (!editItem()) {
+        @if (!editItem) {
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium">Fichier <span class="text-red-500">*</span></label>
             <div class="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-emerald-400 transition-colors"
@@ -90,71 +89,73 @@ import { APP_CONFIG } from '@core/config/app-config.token';
         }
 
         <div class="flex justify-end gap-2 pt-2">
-          <p-button type="button" severity="secondary" [label]="'common.cancel' | translate" (click)="onClose()" />
+          <p-button type="button" severity="secondary" [label]="'common.cancel' | translate"
+            (click)="drawerRef()?.close($event)" />
           <p-button type="submit" [label]="'common.save' | translate" [loading]="saving()" [disabled]="form.invalid" />
         </div>
       </form>
     </p-drawer>
   `,
 })
-export class DocumentFormDrawerComponent implements OnInit {
-  private readonly api = inject(DocumentsApiService);
-  private readonly store = inject(DocumentsStore);
-  private readonly fb = inject(FormBuilder);
+export class DocumentFormDrawerComponent {
+  private readonly api    = inject(DocumentsApiService);
+  private readonly store  = inject(DocumentsStore);
+  private readonly fb     = inject(FormBuilder);
   private readonly translate = inject(TranslateService);
-  private readonly http = inject(HttpClient);
+  private readonly http   = inject(HttpClient);
   private readonly config = inject(APP_CONFIG);
+  private readonly cdr    = inject(ChangeDetectorRef);
 
-  readonly visible = input.required<boolean>();
-  readonly editItem = input<DocumentDto | null>(null);
-  readonly closed = output<void>();
+  readonly drawerRef = viewChild<Drawer>('drawerEl');
+  readonly closed    = output<void>();
 
-  readonly saving = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly selectedFile = signal<File | null>(null);
-  readonly uploadError = signal<string | null>(null);
+  visible  = false;
+  editItem: DocumentDto | null = null;
 
-  readonly drawerTitle = computed(() =>
-    this.editItem()
+  get drawerTitle(): string {
+    return this.editItem
       ? this.translate.instant('documents.edit_document')
-      : this.translate.instant('documents.new')
-  );
+      : this.translate.instant('documents.new');
+  }
 
-  readonly typeOptions = DOCUMENT_TYPES.map(t => ({ label: t, value: t }));
+  readonly saving       = signal(false);
+  readonly error        = signal<string | null>(null);
+  readonly selectedFile = signal<File | null>(null);
+  readonly uploadError  = signal<string | null>(null);
+
+  readonly typeOptions     = DOCUMENT_TYPES.map(t => ({ label: t, value: t }));
   readonly categoryOptions = DOCUMENT_CATEGORIES.map(c => ({ label: c, value: c }));
 
   readonly form = this.fb.group({
-    title: ['', Validators.required],
-    description: [''],
-    type: ['other', Validators.required],
-    category: ['general', Validators.required],
-    file_url: [''],
-    file_name: [''],
-    mime_type: ['application/pdf'],
-    file_size_bytes: [0],
-    is_public: [true],
+    title:           ['', Validators.required],
+    description:     [''],
+    type:            ['other', Validators.required],
+    category:        ['general', Validators.required],
+    is_public:       [true],
   });
 
-  ngOnInit(): void {
-    const item = this.editItem();
+  open(item?: DocumentDto): void {
+    this.editItem = item ?? null;
+    this.error.set(null);
+    this.uploadError.set(null);
+    this.selectedFile.set(null);
+    this.form.reset({ type: 'other', category: 'general', is_public: true });
     if (item) {
       this.form.patchValue({
-        title: item.title,
+        title:       item.title,
         description: item.description ?? '',
-        type: item.type,
-        category: item.category,
-        is_public: item.is_public,
+        type:        item.type,
+        category:    item.category,
+        is_public:   item.is_public,
       });
     }
+    this.visible = true;
+    this.cdr.detectChanges();
   }
 
   onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      this.selectedFile.set(file);
-      this.uploadError.set(null);
-    }
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) { this.selectedFile.set(file); this.uploadError.set(null); }
   }
 
   formatSize(bytes: number): string {
@@ -164,13 +165,10 @@ export class DocumentFormDrawerComponent implements OnInit {
   }
 
   onSubmit(): void {
-    const v = this.form.value;
-    const item = this.editItem();
+    const v    = this.form.value;
+    const item = this.editItem;
 
-    if (!item && !this.selectedFile()) {
-      this.uploadError.set('Veuillez sélectionner un fichier.');
-      return;
-    }
+    if (!item && !this.selectedFile()) { this.uploadError.set('Veuillez sélectionner un fichier.'); return; }
     if (this.form.invalid) return;
 
     this.saving.set(true);
@@ -178,34 +176,46 @@ export class DocumentFormDrawerComponent implements OnInit {
 
     if (item) {
       this.api.update(item.id, {
-        title: v.title!,
+        title:       v.title!,
         description: v.description || undefined,
-        type: v.type!,
-        category: v.category!,
-        is_public: v.is_public!,
+        type:        v.type!,
+        category:    v.category!,
+        is_public:   v.is_public!,
       }).subscribe({
-        next: doc => { this.store.upsert(doc); this.store.loadStats(); this.saving.set(false); this.closed.emit(); },
+        next: doc => {
+          this.store.upsert(doc);
+          this.store.loadStats();
+          this.saving.set(false);
+          this.drawerRef()?.close(new MouseEvent('click'));
+          this.closed.emit();
+        },
         error: () => { this.error.set('Une erreur est survenue.'); this.saving.set(false); },
       });
     } else {
       const formData = new FormData();
       formData.append('file', this.selectedFile()!);
       this.http.post<{ file_url: string; file_name: string; file_size_bytes: number; mime_type: string }>(
-        `${this.config.apiUrl}/api/v1/upload`, formData
+        `${this.config.apiUrl}/api/v1/upload?folder=documents`, formData
       ).subscribe({
         next: upload => {
           this.api.create({
-            title: v.title!,
-            description: v.description || undefined,
-            type: v.type!,
-            category: v.category!,
-            file_url: upload.file_url,
-            file_name: upload.file_name,
+            title:           v.title!,
+            description:     v.description || undefined,
+            type:            v.type!,
+            category:        v.category!,
+            file_url:        upload.file_url,
+            file_name:       upload.file_name,
             file_size_bytes: upload.file_size_bytes,
-            mime_type: upload.mime_type,
-            is_public: v.is_public!,
+            mime_type:       upload.mime_type,
+            is_public:       v.is_public!,
           }).subscribe({
-            next: doc => { this.store.upsert(doc); this.store.loadStats(); this.saving.set(false); this.closed.emit(); },
+            next: doc => {
+              this.store.upsert(doc);
+              this.store.loadStats();
+              this.saving.set(false);
+              this.drawerRef()?.close(new MouseEvent('click'));
+              this.closed.emit();
+            },
             error: () => { this.error.set('Une erreur est survenue.'); this.saving.set(false); },
           });
         },
@@ -213,6 +223,4 @@ export class DocumentFormDrawerComponent implements OnInit {
       });
     }
   }
-
-  onClose(): void { this.closed.emit(); }
 }

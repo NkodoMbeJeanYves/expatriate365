@@ -106,41 +106,19 @@ try
     app.UseSerilogRequestLogging();
     app.UseCors();
 
-        string[] foldersToEnsure =
-    {
-        Path.Combine(builder.Environment.WebRootPath, "uploads"),
-        Path.Combine(builder.Environment.WebRootPath, "photos"),
-        Path.Combine(builder.Environment.WebRootPath, "logos"),
-        Path.Combine(builder.Environment.WebRootPath, "documents")
-    };
+    var wwwroot = app.Environment.WebRootPath
+        ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
 
-    foreach (var folder in foldersToEnsure)
-    {
-        if (!Directory.Exists(folder))
-        {
-            Directory.CreateDirectory(folder);
-        }
-    }
+    foreach (var sub in new[] { "uploads", "photos", "logos", "documents" })
+        Directory.CreateDirectory(Path.Combine(wwwroot, sub));
 
-    // ✅ Servir wwwroot par défaut
     app.UseStaticFiles();
-
-    for (int i = 0; i < foldersToEnsure.Length; i++)
+    foreach (var sub in new[] { "uploads", "photos", "logos", "documents" })
     {
-        var folder = foldersToEnsure[i];
-        var requestPath = folder switch
-        {
-            var f when f.EndsWith("uploads") => "/uploads",
-            var f when f.EndsWith("photos") => "/photos",
-            var f when f.EndsWith("logos") => "/logos",
-            var f when f.EndsWith("documents") => "/documents",
-            _ => throw new InvalidOperationException($"Unexpected folder: {folder}")
-        };
-
         app.UseStaticFiles(new StaticFileOptions
         {
-            FileProvider = new PhysicalFileProvider(folder),
-            RequestPath = requestPath
+            FileProvider = new PhysicalFileProvider(Path.Combine(wwwroot, sub)),
+            RequestPath  = $"/{sub}",
         });
     }
 
@@ -176,6 +154,22 @@ try
         await db.Database.MigrateAsync();
         await DbSeeder.BootstrapAsync(db, config);
     }
+
+    // ── Startup diagnostics ─────────────────────────────────────────────────
+    var startupLog = app.Services.GetRequiredService<ILogger<Program>>();
+    startupLog.LogInformation("=== Expatriate365 API starting ===");
+    startupLog.LogInformation("Environment : {Env}", app.Environment.EnvironmentName);
+    startupLog.LogInformation("ContentRoot : {Root}", app.Environment.ContentRootPath);
+    startupLog.LogInformation("WebRoot     : {Root}", app.Environment.WebRootPath ?? "(null → wwwroot fallback)");
+    startupLog.LogInformation("DB provider : MySQL");
+    var maskedCs = System.Text.RegularExpressions.Regex.Replace(
+        cs, @"(?i)(password|pwd)=[^;]+", "$1=***");
+    startupLog.LogInformation("DB string   : {Cs}", maskedCs);
+    startupLog.LogInformation("JWT Issuer  : {Issuer}",   app.Configuration["Jwt:Issuer"]   ?? "(not set)");
+    startupLog.LogInformation("JWT Audience: {Audience}", app.Configuration["Jwt:Audience"] ?? "(not set)");
+    startupLog.LogInformation("ASPNETCORE_URLS env: {Urls}",
+        Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "(not set — using fallback 0.0.0.0:5001)");
+    // ────────────────────────────────────────────────────────────────────────
 
     app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
     app.MapUploadEndpoints();

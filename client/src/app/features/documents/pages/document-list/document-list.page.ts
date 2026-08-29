@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -116,19 +116,15 @@ import { DocumentFormDrawerComponent } from '../../components/document-form-draw
       }
     </div>
 
-    <app-document-form-drawer
-      [visible]="showForm()"
-      [editItem]="editItem()"
-      (closed)="closeForm()" />
+    <app-document-form-drawer #formDrawer (closed)="onClosed()" />
   `,
 })
 export class DocumentListPage implements OnInit {
   protected readonly store = inject(DocumentsStore);
-  private readonly api = inject(DocumentsApiService);
+  private readonly api     = inject(DocumentsApiService);
   private readonly confirm = inject(ConfirmationService);
 
-  readonly showForm = signal(false);
-  readonly editItem = signal<DocumentDto | null>(null);
+  private readonly formDrawer = viewChild.required<DocumentFormDrawerComponent>('formDrawer');
 
   searchTerm = '';
   filterType: string | null = null;
@@ -152,13 +148,12 @@ export class DocumentListPage implements OnInit {
   }
 
   openForm(item?: DocumentDto): void {
-    this.editItem.set(item ?? null);
-    this.showForm.set(true);
+    this.formDrawer().open(item);
   }
 
-  closeForm(): void {
-    this.showForm.set(false);
-    this.editItem.set(null);
+  onClosed(): void {
+    this.store.load();
+    this.store.loadStats();
   }
 
   confirmDelete(doc: DocumentDto): void {
