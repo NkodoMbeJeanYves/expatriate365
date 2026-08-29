@@ -310,7 +310,7 @@ export class MemberFormDrawerComponent implements OnInit {
     this.photoPreview.set(preview + "?t=" + new Date().getTime());
     const fd = new FormData();
     fd.append('file', file);
-    this.http.post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/upload`, fd).subscribe({
+    this.http.post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/upload?folder=photos`, fd).subscribe({
       next: r => { this.photoUrl.set(r.file_url); this.photoUploading.set(false); },
       error: () => {
         this.photoError.set('Échec de l\'envoi de la photo.');

@@ -230,7 +230,7 @@ export class AdminSettingsPage implements OnInit {
     const formData = new FormData();
     formData.append('file', file);
 
-    this.http.post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/upload`, formData).subscribe({
+    this.http.post<{ file_url: string }>(`${this.config.apiUrl}/api/v1/upload?folder=logos`, formData).subscribe({
       next: ({ file_url }) => {
         const timestamp = new Date().getTime();
         this.logoPreview.set(`${file_url}?t=${timestamp}`);

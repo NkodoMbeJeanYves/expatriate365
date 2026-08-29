@@ -19,8 +19,10 @@ public static class UploadEndpoints
         app.MapPost("/api/v1/upload", async (
             IFormFile file,
             IWebHostEnvironment env,
+            IConfiguration config,
             ClaimsPrincipal principal,
-            HttpRequest request) =>
+            HttpRequest request,
+            string? folder) =>
         {
             if (!principal.Identity?.IsAuthenticated ?? true)
                 return Results.Unauthorized();
@@ -34,17 +36,25 @@ public static class UploadEndpoints
             if (!AllowedMimeTypes.Contains(file.ContentType))
                 return Results.BadRequest(new { error = $"File type '{file.ContentType}' not allowed." });
 
+            // Route vers le bon sous-dossier selon le type de fichier
+            var allowedFolders = new HashSet<string> { "uploads", "logos", "photos", "documents" };
+            var targetFolder = allowedFolders.Contains(folder ?? "") ? folder! : "uploads";
+
             var ext = Path.GetExtension(file.FileName);
             var uniqueName = $"{Guid.NewGuid()}{ext}";
-            var uploadsDir = Path.Combine(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"), "uploads");
-            Directory.CreateDirectory(uploadsDir);
+            var wwwroot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
+            var targetDir = Path.Combine(wwwroot, targetFolder);
+            Directory.CreateDirectory(targetDir);
 
-            var filePath = Path.Combine(uploadsDir, uniqueName);
+            var filePath = Path.Combine(targetDir, uniqueName);
             await using var stream = File.Create(filePath);
             await file.CopyToAsync(stream);
 
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var fileUrl = $"{baseUrl}/uploads/{uniqueName}";
+            // Use configured public URL prefix (FileStorage__UrlPrefix) so the stored
+            // URL is always the public domain, not the internal Kestrel host.
+            var urlPrefix = config["FileStorage:UrlPrefix"]?.TrimEnd('/')
+                ?? $"{request.Scheme}://{request.Host}";
+            var fileUrl = $"{urlPrefix}/{targetFolder}/{uniqueName}";
 
             return Results.Ok(new
             {

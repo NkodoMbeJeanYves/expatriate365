@@ -194,7 +194,7 @@ next "Clé secrète JWT (signature des tokens d'authentification)"
 
 # ── Clé JWT ───────────────────────────────────────────────────────────────────
 echo ""
-_SAVED_JWT=$(_env_get "Jwt__Key")
+_SAVED_JWT=$(_env_get "Jwt__SecretKey")
 info "Clé secrète JWT — utilisée pour signer et vérifier les tokens d'authentification."
 info "  Minimum 32 caractères. Appuyez Entrée pour laisser le script en générer une."
 info "  IMPORTANT : notez-la après l'installation (affichée dans le résumé final)."
@@ -527,8 +527,9 @@ ASPNETCORE_URLS=http://0.0.0.0:${API_PORT}
 ConnectionStrings__MySql='Server=localhost;Port=3306;Database=${DB_NAME};User=${DB_USER};Password=${DB_PASSWORD};'
 
 # JWT
-Jwt__Key='${JWT_KEY}'
-Jwt__Secret='${JWT_KEY}'
+Jwt__SecretKey='${JWT_KEY}'
+Jwt__Issuer=https://${DOMAIN}
+Jwt__Audience=https://${DOMAIN}
 
 # CORS
 Cors__AllowedOrigins=https://${DOMAIN}
@@ -640,11 +641,25 @@ server {
         proxy_read_timeout 86400s;
     }
 
-    location ~ ^/(uploads|logos|photos|documents)/ {
-        proxy_pass       http://127.0.0.1:${API_PORT};
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+    location /uploads/ {
+        alias /var/www/${APP_NAME}/api/wwwroot/uploads/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+    location /logos/ {
+        alias /var/www/${APP_NAME}/api/wwwroot/logos/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+    location /photos/ {
+        alias /var/www/${APP_NAME}/api/wwwroot/photos/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+    location /documents/ {
+        alias /var/www/${APP_NAME}/api/wwwroot/documents/;
+        expires 7d;
+        add_header Cache-Control "public";
     }
 
     location /scalar/ {
@@ -971,7 +986,7 @@ cat <<SUMMARY
        journalctl -u ${APP_NAME}-api --since "5 min ago"
 
   ──────────────────────────────────────────────────────
-  Clé JWT        : grep Jwt__Key /etc/${APP_NAME}/env
+  Clé JWT        : grep Jwt__SecretKey /etc/${APP_NAME}/env
   Super admin    : ${SEED_ADMIN_EMAIL} (mot de passe masqué)
   ──────────────────────────────────────────────────────
 
