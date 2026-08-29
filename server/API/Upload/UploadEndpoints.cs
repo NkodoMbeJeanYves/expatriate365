@@ -21,8 +21,7 @@ public static class UploadEndpoints
             IWebHostEnvironment env,
             IConfiguration config,
             ClaimsPrincipal principal,
-            HttpRequest request,
-            string? folder) =>
+            HttpRequest request) =>
         {
             if (!principal.Identity?.IsAuthenticated ?? true)
                 return Results.Unauthorized();
@@ -36,7 +35,8 @@ public static class UploadEndpoints
             if (!AllowedMimeTypes.Contains(file.ContentType))
                 return Results.BadRequest(new { error = $"File type '{file.ContentType}' not allowed." });
 
-            // Route vers le bon sous-dossier selon le type de fichier
+            // Lecture explicite depuis la query string (multipart/form-data ne bind pas les params automatiquement)
+            var folder = request.Query["folder"].FirstOrDefault();
             var allowedFolders = new HashSet<string> { "uploads", "logos", "photos", "documents" };
             var targetFolder = allowedFolders.Contains(folder ?? "") ? folder! : "uploads";
 
