@@ -32,7 +32,7 @@ import { DatePipe } from '@angular/common';
             class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             [class]="activeTab() === tab.value ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
             (click)="setTab(tab.value)">
-            {{ tab.label }}
+            {{ tab.labelKey | translate }}
             @if (tab.value === 'draft') { <span class="ml-1 text-xs">({{ draftCount() }})</span> }
           </button>
         }
@@ -51,7 +51,7 @@ import { DatePipe } from '@angular/common';
             <div class="bg-white border border-gray-100 rounded-xl p-4 flex items-start gap-4 shadow-sm">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
-                  <p-tag [value]="post.status | translate" [severity]="statusSeverity(post.status)" />
+                  <p-tag [value]="('community.status_' + post.status) | translate" [severity]="statusSeverity(post.status)" />
                   <span class="text-xs text-gray-400">{{ post.author_name }} · {{ post.created_at | date:'mediumDate' }}</span>
                 </div>
                 <h3 class="font-semibold text-gray-800 truncate">{{ post.title }}</h3>
@@ -89,24 +89,24 @@ export class CommunityModerationPage implements OnInit {
   readonly activeTab  = signal<string>('draft');
 
   readonly tabs = [
-    { label: 'Brouillons', value: 'draft' },
-    { label: 'Rejetés',    value: 'rejected' },
-    { label: 'Publiés',    value: 'published' },
+    { labelKey: 'community.status_draft',     value: 'draft' },
+    { labelKey: 'community.status_rejected',  value: 'rejected' },
+    { labelKey: 'community.status_published', value: 'published' },
   ];
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load('draft'); }
 
   setTab(tab: string): void {
     this.activeTab.set(tab);
-    this.load();
+    this.load(tab);
   }
 
-  load(): void {
+  load(status: string): void {
     this.loading.set(true);
-    this.api.list({ status: this.activeTab(), limit: 50 }).subscribe({
+    this.api.list({ status, limit: 50 }).subscribe({
       next: r => {
         this.posts.set(r.data);
-        if (this.activeTab() === 'draft') this.draftCount.set(r.pagination.total);
+        if (status === 'draft') this.draftCount.set(r.pagination.total);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -114,11 +114,11 @@ export class CommunityModerationPage implements OnInit {
   }
 
   publish(post: PostSummaryDto): void {
-    this.api.publish(post.id).subscribe(() => this.posts.update(l => l.filter(p => p.id !== post.id)));
+    this.api.publish(post.id).subscribe(() => this.load(this.activeTab()));
   }
 
   reject(post: PostSummaryDto): void {
-    this.api.reject(post.id).subscribe(() => this.posts.update(l => l.filter(p => p.id !== post.id)));
+    this.api.reject(post.id).subscribe(() => this.load(this.activeTab()));
   }
 
   confirmDelete(post: PostSummaryDto): void {
@@ -127,7 +127,7 @@ export class CommunityModerationPage implements OnInit {
       header: 'Confirmation',
       icon: 'pi pi-trash',
       accept: () => {
-        this.api.delete(post.id).subscribe(() => this.posts.update(l => l.filter(p => p.id !== post.id)));
+        this.api.delete(post.id).subscribe(() => this.load(this.activeTab()));
       },
     });
   }
