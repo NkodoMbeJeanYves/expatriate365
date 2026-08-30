@@ -68,14 +68,17 @@ public static class AuthEndpoints
             SelectTenantRequest dto,
             IMediator mediator) =>
         {
-            var sub = principal.FindFirstValue(ClaimTypes.NameIdentifier)
-                   ?? principal.FindFirstValue("sub");
+            var sub = principal.FindFirstValue("sub")
+                   ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(sub, out var userId))
                 return Results.Unauthorized();
 
-            var role = principal.FindFirstValue("role") ?? "";
+            // Read role claim — supports both raw "role" and ASP.NET-remapped ClaimTypes.Role
+            var role = principal.FindFirstValue("role")
+                    ?? principal.FindFirstValue(System.Security.Claims.ClaimTypes.Role)
+                    ?? "";
             if (role != "super_admin")
-                return Results.Forbid();
+                return Results.Json(new { error = "Réservé au super administrateur." }, statusCode: 403);
 
             if (!Guid.TryParse(dto.TenantId, out var tenantId))
                 return Results.BadRequest(new { error = "tenant_id invalide." });
