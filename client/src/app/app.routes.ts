@@ -33,8 +33,8 @@ export const routes: Routes = [
         path: 'community',
         children: [
           { path: '', loadComponent: () => import('./features/community/pages/community-feed/community-feed.page').then(m => m.CommunityFeedPage) },
-          { path: ':id', loadComponent: () => import('./features/community/pages/community-post/community-post.page').then(m => m.CommunityPostPage) },
           { path: 'moderation', canActivate: [hasRoleGuard(STAFF_ROLES)], loadComponent: () => import('./features/community/pages/community-moderation/community-moderation.page').then(m => m.CommunityModerationPage) },
+          { path: ':id', loadComponent: () => import('./features/community/pages/community-post/community-post.page').then(m => m.CommunityPostPage) },
         ],
       },
       { path: 'analytics', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@analytics/analytics.routes').then((m) => m.ANALYTICS_ROUTES) },
