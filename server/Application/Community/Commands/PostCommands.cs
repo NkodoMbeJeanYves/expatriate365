@@ -5,13 +5,14 @@ using server.Application.Community.DTOs;
 using server.Application.Community.Queries;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Community.Commands;
 
 public record CreatePostCommand(Guid TenantId, Guid AuthorId, Guid UserId, CreatePostRequest Request)
     : IRequest<ServiceResult<PostDto>>;
 
-public class CreatePostCommandHandler(AppDbContext db)
+public class CreatePostCommandHandler(AppDbContext db, AuditService audit)
     : IRequestHandler<CreatePostCommand, ServiceResult<PostDto>>
 {
     public async Task<ServiceResult<PostDto>> Handle(CreatePostCommand request, CancellationToken ct)
@@ -41,6 +42,7 @@ public class CreatePostCommandHandler(AppDbContext db)
             Status   = "draft",
         };
         db.Posts.Add(post);
+        audit.Log("post.create", request.UserId, request.TenantId, "post", post.Id.ToString());
         await db.SaveChangesAsync(ct);
         await db.Entry(post).Reference(p => p.Author).Query().Include(m => m.User).LoadAsync(ct);
         return ServiceResult<PostDto>.Success(ListPostsQueryHandler.ToDto(post));
@@ -94,9 +96,9 @@ public class DeletePostCommandHandler(AppDbContext db)
     }
 }
 
-public record PublishPostCommand(Guid TenantId, Guid PostId) : IRequest<ServiceResult<PostDto>>;
+public record PublishPostCommand(Guid TenantId, Guid PostId, Guid UserId) : IRequest<ServiceResult<PostDto>>;
 
-public class PublishPostCommandHandler(AppDbContext db)
+public class PublishPostCommandHandler(AppDbContext db, AuditService audit)
     : IRequestHandler<PublishPostCommand, ServiceResult<PostDto>>
 {
     public async Task<ServiceResult<PostDto>> Handle(PublishPostCommand request, CancellationToken ct)
@@ -111,14 +113,15 @@ public class PublishPostCommandHandler(AppDbContext db)
 
         post.Status      = "published";
         post.PublishedAt = DateTime.UtcNow;
+        audit.Log("post.publish", request.UserId, request.TenantId, "post", post.Id.ToString());
         await db.SaveChangesAsync(ct);
         return ServiceResult<PostDto>.Success(ListPostsQueryHandler.ToDto(post));
     }
 }
 
-public record RejectPostCommand(Guid TenantId, Guid PostId) : IRequest<ServiceResult<PostDto>>;
+public record RejectPostCommand(Guid TenantId, Guid PostId, Guid UserId) : IRequest<ServiceResult<PostDto>>;
 
-public class RejectPostCommandHandler(AppDbContext db)
+public class RejectPostCommandHandler(AppDbContext db, AuditService audit)
     : IRequestHandler<RejectPostCommand, ServiceResult<PostDto>>
 {
     public async Task<ServiceResult<PostDto>> Handle(RejectPostCommand request, CancellationToken ct)
@@ -131,6 +134,7 @@ public class RejectPostCommandHandler(AppDbContext db)
         if (post is null) return ServiceResult<PostDto>.Failure("Publication introuvable.");
 
         post.Status = "rejected";
+        audit.Log("post.reject", request.UserId, request.TenantId, "post", post.Id.ToString());
         await db.SaveChangesAsync(ct);
         return ServiceResult<PostDto>.Success(ListPostsQueryHandler.ToDto(post));
     }

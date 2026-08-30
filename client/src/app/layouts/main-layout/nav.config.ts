@@ -54,6 +54,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.documents', icon: 'pi pi-file', route: '/documents', roles: STAFF_ROLES },
       { labelKey: 'nav.governance', icon: 'pi pi-shield', route: '/governance', roles: [ROLES.PRESIDENT, ROLES.SECRETARY, ROLES.COMMITTEE_MEMBER] },
       { labelKey: 'nav.admin', icon: 'pi pi-users', route: '/admin', roles: [ROLES.SUPER_ADMIN] },
+      { labelKey: 'nav.audit', icon: 'pi pi-history', route: '/admin/audit', roles: [ROLES.SUPER_ADMIN] },
       { labelKey: 'nav.roles', icon: 'pi pi-shield', route: '/admin/roles', roles: [ROLES.SUPER_ADMIN] },
       { labelKey: 'nav.settings', icon: 'pi pi-cog', route: '/admin/settings', roles: [ROLES.PRESIDENT, ROLES.SUPER_ADMIN] },
     ],

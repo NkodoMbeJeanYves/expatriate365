@@ -92,9 +92,10 @@ public static class CommunityEndpoints
         group.MapPost("/{id:guid}/publish", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
         {
             var tenantId = GetTenantId(principal);
-            if (tenantId is null) return Results.Unauthorized();
+            var userId   = GetUserId(principal);
+            if (tenantId is null || userId is null) return Results.Unauthorized();
 
-            var result = await mediator.Send(new PublishPostCommand(tenantId.Value, id));
+            var result = await mediator.Send(new PublishPostCommand(tenantId.Value, id, userId.Value));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
                 : Results.BadRequest(new { error = result.ErrorMessage });
@@ -104,9 +105,10 @@ public static class CommunityEndpoints
         group.MapPost("/{id:guid}/reject", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
         {
             var tenantId = GetTenantId(principal);
-            if (tenantId is null) return Results.Unauthorized();
+            var userId   = GetUserId(principal);
+            if (tenantId is null || userId is null) return Results.Unauthorized();
 
-            var result = await mediator.Send(new RejectPostCommand(tenantId.Value, id));
+            var result = await mediator.Send(new RejectPostCommand(tenantId.Value, id, userId.Value));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
                 : Results.BadRequest(new { error = result.ErrorMessage });

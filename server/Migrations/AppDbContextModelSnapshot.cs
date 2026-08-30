@@ -22,6 +22,56 @@ namespace server.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("server.Domain.Entities.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("action");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("EntityId")
+                        .HasMaxLength(36)
+                        .HasColumnType("varchar(36)")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("Meta")
+                        .HasColumnType("longtext")
+                        .HasColumnName("meta");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id").HasName("PK_audit_logs");
+
+                    b.HasIndex("TenantId").HasDatabaseName("IX_audit_logs_tenant_id");
+
+                    b.HasIndex("UserId").HasDatabaseName("IX_audit_logs_user_id");
+
+                    b.HasIndex("CreatedAt").HasDatabaseName("IX_audit_logs_created_at");
+
+                    b.ToTable("audit_logs");
+                });
+
             modelBuilder.Entity("server.Domain.Entities.BoardMember", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1806,6 +1856,23 @@ namespace server.Migrations
                     b.HasIndex("MemberId");
 
                     b.ToTable("welfare_requests", (string)null);
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.AuditLog", b =>
+                {
+                    b.HasOne("server.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("server.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("User");
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("server.Domain.Entities.BoardMember", b =>

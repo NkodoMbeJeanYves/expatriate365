@@ -39,7 +39,8 @@
       "@explore/*":       ["app/features/explore/*"],
       "@analytics/*":     ["app/features/analytics/*"],
       "@governance/*":    ["app/features/governance/*"],
-      "@admin/*":         ["app/features/admin/*"]
+      "@admin/*":         ["app/features/admin/*"],
+      "@audit/*":         ["app/features/audit/*"]
     }
   },
   "angularCompilerOptions": {

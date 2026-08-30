@@ -19,7 +19,8 @@
     "roles": "Rôles & Permissions",
     "member_categories": "Categories membres",
     "community": "Communauté",
-    "community_moderation": "Modération"
+    "community_moderation": "Modération",
+    "audit": "Audit"
   },
   "roles": {
     "title": "Rôles & Permissions",
@@ -656,6 +657,28 @@
     "confirm_suspend": "Suspendre cet utilisateur ?",
     "no_users": "Aucun utilisateur trouvé",
     "invite_sent": "Invitation envoyée"
+  },
+  "audit": {
+    "title": "Audit & Supervision",
+    "subtitle": "Suivi des activités, santé des communautés et anomalies sur tous les tenants",
+    "tab_activity": "Activité",
+    "tab_tenants": "Communautés",
+    "tab_anomalies": "Anomalies",
+    "filter_action": "Filtrer par action…",
+    "col_date": "Date",
+    "col_user": "Utilisateur",
+    "col_action": "Action",
+    "col_entity": "Entité",
+    "col_tenant": "Communauté",
+    "no_logs": "Aucune activité enregistrée",
+    "no_tenants": "Aucune communauté trouvée",
+    "no_anomalies": "Aucune anomalie détectée — tout est en ordre !",
+    "stat_members": "Membres",
+    "stat_published": "Publiés",
+    "stat_draft": "Brouillons",
+    "stat_rejected": "Rejetés",
+    "last_activity": "Dernière activité",
+    "no_activity": "Aucune activité enregistrée"
   },
   "settings": {
     "title": "Paramètres de l'association",

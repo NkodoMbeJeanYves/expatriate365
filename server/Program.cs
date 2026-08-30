@@ -23,6 +23,7 @@ using server.API.Analytics;
 using server.API.Upload;
 using server.API.Finances;
 using server.API.Tenant;
+using server.API.Audit;
 using server.API.Roles;
 using Microsoft.AspNetCore.Authorization;
 using server.Infrastructure.Auth;
@@ -72,6 +73,7 @@ try
 
     builder.Services.AddHostedService<ChargeGenerationBackgroundService>();
     builder.Services.AddSingleton<JwtService>();
+    builder.Services.AddScoped<server.Infrastructure.Services.AuditService>();
 
     var jwtSecret = builder.Configuration["Jwt:SecretKey"]
         ?? throw new InvalidOperationException("Jwt:SecretKey not configured");
@@ -194,6 +196,7 @@ try
     app.MapFinanceEndpoints();
     app.MapTenantEndpoints();
     app.MapRoleEndpoints();
+    app.MapAuditEndpoints();
 
     app.Run();
 }
