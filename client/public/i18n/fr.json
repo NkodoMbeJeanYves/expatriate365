@@ -17,7 +17,10 @@
     "admin": "Administration",
     "member_dashboard": "Mon espace",
     "roles": "Rôles & Permissions",
-    "member_categories": "Categories membres"
+    "member_categories": "Categories membres",
+    "community": "Communauté",
+    "community_moderation": "Modération",
+    "audit": "Audit"
   },
   "roles": {
     "title": "Rôles & Permissions",
@@ -89,7 +92,10 @@
     "perm_integrations": "Intégrations",
     "perm_assign": "Assigner",
     "perm_reset_password": "Réinitialiser mot de passe",
-    "perm_impersonate": "Usurper identité"
+    "perm_impersonate": "Usurper identité",
+    "perm_write": "Écrire",
+    "perm_moderate": "Modérer",
+    "domain_community": "Communauté"
   },
   "auth": {
     "login": "Connexion",
@@ -103,7 +109,10 @@
     "mfa_title": "Vérification en deux étapes",
     "mfa_code": "Code de vérification",
     "mfa_submit": "Vérifier",
-    "quick_access": "Accès rapide (dev)"
+    "quick_access": "Accès rapide (dev)",
+    "select_tenant_title": "Sélectionner une communauté",
+    "select_tenant_subtitle": "Choisissez la communauté que vous souhaitez gérer",
+    "no_tenants": "Aucune communauté trouvée"
   },
   "common": {
     "save": "Enregistrer",
@@ -159,6 +168,47 @@
     "title": "Titre",
     "create": "Créer",
     "uploading": "Envoi en cours…"
+  },
+  "community": {
+    "title": "Communauté",
+    "subtitle": "Partagez votre expérience avec la communauté",
+    "new_post": "Partager une expérience",
+    "edit_post": "Modifier la publication",
+    "submit_draft": "Soumettre",
+    "post_title": "Titre",
+    "post_title_placeholder": "Résumez votre expérience en quelques mots…",
+    "post_content": "Votre témoignage",
+    "post_content_placeholder": "Partagez votre expérience, conseils ou astuces avec la communauté…",
+    "attachments": "Pièces jointes",
+    "add_photo": "Ajouter une photo",
+    "add_document": "Ajouter un document",
+    "uploading": "Envoi en cours…",
+    "read_more": "Lire la suite",
+    "back_to_feed": "Retour à la communauté",
+    "no_posts": "Aucune publication pour l'instant. Soyez le premier à partager votre expérience !",
+    "post_not_found": "Publication introuvable.",
+    "moderation_title": "Modération communautaire",
+    "moderation_subtitle": "Examinez et publiez les soumissions des membres",
+    "publish": "Publier",
+    "reject": "Rejeter",
+    "no_pending": "Rien à modérer.",
+    "status_draft": "Brouillon",
+    "status_published": "Publié",
+    "status_rejected": "Rejeté",
+    "load_more": "Charger plus",
+    "photos": "Photos",
+    "documents": "Documents"
+  },
+  "explore": {
+    "title": "Nos communautés",
+    "subtitle": "Découvrez les expériences partagées par les communautés d'expatriés",
+    "no_communities": "Aucune communauté disponible.",
+    "back_to_feed": "Retour à la communauté",
+    "cta_title": "Rejoindre la communauté",
+    "cta_subtitle": "Connectez-vous pour partager votre propre expérience et interagir avec les autres membres.",
+    "cta_button": "Se connecter",
+    "files": "pièce(s) jointe(s)",
+    "no_files": "Aucune pièce jointe"
   },
   "errors": {
     "required": "Ce champ est obligatoire",
@@ -609,6 +659,28 @@
     "confirm_suspend": "Suspendre cet utilisateur ?",
     "no_users": "Aucun utilisateur trouvé",
     "invite_sent": "Invitation envoyée"
+  },
+  "audit": {
+    "title": "Audit & Supervision",
+    "subtitle": "Suivi des activités, santé des communautés et anomalies sur tous les tenants",
+    "tab_activity": "Activité",
+    "tab_tenants": "Communautés",
+    "tab_anomalies": "Anomalies",
+    "filter_action": "Filtrer par action…",
+    "col_date": "Date",
+    "col_user": "Utilisateur",
+    "col_action": "Action",
+    "col_entity": "Entité",
+    "col_tenant": "Communauté",
+    "no_logs": "Aucune activité enregistrée",
+    "no_tenants": "Aucune communauté trouvée",
+    "no_anomalies": "Aucune anomalie détectée — tout est en ordre !",
+    "stat_members": "Membres",
+    "stat_published": "Publiés",
+    "stat_draft": "Brouillons",
+    "stat_rejected": "Rejetés",
+    "last_activity": "Dernière activité",
+    "no_activity": "Aucune activité enregistrée"
   },
   "settings": {
     "title": "Paramètres de l'association",

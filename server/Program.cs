@@ -15,6 +15,7 @@ using server.API.Events;
 using server.API.Meetings;
 using server.API.Elections;
 using server.API.Communications;
+using server.API.Community;
 using server.API.Documents;
 using server.API.Governance;
 using server.API.Admin;
@@ -22,6 +23,7 @@ using server.API.Analytics;
 using server.API.Upload;
 using server.API.Finances;
 using server.API.Tenant;
+using server.API.Audit;
 using server.API.Roles;
 using Microsoft.AspNetCore.Authorization;
 using server.Infrastructure.Auth;
@@ -71,6 +73,7 @@ try
 
     builder.Services.AddHostedService<ChargeGenerationBackgroundService>();
     builder.Services.AddSingleton<JwtService>();
+    builder.Services.AddScoped<server.Infrastructure.Services.AuditService>();
 
     var jwtSecret = builder.Configuration["Jwt:SecretKey"]
         ?? throw new InvalidOperationException("Jwt:SecretKey not configured");
@@ -78,6 +81,7 @@ try
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(o =>
         {
+            o.MapInboundClaims = false;
             o.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
@@ -184,12 +188,15 @@ try
     app.MapElectionEndpoints();
     app.MapCommunicationEndpoints();
     app.MapDocumentEndpoints();
+    app.MapCommunityEndpoints();
+    app.MapExploreEndpoints();
     app.MapGovernanceEndpoints();
     app.MapAdminEndpoints();
     app.MapAnalyticsEndpoints();
     app.MapFinanceEndpoints();
     app.MapTenantEndpoints();
     app.MapRoleEndpoints();
+    app.MapAuditEndpoints();
 
     app.Run();
 }

@@ -387,6 +387,123 @@ public static class DbSeeder
             new Resolution { Id = Guid.NewGuid(), TenantId = tenantId, Title = "Création d'un fonds de scolarité", Content = "Il est proposé de créer un fonds dédié aux bourses scolaires pour les enfants de membres en difficulté, doté initialement de 500 €.",                              Status = "draft",   VotesFor = 0, VotesAgainst = 0, Abstentions = 0,                            IsActive = true }
         );
 
+        // ── Community posts ───────────────────────────────────────────────────
+        var postAlice = new Post
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, AuthorId = mMember1.Id,
+            Title   = "Mon premier mois à Maurice : ce que personne ne vous dit",
+            Content = "Arrivée en janvier 2021, la première semaine a été un choc culturel total. " +
+                      "Je m'attendais à un paradis tropical, mais j'ai d'abord trouvé la chaleur étouffante, " +
+                      "les embouteillages de Port-Louis et la difficulté à trouver un logement abordable.\n\n" +
+                      "Ce qui m'a sauvée, c'est la communauté camerounaise de l'ACM. Dès la deuxième semaine, " +
+                      "Jean Nkodo m'a mise en contact avec une collègue qui cherchait une colocataire à Quatre-Bornes. " +
+                      "C'est comme ça que j'ai trouvé mon appartement en 48h.\n\n" +
+                      "Mon conseil n°1 : rejoignez l'ACM AVANT d'arriver. Le réseau est votre filet de sécurité.\n\n" +
+                      "Mon conseil n°2 : apprenez quelques mots de créole mauricien. Les locaux apprécient énormément " +
+                      "l'effort et ça ouvre des portes incroyables.\n\n" +
+                      "Mon conseil n°3 : ouvrez votre compte bancaire dès le premier jour. La MCB et la SBM sont les " +
+                      "plus pratiques pour les étrangers. Prévenez les délais — comptez 2 à 3 semaines.\n\n" +
+                      "Quatre ans après, je ne regrette rien. Maurice est une chance extraordinaire pour qui sait " +
+                      "s'y préparer. N'hésitez pas à me contacter si vous avez des questions !",
+            Status = "published", PublishedAt = DateTime.UtcNow.AddDays(-45), IsActive = true,
+            CreatedAt = DateTime.UtcNow.AddDays(-50),
+        };
+
+        var postEric = new Post
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, AuthorId = mMember2.Id,
+            Title   = "Trouver un emploi dans le secteur IT à Maurice : mon parcours",
+            Content = "Développeur fullstack avec 8 ans d'expérience en France, j'ai décidé de tenter l'aventure " +
+                      "mauricienne en 2022. Voici comment j'ai décroché mon poste en 6 semaines.\n\n" +
+                      "**Les secteurs qui recrutent :**\n" +
+                      "- BPO/Centres d'appels (facile d'entrée mais salaires modestes)\n" +
+                      "- Finance & FinTech (en plein boom depuis 2020)\n" +
+                      "- Tourisme-tech (plateformes, réservations en ligne)\n" +
+                      "- Administration publique (pour les postes spécialisés)\n\n" +
+                      "**Ma méthode :**\n" +
+                      "LinkedIn reste le meilleur canal. Les agences de recrutement locales comme Rogers et " +
+                      "Manpower sont également efficaces. J'ai aussi contacté directement 15 entreprises via " +
+                      "leurs sites, ce qui m'a valu 3 entretiens.\n\n" +
+                      "**Le piège :** beaucoup d'offres mentionnent des salaires en roupies mauriciennes sans " +
+                      "préciser le package (logement, transport, assurance santé). Négociez toujours le package " +
+                      "complet, pas seulement le salaire brut.\n\n" +
+                      "Actuellement chez une FinTech de Grand-Baie, je suis ravi de l'environnement de travail " +
+                      "et du cadre de vie. Questions bienvenues !",
+            Status = "published", PublishedAt = DateTime.UtcNow.AddDays(-20), IsActive = true,
+            CreatedAt = DateTime.UtcNow.AddDays(-22),
+        };
+
+        var postSolange = new Post
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, AuthorId = mMember3.Id,
+            Title   = "Scolariser ses enfants à Maurice : comparatif des écoles francophones",
+            Content = "Maman de deux enfants (8 et 11 ans), j'ai visité 7 écoles avant de faire mon choix. " +
+                      "Voici mon retour d'expérience pour les familles qui cherchent une scolarisation en français.\n\n" +
+                      "Les établissements francophones reconnus :\n\n" +
+                      "1. École française de Maurice (Moka) — programme AEFE, idéal si retour probable en France. " +
+                      "Liste d'attente importante, inscrivez-vous 6 mois à l'avance.\n\n" +
+                      "2. Lycée Labourdonnais (Mapou) — bilingue français/anglais, très bon niveau. " +
+                      "Frais : environ 3 500 € par an.\n\n" +
+                      "3. École du Sacré-Cœur (Quatre-Bornes) — catholique, francophone, excellente réputation. " +
+                      "Plus abordable mais places limitées.\n\n" +
+                      "Mon choix : Labourdonnais pour le bilinguisme. Mes enfants parlent maintenant couramment " +
+                      "anglais et créole, ce qui est un atout énorme pour leur avenir.\n\n" +
+                      "Je joins quelques photos des campus pour vous aider à visualiser.",
+            Status = "published", PublishedAt = DateTime.UtcNow.AddDays(-8), IsActive = true,
+            CreatedAt = DateTime.UtcNow.AddDays(-10),
+        };
+
+        var postBoris = new Post
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, AuthorId = mMember4.Id,
+            Title   = "Mon expérience avec le permis de résidence — ce qu'il faut anticiper",
+            Content = "En cours de rédaction. Je partage bientôt les démarches pour l'Occupation Permit " +
+                      "et le processus de renouvellement après 3 ans.",
+            Status = "draft", IsActive = true,
+            CreatedAt = DateTime.UtcNow.AddDays(-2),
+        };
+
+        var postPresident = new Post
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, AuthorId = mPresident.Id,
+            Title   = "Retour sur le festival camerounais 2024 — un succès !",
+            Content = "Notre festival annuel a rassemblé plus de 200 personnes cette année. " +
+                      "Un immense merci à tous les bénévoles et aux familles qui ont contribué. " +
+                      "Les photos de l'événement sont disponibles ci-dessous.",
+            Status = "rejected", IsActive = true,
+            CreatedAt = DateTime.UtcNow.AddDays(-5),
+        };
+
+        db.Posts.AddRange(postAlice, postEric, postSolange, postBoris, postPresident);
+
+        // ── Post attachments ──────────────────────────────────────────────────
+        db.PostAttachments.AddRange(
+            new PostAttachment
+            {
+                Id = Guid.NewGuid(), PostId = postSolange.Id,
+                FileUrl = "/avatars/ecole-labourdonnais.jpg",
+                FileName = "ecole-labourdonnais.jpg", MimeType = "image/jpeg",
+                FileSizeBytes = 184_320, AttachmentType = "photo",
+                CreatedAt = postSolange.CreatedAt,
+            },
+            new PostAttachment
+            {
+                Id = Guid.NewGuid(), PostId = postSolange.Id,
+                FileUrl = "/avatars/campus-sacre-coeur.jpg",
+                FileName = "campus-sacre-coeur.jpg", MimeType = "image/jpeg",
+                FileSizeBytes = 156_800, AttachmentType = "photo",
+                CreatedAt = postSolange.CreatedAt,
+            },
+            new PostAttachment
+            {
+                Id = Guid.NewGuid(), PostId = postEric.Id,
+                FileUrl = "/docs/guide-emploi-mauritius-2024.pdf",
+                FileName = "guide-emploi-mauritius-2024.pdf", MimeType = "application/pdf",
+                FileSizeBytes = 320_000, AttachmentType = "document",
+                CreatedAt = postEric.CreatedAt,
+            }
+        );
+
         await db.SaveChangesAsync();
     }
 

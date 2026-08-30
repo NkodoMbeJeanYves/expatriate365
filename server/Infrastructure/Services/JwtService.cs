@@ -21,7 +21,8 @@ public class JwtService(IConfiguration config)
         User user,
         string[]? permissions = null,
         string? entityType = null,
-        string? entityId = null)
+        string? entityId = null,
+        Guid? overrideTenantId = null)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -37,8 +38,9 @@ public class JwtService(IConfiguration config)
             new("role", user.Role),
             new("permissions", permissionsJson),
         };
-        if (user.TenantId.HasValue)
-            claims.Add(new("tenant_id", user.TenantId.Value.ToString()));
+        var effectiveTenantId = overrideTenantId ?? user.TenantId;
+        if (effectiveTenantId.HasValue)
+            claims.Add(new("tenant_id", effectiveTenantId.Value.ToString()));
         if (entityType is not null)
             claims.Add(new("entity_type", entityType));
         if (entityId is not null)
@@ -83,12 +85,12 @@ public class JwtService(IConfiguration config)
         ClockSkew = TimeSpan.Zero,
     };
 
-    public UserInfo ToUserInfo(User user, string? entityType = null, string? entityId = null) => new(
+    public UserInfo ToUserInfo(User user, string? entityType = null, string? entityId = null, Guid? overrideTenantId = null) => new(
         user.Id.ToString(),
         user.Email,
         user.FullName,
         [user.Role],
-        user.TenantId?.ToString(),
+        (overrideTenantId ?? user.TenantId)?.ToString(),
         entityType,
         entityId,
         user.EmailVerifiedAt?.ToString("O")

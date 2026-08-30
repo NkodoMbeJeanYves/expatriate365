@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { AuthStore } from './auth.store';
-import { LoginRequest, LoginResponse, MeResponse } from './models/user.model';
+import { LoginRequest, LoginResponse, MeResponse, PublicTenant } from './models/user.model';
 import { APP_CONFIG } from '@core/config/app-config.token';
 import { TenantStore } from '@core/tenant/tenant.store';
 
@@ -54,6 +54,19 @@ export class AuthService {
         this.store.setSession(res.user as MeResponse, res.access_token);
         localStorage.setItem('exp365_refresh', res.refresh_token);
       }));
+  }
+
+  getPublicTenants() {
+    return this.http.get<PublicTenant[]>(`${this.config.apiUrl}/api/v1/tenants/public`);
+  }
+
+  selectTenant(tenantId: string) {
+    return this.http.post<LoginResponse>(`${this.base}/auth/select-tenant`, { tenant_id: tenantId }).pipe(
+      tap((res) => {
+        this.store.setSession(res.user as MeResponse, res.access_token);
+        localStorage.setItem('exp365_refresh', res.refresh_token);
+      })
+    );
   }
 
   me() {

@@ -30,6 +30,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MeetingAttendance> MeetingAttendances => Set<MeetingAttendance>();
     public DbSet<MeetingMinute> MeetingMinutes => Set<MeetingMinute>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Post> Posts => Set<Post>();
+    public DbSet<PostAttachment> PostAttachments => Set<PostAttachment>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

@@ -19,7 +19,7 @@ public class LoginCommandValidator : AbstractValidator<LoginCommand>
     }
 }
 
-public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginCommandHandler> log)
+public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginCommandHandler> log, AuditService audit)
     : IRequestHandler<LoginCommand, ServiceResult<LoginResponse>>
 {
     private async Task<string[]> LoadPermissionsAsync(string roleName, CancellationToken ct)
@@ -62,6 +62,7 @@ public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginC
         user.RefreshTokenHash = hash;
         user.RefreshTokenExpiresAt = jwt.RefreshTokenExpiry();
         user.LastLoginAt = DateTime.UtcNow;
+        audit.Log("login", user.Id, user.TenantId);
         await db.SaveChangesAsync(ct);
 
         var permissions = await LoadPermissionsAsync(user.Role, ct);

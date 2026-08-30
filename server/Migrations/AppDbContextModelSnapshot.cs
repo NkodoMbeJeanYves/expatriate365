@@ -22,6 +22,56 @@ namespace server.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("server.Domain.Entities.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("action");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("EntityId")
+                        .HasMaxLength(36)
+                        .HasColumnType("varchar(36)")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("Meta")
+                        .HasColumnType("longtext")
+                        .HasColumnName("meta");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id").HasName("PK_audit_logs");
+
+                    b.HasIndex("TenantId").HasDatabaseName("IX_audit_logs_tenant_id");
+
+                    b.HasIndex("UserId").HasDatabaseName("IX_audit_logs_user_id");
+
+                    b.HasIndex("CreatedAt").HasDatabaseName("IX_audit_logs_created_at");
+
+                    b.ToTable("audit_logs");
+                });
+
             modelBuilder.Entity("server.Domain.Entities.BoardMember", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1327,6 +1377,121 @@ namespace server.Migrations
                     b.ToTable("payments", (string)null);
                 });
 
+            modelBuilder.Entity("server.Domain.Entities.Post", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("draft")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("posts", (string)null);
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.PostAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AttachmentType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("document")
+                        .HasColumnName("attachment_type");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("file_name");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size_bytes");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)")
+                        .HasColumnName("file_url");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("mime_type");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("post_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.ToTable("post_attachments", (string)null);
+                });
+
             modelBuilder.Entity("server.Domain.Entities.Resolution", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1693,6 +1858,23 @@ namespace server.Migrations
                     b.ToTable("welfare_requests", (string)null);
                 });
 
+            modelBuilder.Entity("server.Domain.Entities.AuditLog", b =>
+                {
+                    b.HasOne("server.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("server.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("User");
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("server.Domain.Entities.BoardMember", b =>
                 {
                     b.HasOne("server.Domain.Entities.Member", "Member")
@@ -1939,6 +2121,28 @@ namespace server.Migrations
                     b.Navigation("Member");
                 });
 
+            modelBuilder.Entity("server.Domain.Entities.Post", b =>
+                {
+                    b.HasOne("server.Domain.Entities.Member", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.PostAttachment", b =>
+                {
+                    b.HasOne("server.Domain.Entities.Post", "Post")
+                        .WithMany("Attachments")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+                });
+
             modelBuilder.Entity("server.Domain.Entities.User", b =>
                 {
                     b.HasOne("server.Domain.Entities.Tenant", "Tenant")
@@ -2005,6 +2209,11 @@ namespace server.Migrations
             modelBuilder.Entity("server.Domain.Entities.MembershipCategory", b =>
                 {
                     b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.Post", b =>
+                {
+                    b.Navigation("Attachments");
                 });
 
             modelBuilder.Entity("server.Domain.Entities.Tenant", b =>

@@ -43,6 +43,8 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.events', icon: 'pi pi-calendar', route: '/events', roles: STAFF_ROLES },
       { labelKey: 'nav.meetings', icon: 'pi pi-microphone', route: '/meetings', roles: [ROLES.PRESIDENT, ROLES.SECRETARY, ROLES.COMMITTEE_MEMBER] },
       { labelKey: 'nav.elections', icon: 'pi pi-check-square', route: '/elections' },
+      { labelKey: 'nav.community', icon: 'pi pi-comments', route: '/community' },
+      { labelKey: 'nav.community_moderation', icon: 'pi pi-shield', route: '/community/moderation', roles: STAFF_ROLES },
     ],
   },
   {
@@ -52,6 +54,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.documents', icon: 'pi pi-file', route: '/documents', roles: STAFF_ROLES },
       { labelKey: 'nav.governance', icon: 'pi pi-shield', route: '/governance', roles: [ROLES.PRESIDENT, ROLES.SECRETARY, ROLES.COMMITTEE_MEMBER] },
       { labelKey: 'nav.admin', icon: 'pi pi-users', route: '/admin', roles: [ROLES.SUPER_ADMIN] },
+      { labelKey: 'nav.audit', icon: 'pi pi-history', route: '/admin/audit', roles: [ROLES.SUPER_ADMIN] },
       { labelKey: 'nav.roles', icon: 'pi pi-shield', route: '/admin/roles', roles: [ROLES.SUPER_ADMIN] },
       { labelKey: 'nav.settings', icon: 'pi pi-cog', route: '/admin/settings', roles: [ROLES.PRESIDENT, ROLES.SUPER_ADMIN] },
     ],

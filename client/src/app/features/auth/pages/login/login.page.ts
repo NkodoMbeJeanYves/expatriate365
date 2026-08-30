@@ -86,7 +86,11 @@ export class LoginPageComponent {
     this.errorMessage.set(null);
     const { email, password } = this.form.getRawValue();
     this.auth.login({ email: email!, password: password! }).subscribe({
-      next: () => this.router.navigateByUrl('/dashboard'),
+      next: (res) => {
+        const isSuperAdmin = res.user.roles?.includes('super_admin');
+        const hasTenant   = !!res.user.tenant_id;
+        this.router.navigateByUrl(isSuperAdmin && !hasTenant ? '/select-tenant' : '/dashboard');
+      },
       error: (err) => {
         this.errorMessage.set(err?.error?.error ?? 'Identifiants incorrects');
         this.loading.set(false);

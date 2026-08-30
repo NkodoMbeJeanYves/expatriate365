@@ -3,7 +3,7 @@ import { authGuard, hasRoleGuard } from '@core/auth/auth.guard';
 import { STAFF_ROLES } from '@core/auth/models/role.model';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: '', redirectTo: 'explore', pathMatch: 'full' },
   {
     path: 'auth',
     loadComponent: () => import('@layouts/auth-layout/auth-layout').then((m) => m.AuthLayoutComponent),
@@ -29,9 +29,26 @@ export const routes: Routes = [
       { path: 'meetings', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@meetings/meetings.routes').then((m) => m.MEETINGS_ROUTES) },
       { path: 'communications', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@communications/communications.routes').then((m) => m.COMMUNICATIONS_ROUTES) },
       { path: 'documents', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@documents/documents.routes').then((m) => m.DOCUMENTS_ROUTES) },
+      {
+        path: 'community',
+        children: [
+          { path: '', loadComponent: () => import('./features/community/pages/community-feed/community-feed.page').then(m => m.CommunityFeedPage) },
+          { path: 'moderation', canActivate: [hasRoleGuard(STAFF_ROLES)], loadComponent: () => import('./features/community/pages/community-moderation/community-moderation.page').then(m => m.CommunityModerationPage) },
+          { path: ':id', loadComponent: () => import('./features/community/pages/community-post/community-post.page').then(m => m.CommunityPostPage) },
+        ],
+      },
       { path: 'analytics', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@analytics/analytics.routes').then((m) => m.ANALYTICS_ROUTES) },
       { path: 'governance', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@governance/governance.routes').then((m) => m.GOVERNANCE_ROUTES) },
       { path: 'admin', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@admin/admin.routes').then((m) => m.ADMIN_ROUTES) },
+    ],
+  },
+  { path: 'select-tenant', loadComponent: () => import('@auth/pages/select-tenant/select-tenant.page').then((m) => m.SelectTenantPage) },
+  {
+    path: 'explore',
+    children: [
+      { path: '', loadComponent: () => import('./features/explore/pages/explore-home/explore-home.page').then(m => m.ExploreHomePage) },
+      { path: ':slug', loadComponent: () => import('./features/explore/pages/explore-feed/explore-feed.page').then(m => m.ExploreFeedPage) },
+      { path: ':slug/:id', loadComponent: () => import('./features/explore/pages/explore-post/explore-post.page').then(m => m.ExplorePostPage) },
     ],
   },
   { path: 'forbidden', loadComponent: () => import('@shared/components/forbidden/forbidden.component').then((m) => m.ForbiddenComponent) },

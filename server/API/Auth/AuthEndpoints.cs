@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using server.Application.Auth.Commands;
 using server.Application.Auth.Queries;
+using server.Application.Common;
 
 namespace server.Api.Auth;
 
@@ -61,5 +62,33 @@ public static class AuthEndpoints
                 ? Results.Ok(result.Data)
                 : Results.NotFound(new { error = result.ErrorMessage });
         }).RequireAuthorization();
+
+        group.MapPost("/select-tenant", async (
+            ClaimsPrincipal principal,
+            SelectTenantRequest dto,
+            IMediator mediator) =>
+        {
+            var sub = principal.FindFirstValue("sub")
+                   ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(sub, out var userId))
+                return Results.Unauthorized();
+
+            // Read role claim — supports both raw "role" and ASP.NET-remapped ClaimTypes.Role
+            var role = principal.FindFirstValue("role")
+                    ?? principal.FindFirstValue(System.Security.Claims.ClaimTypes.Role)
+                    ?? "";
+            if (role != "super_admin")
+                return Results.Json(new { error = "Réservé au super administrateur." }, statusCode: 403);
+
+            if (!Guid.TryParse(dto.TenantId, out var tenantId))
+                return Results.BadRequest(new { error = "tenant_id invalide." });
+
+            var result = await mediator.Send(new SelectTenantCommand(userId, tenantId));
+            return result.IsSuccess
+                ? Results.Ok(result.Data)
+                : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization();
     }
 }
+
+public record SelectTenantRequest(string TenantId);

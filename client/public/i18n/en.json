@@ -17,7 +17,10 @@
     "admin": "Administration",
     "member_dashboard": "My space",
     "roles": "Roles & Permissions",
-    "member_categories": "Member categories"
+    "member_categories": "Member categories",
+    "community": "Community",
+    "community_moderation": "Moderation",
+    "audit": "Audit"
   },
   "roles": {
     "title": "Roles & Permissions",
@@ -89,7 +92,10 @@
     "perm_integrations": "Integrations",
     "perm_assign": "Assign",
     "perm_reset_password": "Reset password",
-    "perm_impersonate": "Impersonate"
+    "perm_impersonate": "Impersonate",
+    "perm_write": "Write",
+    "perm_moderate": "Moderate",
+    "domain_community": "Community"
   },
   "auth": {
     "login": "Login",
@@ -103,7 +109,10 @@
     "mfa_title": "Two-step verification",
     "mfa_code": "Verification code",
     "mfa_submit": "Verify",
-    "quick_access": "Quick access (dev)"
+    "quick_access": "Quick access (dev)",
+    "select_tenant_title": "Select a community",
+    "select_tenant_subtitle": "Choose the community you want to manage",
+    "no_tenants": "No community found"
   },
   "common": {
     "save": "Save",
@@ -159,6 +168,47 @@
     "title": "Title",
     "create": "Create",
     "uploading": "Uploading…"
+  },
+  "community": {
+    "title": "Community",
+    "subtitle": "Share your experience with the community",
+    "new_post": "Share an experience",
+    "edit_post": "Edit post",
+    "submit_draft": "Submit",
+    "post_title": "Title",
+    "post_title_placeholder": "Summarize your experience in a few words…",
+    "post_content": "Your story",
+    "post_content_placeholder": "Share your experience, tips, or advice with the community…",
+    "attachments": "Attachments",
+    "add_photo": "Add photo",
+    "add_document": "Add document",
+    "uploading": "Uploading…",
+    "read_more": "Read more",
+    "back_to_feed": "Back to community",
+    "no_posts": "No publications yet. Be the first to share your experience!",
+    "post_not_found": "Publication not found.",
+    "moderation_title": "Community moderation",
+    "moderation_subtitle": "Review and publish member submissions",
+    "publish": "Publish",
+    "reject": "Reject",
+    "no_pending": "Nothing to moderate.",
+    "status_draft": "Draft",
+    "status_published": "Published",
+    "status_rejected": "Rejected",
+    "load_more": "Load more",
+    "photos": "Photos",
+    "documents": "Documents"
+  },
+  "explore": {
+    "title": "Our communities",
+    "subtitle": "Discover the experiences shared by expatriate communities",
+    "no_communities": "No community available.",
+    "back_to_feed": "Back to community",
+    "cta_title": "Join the community",
+    "cta_subtitle": "Log in to share your own experience and interact with other members.",
+    "files": "attachment(s)",
+    "no_files": "No attachment",
+    "cta_button": "Log in"
   },
   "errors": {
     "required": "This field is required",
@@ -609,6 +659,28 @@
     "confirm_suspend": "Suspend this user?",
     "no_users": "No users found",
     "invite_sent": "Invitation sent"
+  },
+  "audit": {
+    "title": "Audit & Monitoring",
+    "subtitle": "Track activity, community health and anomalies across all tenants",
+    "tab_activity": "Activity",
+    "tab_tenants": "Communities",
+    "tab_anomalies": "Anomalies",
+    "filter_action": "Filter by action…",
+    "col_date": "Date",
+    "col_user": "User",
+    "col_action": "Action",
+    "col_entity": "Entity",
+    "col_tenant": "Community",
+    "no_logs": "No activity logged yet",
+    "no_tenants": "No communities found",
+    "no_anomalies": "No anomalies detected — all clear!",
+    "stat_members": "Members",
+    "stat_published": "Published",
+    "stat_draft": "Drafts",
+    "stat_rejected": "Rejected",
+    "last_activity": "Last activity",
+    "no_activity": "No activity recorded"
   },
   "settings": {
     "title": "Association settings",
