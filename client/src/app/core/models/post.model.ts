@@ -1,4 +1,4 @@
-import { PaginationMeta } from './pagination.model';
+import { PaginationMeta } from '@shared/models/pagination.model';
 
 export interface PostAttachmentDto {
   id: string;

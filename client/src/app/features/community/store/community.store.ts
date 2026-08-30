@@ -41,7 +41,8 @@ export class CommunityStore {
   upsertSummary(post: PostSummaryDto): void {
     this._posts.update(list => {
       const idx = list.findIndex(p => p.id === post.id);
-      return idx >= 0 ? list.with(idx, post) : [post, ...list];
+      if (idx >= 0) { const copy = [...list]; copy[idx] = post; return copy; }
+      return [post, ...list];
     });
   }
 }

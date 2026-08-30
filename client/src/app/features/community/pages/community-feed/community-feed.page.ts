@@ -3,6 +3,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -19,7 +20,7 @@ import { PostFormDrawerComponent } from '../../components/post-form-drawer/post-
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    RouterLink, FormsModule, ButtonModule, InputTextModule,
+    RouterLink, FormsModule, DatePipe, ButtonModule, InputTextModule,
     ProgressSpinnerModule, TagModule, TooltipModule, TranslatePipe,
     PostFormDrawerComponent,
   ],
