@@ -15,6 +15,7 @@ using server.API.Events;
 using server.API.Meetings;
 using server.API.Elections;
 using server.API.Communications;
+using server.API.Community;
 using server.API.Documents;
 using server.API.Governance;
 using server.API.Admin;
@@ -184,6 +185,7 @@ try
     app.MapElectionEndpoints();
     app.MapCommunicationEndpoints();
     app.MapDocumentEndpoints();
+    app.MapCommunityEndpoints();
     app.MapGovernanceEndpoints();
     app.MapAdminEndpoints();
     app.MapAnalyticsEndpoints();

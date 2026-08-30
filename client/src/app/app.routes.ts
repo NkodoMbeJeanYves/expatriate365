@@ -29,6 +29,14 @@ export const routes: Routes = [
       { path: 'meetings', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@meetings/meetings.routes').then((m) => m.MEETINGS_ROUTES) },
       { path: 'communications', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@communications/communications.routes').then((m) => m.COMMUNICATIONS_ROUTES) },
       { path: 'documents', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@documents/documents.routes').then((m) => m.DOCUMENTS_ROUTES) },
+      {
+        path: 'community',
+        children: [
+          { path: '', loadComponent: () => import('./features/community/pages/community-feed/community-feed.page').then(m => m.CommunityFeedPage) },
+          { path: ':id', loadComponent: () => import('./features/community/pages/community-post/community-post.page').then(m => m.CommunityPostPage) },
+          { path: 'moderation', canActivate: [hasRoleGuard(STAFF_ROLES)], loadComponent: () => import('./features/community/pages/community-moderation/community-moderation.page').then(m => m.CommunityModerationPage) },
+        ],
+      },
       { path: 'analytics', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@analytics/analytics.routes').then((m) => m.ANALYTICS_ROUTES) },
       { path: 'governance', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@governance/governance.routes').then((m) => m.GOVERNANCE_ROUTES) },
       { path: 'admin', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@admin/admin.routes').then((m) => m.ADMIN_ROUTES) },

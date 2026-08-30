@@ -35,6 +35,7 @@
       "@meetings/*":      ["app/features/meetings/*"],
       "@communications/*":["app/features/communications/*"],
       "@documents/*":     ["app/features/documents/*"],
+      "@community/*":     ["app/features/community/*"],
       "@analytics/*":     ["app/features/analytics/*"],
       "@governance/*":    ["app/features/governance/*"],
       "@admin/*":         ["app/features/admin/*"]

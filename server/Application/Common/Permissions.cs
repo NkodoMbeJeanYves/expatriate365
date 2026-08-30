@@ -65,6 +65,11 @@ public static class Permissions
     public const string DocumentsManage  = "documents.manage";
     public const string DocumentsPublish = "documents.publish";
 
+    // ── Community ────────────────────────────────────────────────────────────
+    public const string CommunityRead     = "community.read";
+    public const string CommunityWrite    = "community.write";
+    public const string CommunityModerate = "community.moderate";
+
     // ── Announcements ────────────────────────────────────────────────────────
     public const string AnnouncementsRead    = "announcements.read";
     public const string AnnouncementsCreate  = "announcements.create";
@@ -121,6 +126,7 @@ public static class Permissions
             ["votes"]         = [VotesRead, VotesCast, VotesResults, VotesCreate, VotesManage, VotesDelete, VotesExport],
             ["events"]        = [EventsRead, EventsRegister, EventsCreate, EventsUpdate, EventsDelete, EventsManageAttendees, EventsExport],
             ["documents"]     = [DocumentsRead, DocumentsUpload, DocumentsManage, DocumentsPublish],
+            ["community"]     = [CommunityRead, CommunityWrite, CommunityModerate],
             ["announcements"] = [AnnouncementsRead, AnnouncementsCreate, AnnouncementsUpdate, AnnouncementsDelete, AnnouncementsPublish],
             ["notifications"] = [NotificationsReadOwn, NotificationsSend, NotificationsManage],
             ["dashboard"]     = [DashboardRead, DashboardFinancial, DashboardMembers, ReportsRead, ReportsFinancial, ReportsMembers, ReportsContributions, ReportsExport, AuditRead],

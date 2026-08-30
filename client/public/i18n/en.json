@@ -17,7 +17,8 @@
     "admin": "Administration",
     "member_dashboard": "My space",
     "roles": "Roles & Permissions",
-    "member_categories": "Member categories"
+    "member_categories": "Member categories",
+    "community": "Community"
   },
   "roles": {
     "title": "Roles & Permissions",
@@ -159,6 +160,33 @@
     "title": "Title",
     "create": "Create",
     "uploading": "Uploading…"
+  },
+  "community": {
+    "title": "Community",
+    "subtitle": "Share your experience with the community",
+    "new_post": "Share an experience",
+    "edit_post": "Edit post",
+    "submit_draft": "Submit",
+    "post_title": "Title",
+    "post_title_placeholder": "Summarize your experience in a few words…",
+    "post_content": "Your story",
+    "post_content_placeholder": "Share your experience, tips, or advice with the community…",
+    "attachments": "Attachments",
+    "add_photo": "Add photo",
+    "add_document": "Add document",
+    "uploading": "Uploading…",
+    "read_more": "Read more",
+    "back_to_feed": "Back to community",
+    "no_posts": "No publications yet. Be the first to share your experience!",
+    "post_not_found": "Publication not found.",
+    "moderation_title": "Community moderation",
+    "moderation_subtitle": "Review and publish member submissions",
+    "publish": "Publish",
+    "reject": "Reject",
+    "no_pending": "Nothing to moderate.",
+    "status_draft": "Draft",
+    "status_published": "Published",
+    "status_rejected": "Rejected"
   },
   "errors": {
     "required": "This field is required",

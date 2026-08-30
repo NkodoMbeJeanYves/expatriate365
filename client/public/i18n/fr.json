@@ -17,7 +17,8 @@
     "admin": "Administration",
     "member_dashboard": "Mon espace",
     "roles": "Rôles & Permissions",
-    "member_categories": "Categories membres"
+    "member_categories": "Categories membres",
+    "community": "Communauté"
   },
   "roles": {
     "title": "Rôles & Permissions",
@@ -159,6 +160,33 @@
     "title": "Titre",
     "create": "Créer",
     "uploading": "Envoi en cours…"
+  },
+  "community": {
+    "title": "Communauté",
+    "subtitle": "Partagez votre expérience avec la communauté",
+    "new_post": "Partager une expérience",
+    "edit_post": "Modifier la publication",
+    "submit_draft": "Soumettre",
+    "post_title": "Titre",
+    "post_title_placeholder": "Résumez votre expérience en quelques mots…",
+    "post_content": "Votre témoignage",
+    "post_content_placeholder": "Partagez votre expérience, conseils ou astuces avec la communauté…",
+    "attachments": "Pièces jointes",
+    "add_photo": "Ajouter une photo",
+    "add_document": "Ajouter un document",
+    "uploading": "Envoi en cours…",
+    "read_more": "Lire la suite",
+    "back_to_feed": "Retour à la communauté",
+    "no_posts": "Aucune publication pour l'instant. Soyez le premier à partager votre expérience !",
+    "post_not_found": "Publication introuvable.",
+    "moderation_title": "Modération communautaire",
+    "moderation_subtitle": "Examinez et publiez les soumissions des membres",
+    "publish": "Publier",
+    "reject": "Rejeter",
+    "no_pending": "Rien à modérer.",
+    "status_draft": "Brouillon",
+    "status_published": "Publié",
+    "status_rejected": "Rejeté"
   },
   "errors": {
     "required": "Ce champ est obligatoire",
