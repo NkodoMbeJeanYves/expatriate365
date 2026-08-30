@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -32,24 +32,24 @@ namespace server.Migrations
                 {
                     table.PrimaryKey("PK_audit_logs", x => x.id);
                     table.ForeignKey(
-                        name: "FK_audit_logs_users_user_id",
-                        column: x => x.user_id,
-                        principalTable: "users",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_audit_logs_tenants_tenant_id",
+                        name: "FK_audit_logs_Tenants_tenant_id",
                         column: x => x.tenant_id,
-                        principalTable: "tenants",
-                        principalColumn: "id",
+                        principalTable: "Tenants",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_audit_logs_Users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(
-                name: "IX_audit_logs_user_id",
+                name: "IX_audit_logs_created_at",
                 table: "audit_logs",
-                column: "user_id");
+                column: "created_at");
 
             migrationBuilder.CreateIndex(
                 name: "IX_audit_logs_tenant_id",
@@ -57,15 +57,16 @@ namespace server.Migrations
                 column: "tenant_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_audit_logs_created_at",
+                name: "IX_audit_logs_user_id",
                 table: "audit_logs",
-                column: "created_at");
+                column: "user_id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(name: "audit_logs");
+            migrationBuilder.DropTable(
+                name: "audit_logs");
         }
     }
 }
