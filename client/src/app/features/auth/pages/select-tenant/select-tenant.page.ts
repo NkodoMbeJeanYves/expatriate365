@@ -5,7 +5,6 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthService } from '@core/auth/auth.service';
 import { PublicTenant } from '@core/auth/models/user.model';
-import { TenantStore } from '@core/tenant/tenant.store';
 
 @Component({
   selector: 'app-select-tenant-page',
@@ -77,9 +76,8 @@ import { TenantStore } from '@core/tenant/tenant.store';
   `,
 })
 export class SelectTenantPage implements OnInit {
-  private readonly auth    = inject(AuthService);
-  private readonly tenant  = inject(TenantStore);
-  private readonly router  = inject(Router);
+  private readonly auth   = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly tenants      = signal<PublicTenant[]>([]);
   readonly loading      = signal(true);
@@ -97,10 +95,7 @@ export class SelectTenantPage implements OnInit {
     this.selecting.set(true);
     this.errorMessage.set(null);
     this.auth.selectTenant(t.id).subscribe({
-      next: () => {
-        this.tenant.load();
-        this.router.navigateByUrl('/dashboard');
-      },
+      next: () => this.router.navigateByUrl('/dashboard'),
       error: (err) => {
         this.errorMessage.set(err?.error?.error ?? 'Une erreur est survenue.');
         this.selecting.set(false);
