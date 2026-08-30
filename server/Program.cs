@@ -187,6 +187,7 @@ try
     app.MapCommunicationEndpoints();
     app.MapDocumentEndpoints();
     app.MapCommunityEndpoints();
+    app.MapExploreEndpoints();
     app.MapGovernanceEndpoints();
     app.MapAdminEndpoints();
     app.MapAnalyticsEndpoints();

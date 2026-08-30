@@ -36,6 +36,7 @@
       "@communications/*":["app/features/communications/*"],
       "@documents/*":     ["app/features/documents/*"],
       "@community/*":     ["app/features/community/*"],
+      "@explore/*":       ["app/features/explore/*"],
       "@analytics/*":     ["app/features/analytics/*"],
       "@governance/*":    ["app/features/governance/*"],
       "@admin/*":         ["app/features/admin/*"]

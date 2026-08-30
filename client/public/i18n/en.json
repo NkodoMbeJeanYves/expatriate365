@@ -192,7 +192,19 @@
     "no_pending": "Nothing to moderate.",
     "status_draft": "Draft",
     "status_published": "Published",
-    "status_rejected": "Rejected"
+    "status_rejected": "Rejected",
+    "load_more": "Load more",
+    "photos": "Photos",
+    "documents": "Documents"
+  },
+  "explore": {
+    "title": "Our communities",
+    "subtitle": "Discover the experiences shared by expatriate communities",
+    "no_communities": "No community available.",
+    "back_to_feed": "Back to community",
+    "cta_title": "Join the community",
+    "cta_subtitle": "Log in to share your own experience and interact with other members.",
+    "cta_button": "Log in"
   },
   "errors": {
     "required": "This field is required",

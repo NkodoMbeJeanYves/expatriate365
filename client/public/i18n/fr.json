@@ -192,7 +192,19 @@
     "no_pending": "Rien à modérer.",
     "status_draft": "Brouillon",
     "status_published": "Publié",
-    "status_rejected": "Rejeté"
+    "status_rejected": "Rejeté",
+    "load_more": "Charger plus",
+    "photos": "Photos",
+    "documents": "Documents"
+  },
+  "explore": {
+    "title": "Nos communautés",
+    "subtitle": "Découvrez les expériences partagées par les communautés d'expatriés",
+    "no_communities": "Aucune communauté disponible.",
+    "back_to_feed": "Retour à la communauté",
+    "cta_title": "Rejoindre la communauté",
+    "cta_subtitle": "Connectez-vous pour partager votre propre expérience et interagir avec les autres membres.",
+    "cta_button": "Se connecter"
   },
   "errors": {
     "required": "Ce champ est obligatoire",

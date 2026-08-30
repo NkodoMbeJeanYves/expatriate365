@@ -43,6 +43,14 @@ export const routes: Routes = [
     ],
   },
   { path: 'select-tenant', loadComponent: () => import('@auth/pages/select-tenant/select-tenant.page').then((m) => m.SelectTenantPage) },
+  {
+    path: 'explore',
+    children: [
+      { path: '', loadComponent: () => import('./features/explore/pages/explore-home/explore-home.page').then(m => m.ExploreHomePage) },
+      { path: ':slug', loadComponent: () => import('./features/explore/pages/explore-feed/explore-feed.page').then(m => m.ExploreFeedPage) },
+      { path: ':slug/:id', loadComponent: () => import('./features/explore/pages/explore-post/explore-post.page').then(m => m.ExplorePostPage) },
+    ],
+  },
   { path: 'forbidden', loadComponent: () => import('@shared/components/forbidden/forbidden.component').then((m) => m.ForbiddenComponent) },
   { path: '**', redirectTo: 'dashboard' },
 ];
