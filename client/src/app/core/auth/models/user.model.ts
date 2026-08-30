@@ -33,3 +33,10 @@ export interface LoginRequest {
 export interface MfaVerifyRequest {
   code: string;
 }
+
+export interface PublicTenant {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url?: string;
+}

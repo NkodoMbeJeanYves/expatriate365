@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using server.Application.Common;
 using server.Application.TenantSettings;
+using server.Infrastructure.Persistence;
 
 namespace server.API.Tenant;
 
@@ -9,6 +11,20 @@ public static class TenantEndpoints
 {
     public static void MapTenantEndpoints(this WebApplication app)
     {
+        // Public — no auth required, used by super_admin tenant picker
+        app.MapGet("/api/v1/tenants/public", async (AppDbContext db) =>
+        {
+            var tenants = await db.Tenants
+                .AsNoTracking()
+                .Where(t => t.IsActive)
+                .Select(t => new { t.Id, t.Name, t.Slug, t.LogoUrl })
+                .OrderBy(t => t.Name)
+                .ToListAsync();
+            return Results.Ok(tenants);
+        })
+        .WithTags("Tenants")
+        .WithName("GetPublicTenants");
+
         var g = app.MapGroup("/api/v1/tenant").RequireAuthorization();
 
         g.MapGet("/settings", async (HttpContext ctx, IMediator mediator) =>

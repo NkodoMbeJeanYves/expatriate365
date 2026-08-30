@@ -42,6 +42,7 @@ export const routes: Routes = [
       { path: 'admin', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@admin/admin.routes').then((m) => m.ADMIN_ROUTES) },
     ],
   },
+  { path: 'select-tenant', loadComponent: () => import('@auth/pages/select-tenant/select-tenant.page').then((m) => m.SelectTenantPage) },
   { path: 'forbidden', loadComponent: () => import('@shared/components/forbidden/forbidden.component').then((m) => m.ForbiddenComponent) },
   { path: '**', redirectTo: 'dashboard' },
 ];
