@@ -51,9 +51,10 @@ public static class CommunityEndpoints
         {
             var tenantId = GetTenantId(principal);
             var memberId = GetMemberId(principal);
-            if (tenantId is null || memberId is null) return Results.Unauthorized();
+            var userId   = GetUserId(principal);
+            if (tenantId is null || userId is null) return Results.Unauthorized();
 
-            var result = await mediator.Send(new CreatePostCommand(tenantId.Value, memberId.Value, request));
+            var result = await mediator.Send(new CreatePostCommand(tenantId.Value, memberId ?? userId.Value, userId.Value, request));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/posts/{result.Data!.Id}", result.Data)
                 : Results.BadRequest(new { error = result.ErrorMessage });
@@ -149,6 +150,13 @@ public static class CommunityEndpoints
     private static Guid? GetMemberId(ClaimsPrincipal principal)
     {
         var claim = principal.FindFirst("entity_id")?.Value;
+        return Guid.TryParse(claim, out var id) ? id : null;
+    }
+
+    private static Guid? GetUserId(ClaimsPrincipal principal)
+    {
+        var claim = principal.FindFirstValue("sub")
+                 ?? principal.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
         return Guid.TryParse(claim, out var id) ? id : null;
     }
 

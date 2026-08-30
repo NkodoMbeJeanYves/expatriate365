@@ -8,7 +8,7 @@ using server.Infrastructure.Persistence;
 
 namespace server.Application.Community.Commands;
 
-public record CreatePostCommand(Guid TenantId, Guid AuthorId, CreatePostRequest Request)
+public record CreatePostCommand(Guid TenantId, Guid AuthorId, Guid UserId, CreatePostRequest Request)
     : IRequest<ServiceResult<PostDto>>;
 
 public class CreatePostCommandHandler(AppDbContext db)
@@ -16,11 +16,26 @@ public class CreatePostCommandHandler(AppDbContext db)
 {
     public async Task<ServiceResult<PostDto>> Handle(CreatePostCommand request, CancellationToken ct)
     {
+        // Resolve the member — entity_id may be the user UUID when the token was issued
+        // before a member record existed (e.g. super_admin acting on a tenant)
+        var memberId = request.AuthorId;
+        var memberExists = await db.Members.AnyAsync(
+            m => m.Id == memberId && m.TenantId == request.TenantId && m.IsActive, ct);
+
+        if (!memberExists)
+        {
+            var member = await db.Members.FirstOrDefaultAsync(
+                m => m.UserId == request.UserId && m.TenantId == request.TenantId && m.IsActive, ct);
+            if (member is null)
+                return ServiceResult<PostDto>.Failure("Vous devez être membre pour publier une expérience.");
+            memberId = member.Id;
+        }
+
         var post = new Post
         {
             Id       = Guid.NewGuid(),
             TenantId = request.TenantId,
-            AuthorId = request.AuthorId,
+            AuthorId = memberId,
             Title    = request.Request.Title,
             Content  = request.Request.Content,
             Status   = "draft",
