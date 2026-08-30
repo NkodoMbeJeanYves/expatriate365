@@ -90,7 +90,10 @@
     "perm_integrations": "Intégrations",
     "perm_assign": "Assigner",
     "perm_reset_password": "Réinitialiser mot de passe",
-    "perm_impersonate": "Usurper identité"
+    "perm_impersonate": "Usurper identité",
+    "perm_write": "Écrire",
+    "perm_moderate": "Modérer",
+    "domain_community": "Communauté"
   },
   "auth": {
     "login": "Connexion",
