@@ -54,15 +54,20 @@ import { PostFormDrawerComponent } from '../../components/post-form-drawer/post-
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           @for (post of store.posts(); track post.id) {
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
-              <!-- Author & date -->
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm shrink-0">
-                  {{ post.author_name[0]?.toUpperCase() }}
+              <!-- Author & date + status badge -->
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm shrink-0">
+                    {{ post.author_name[0]?.toUpperCase() }}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-800 truncate">{{ post.author_name }}</p>
+                    <p class="text-xs text-gray-400">{{ post.published_at ?? post.created_at | date:'mediumDate' }}</p>
+                  </div>
                 </div>
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-800 truncate">{{ post.author_name }}</p>
-                  <p class="text-xs text-gray-400">{{ post.published_at ?? post.created_at | date:'mediumDate' }}</p>
-                </div>
+                <span [class]="statusClass(post.status)" class="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full">
+                  {{ ('community.status_' + post.status) | translate }}
+                </span>
               </div>
 
               <!-- Title & preview -->
@@ -108,8 +113,14 @@ export class CommunityFeedPage implements OnInit {
   readonly loadingMore = signal(false);
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
+  readonly statusClass = (status: string): string => ({
+    published: 'bg-emerald-100 text-emerald-700',
+    draft:     'bg-yellow-100 text-yellow-700',
+    rejected:  'bg-red-100 text-red-600',
+  })[status] ?? 'bg-gray-100 text-gray-500';
+
   ngOnInit(): void {
-    this.store.load({ status: 'published' });
+    this.store.load();
   }
 
   openForm(): void {
@@ -117,24 +128,23 @@ export class CommunityFeedPage implements OnInit {
   }
 
   onSaved(): void {
-    this.store.load({ status: 'published' });
+    this.store.load();
   }
 
   onSearch(): void {
     if (this.searchTimer) clearTimeout(this.searchTimer);
     this.searchTimer = setTimeout(() => {
-      this.store.load({ status: 'published', search: this.searchTerm || undefined });
+      this.store.load({ search: this.searchTerm || undefined });
     }, 300);
   }
 
   loadMore(): void {
     this.loadingMore.set(true);
     const next = this.store.page() + 1;
-    this.api.list({ page: next, limit: this.store.limit, status: 'published', search: this.searchTerm || undefined })
-      .subscribe({
+    this.api.list({ page: next, limit: this.store.limit, search: this.searchTerm || undefined })
+      .subscribe({ /* loadMore */
         next: r => {
-          // append to existing list via store
-          this.store.load({ page: next, status: 'published', search: this.searchTerm || undefined });
+          this.store.load({ page: next, search: this.searchTerm || undefined });
           this.loadingMore.set(false);
         },
         error: () => this.loadingMore.set(false),
