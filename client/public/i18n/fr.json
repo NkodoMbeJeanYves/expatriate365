@@ -206,7 +206,9 @@
     "back_to_feed": "Retour à la communauté",
     "cta_title": "Rejoindre la communauté",
     "cta_subtitle": "Connectez-vous pour partager votre propre expérience et interagir avec les autres membres.",
-    "cta_button": "Se connecter"
+    "cta_button": "Se connecter",
+    "files": "pièce(s) jointe(s)",
+    "no_files": "Aucune pièce jointe"
   },
   "errors": {
     "required": "Ce champ est obligatoire",

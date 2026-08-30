@@ -57,11 +57,12 @@ import { PublicTenant } from '@core/auth/models/user.model';
             <p>{{ 'community.no_posts' | translate }}</p>
           </div>
         } @else {
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
             @for (post of posts(); track post.id) {
               <a [routerLink]="['/explore', slug(), post.id]"
                  class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800
-                        shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow no-underline">
+                        shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow no-underline
+                        overflow-hidden">
                 <div class="flex items-center gap-2">
                   <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30
                               flex items-center justify-center shrink-0">
@@ -80,11 +81,13 @@ import { PublicTenant } from '@core/auth/models/user.model';
                 <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 flex-1">
                   {{ post.content_preview }}
                 </p>
-                @if (post.attachment_count > 0) {
-                  <p class="text-xs text-gray-400 flex items-center gap-1">
-                    <i class="pi pi-paperclip"></i> {{ post.attachment_count }} fichier(s)
-                  </p>
-                }
+                <p class="text-xs text-gray-400 flex items-center gap-1 mt-auto pt-1">
+                  @if (post.attachment_count > 0) {
+                    <i class="pi pi-paperclip"></i> {{ post.attachment_count }} {{ 'explore.files' | translate }}
+                  } @else {
+                    <i class="pi pi-file-o"></i> {{ 'explore.no_files' | translate }}
+                  }
+                </p>
               </a>
             }
           </div>

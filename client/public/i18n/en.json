@@ -206,6 +206,8 @@
     "back_to_feed": "Back to community",
     "cta_title": "Join the community",
     "cta_subtitle": "Log in to share your own experience and interact with other members.",
+    "files": "attachment(s)",
+    "no_files": "No attachment",
     "cta_button": "Log in"
   },
   "errors": {
