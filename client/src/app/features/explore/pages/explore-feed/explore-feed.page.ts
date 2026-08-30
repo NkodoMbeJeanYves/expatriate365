@@ -6,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { ExploreApiService } from '../../services/explore-api.service';
 import { PostSummaryDto } from '@models/post.model';
 import { PublicTenant } from '@core/auth/models/user.model';
@@ -14,7 +15,7 @@ import { PublicTenant } from '@core/auth/models/user.model';
   selector: 'app-explore-feed',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, DatePipe, ButtonModule, InputTextModule, ProgressSpinnerModule, TranslatePipe],
+  imports: [RouterLink, FormsModule, DatePipe, ButtonModule, InputTextModule, ProgressSpinnerModule, TranslatePipe, LangSwitcherComponent],
   template: `
     <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
 
@@ -31,9 +32,12 @@ import { PublicTenant } from '@core/auth/models/user.model';
           }
           <span class="font-bold text-gray-900 dark:text-white">{{ tenant()?.name ?? slug() }}</span>
         </div>
-        <a routerLink="/auth/login">
-          <p-button [label]="'auth.login' | translate" icon="pi pi-sign-in" severity="secondary" size="small" />
-        </a>
+        <div class="flex items-center gap-3">
+          <app-lang-switcher />
+          <a routerLink="/auth/login">
+            <p-button [label]="'auth.login' | translate" icon="pi pi-sign-in" severity="secondary" size="small" />
+          </a>
+        </div>
       </header>
 
       <main class="max-w-5xl mx-auto px-6 py-8">

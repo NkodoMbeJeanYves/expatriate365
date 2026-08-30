@@ -4,6 +4,7 @@ import { DatePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { ExploreApiService } from '../../services/explore-api.service';
 import { PostDto } from '@models/post.model';
 
@@ -11,7 +12,7 @@ import { PostDto } from '@models/post.model';
   selector: 'app-explore-post',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DatePipe, ButtonModule, ProgressSpinnerModule, TranslatePipe],
+  imports: [RouterLink, DatePipe, ButtonModule, ProgressSpinnerModule, TranslatePipe, LangSwitcherComponent],
   template: `
     <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
 
@@ -26,9 +27,12 @@ import { PostDto } from '@models/post.model';
             {{ 'explore.back_to_feed' | translate }}
           </span>
         </div>
-        <a routerLink="/auth/login">
-          <p-button [label]="'auth.login' | translate" icon="pi pi-sign-in" severity="secondary" size="small" />
-        </a>
+        <div class="flex items-center gap-3">
+          <app-lang-switcher />
+          <a routerLink="/auth/login">
+            <p-button [label]="'auth.login' | translate" icon="pi pi-sign-in" severity="secondary" size="small" />
+          </a>
+        </div>
       </header>
 
       <main class="max-w-3xl mx-auto px-6 py-10">
