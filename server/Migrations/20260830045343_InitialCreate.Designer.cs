@@ -12,8 +12,8 @@ using server.Infrastructure.Persistence;
 namespace server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260830044122_FixPendingChanges")]
-    partial class FixPendingChanges
+    [Migration("20260830045343_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
