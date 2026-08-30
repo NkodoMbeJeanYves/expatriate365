@@ -74,7 +74,7 @@ import { PublicTenant } from '@core/auth/models/user.model';
                   {{ post.title }}
                 </h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 flex-1">
-                  {{ post.excerpt }}
+                  {{ post.content_preview }}
                 </p>
                 @if (post.attachment_count > 0) {
                   <p class="text-xs text-gray-400 flex items-center gap-1">
