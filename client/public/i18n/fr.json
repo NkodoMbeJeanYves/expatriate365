@@ -18,7 +18,8 @@
     "member_dashboard": "Mon espace",
     "roles": "Rôles & Permissions",
     "member_categories": "Categories membres",
-    "community": "Communauté"
+    "community": "Communauté",
+    "community_moderation": "Modération"
   },
   "roles": {
     "title": "Rôles & Permissions",

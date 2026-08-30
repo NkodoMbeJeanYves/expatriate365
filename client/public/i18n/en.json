@@ -18,7 +18,8 @@
     "member_dashboard": "My space",
     "roles": "Roles & Permissions",
     "member_categories": "Member categories",
-    "community": "Community"
+    "community": "Community",
+    "community_moderation": "Moderation"
   },
   "roles": {
     "title": "Roles & Permissions",

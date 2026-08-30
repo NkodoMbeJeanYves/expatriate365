@@ -44,6 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.meetings', icon: 'pi pi-microphone', route: '/meetings', roles: [ROLES.PRESIDENT, ROLES.SECRETARY, ROLES.COMMITTEE_MEMBER] },
       { labelKey: 'nav.elections', icon: 'pi pi-check-square', route: '/elections' },
       { labelKey: 'nav.community', icon: 'pi pi-comments', route: '/community' },
+      { labelKey: 'nav.community_moderation', icon: 'pi pi-shield', route: '/community/moderation', roles: STAFF_ROLES },
     ],
   },
   {
