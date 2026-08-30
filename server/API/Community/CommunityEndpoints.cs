@@ -160,7 +160,12 @@ public static class CommunityEndpoints
         return Guid.TryParse(claim, out var id) ? id : null;
     }
 
-    private static bool IsStaff(ClaimsPrincipal principal) =>
-        principal.IsInRole("admin") || principal.IsInRole("staff") ||
-        principal.HasClaim("entity_type", "staff");
+    private static bool IsStaff(ClaimsPrincipal principal)
+    {
+        var role = principal.FindFirstValue("role")
+                ?? principal.FindFirstValue(System.Security.Claims.ClaimTypes.Role)
+                ?? "";
+        // Only plain members are restricted to published posts
+        return role != "member";
+    }
 }
