@@ -1,40 +1,54 @@
 #!/bin/bash
-# setup-downloads.sh
-# Script pour créer les dossiers de téléchargement et configurer les droits
+# setup-download.sh
+# Crée les dossiers d'upload et configure les droits pour l'API et nginx.
+#
+# Droits :
+#   - Propriétaire : expatriate365 (service app) → peut écrire les fichiers uploadés
+#   - Groupe       : www-data (nginx)            → peut lire via les alias nginx
+#   - Permissions  : 750 (rwxr-x---) sur les dossiers
+#   - setgid       : les nouveaux fichiers héritent automatiquement du groupe www-data
+#
+# Usage : sudo bash setup-download.sh
+set -euo pipefail
 
-# Variables
-BASE_DIR="/var/www/expatriate365/api"
-DOWNLOAD_DIR="$BASE_DIR/downloads"
+APP_NAME="expatriate365"
+BASE_DIR="/var/www/${APP_NAME}/api"
+DOWNLOAD_DIR="${BASE_DIR}/downloads"
 
-# Création des dossiers
-echo "📂 Création des dossiers..."
-sudo mkdir -p "$DOWNLOAD_DIR/attachments"
-sudo mkdir -p "$DOWNLOAD_DIR/avatars"
-sudo mkdir -p "$DOWNLOAD_DIR/branding"
-sudo mkdir -p "$DOWNLOAD_DIR/docs"
-# sudo mkdir -p "$DOWNLOAD_DIR/avatars"
-# sudo mkdir -p "$DOWNLOAD_DIR/pictures"
+# ── Création des dossiers ──────────────────────────────────────────────────────
+echo "→ Création des dossiers..."
+mkdir -p "${DOWNLOAD_DIR}/attachments"
+mkdir -p "${DOWNLOAD_DIR}/avatars"
+mkdir -p "${DOWNLOAD_DIR}/branding"
+mkdir -p "${DOWNLOAD_DIR}/docs"
 
-# Attribution des droits à www-data
-echo "🔒 Attribution des droits..."
-sudo chown -R www-data:www-data "$DOWNLOAD_DIR"
-sudo chmod -R 755 "$DOWNLOAD_DIR"
+# ── Propriétaire : service app ; groupe : www-data ────────────────────────────
+echo "→ Attribution des droits..."
+chown -R "${APP_NAME}:www-data" "${DOWNLOAD_DIR}"
 
-# Ajouter l'utilisateur API (exemple: school365) au groupe www-data
-echo "👤 Ajout de l'utilisateur API au groupe www-data..."
-sudo usermod -a -G www-data expatriate365
+# ── 750 : service app lit/écrit, nginx (www-data) lit, autres : rien ──────────
+chmod -R 750 "${DOWNLOAD_DIR}"
 
-# Vérification de la config Nginx
-echo "🧪 Test de la configuration Nginx..."
-sudo nginx -t
+# ── setgid sur les dossiers : nouveaux fichiers héritent du groupe www-data ───
+find "${DOWNLOAD_DIR}" -type d -exec chmod g+s {} \;
 
-# Rechargement de Nginx
-echo "🔄 Rechargement de Nginx..."
-sudo systemctl reload nginx
+# ── Vérification ──────────────────────────────────────────────────────────────
+echo ""
+echo "→ Résultat :"
+ls -la "${DOWNLOAD_DIR}"
 
-echo "✅ Configuration terminée !"
-echo "Les fichiers peuvent être uploadés dans:"
-echo " - $DOWNLOAD_DIR/docs"
-echo " - $DOWNLOAD_DIR/avatars"
-echo " - $DOWNLOAD_DIR/attachments"
-echo " - $DOWNLOAD_DIR/branding"
+# ── Nginx ─────────────────────────────────────────────────────────────────────
+echo ""
+echo "→ Test de la configuration Nginx..."
+nginx -t
+
+echo "→ Rechargement de Nginx..."
+systemctl reload nginx
+
+echo ""
+echo "✓ Configuration terminée."
+echo "  Dossiers d'upload disponibles :"
+echo "    ${DOWNLOAD_DIR}/attachments"
+echo "    ${DOWNLOAD_DIR}/avatars"
+echo "    ${DOWNLOAD_DIR}/branding"
+echo "    ${DOWNLOAD_DIR}/docs"
