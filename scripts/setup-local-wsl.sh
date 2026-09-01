@@ -7,15 +7,28 @@
 #   - MySQL (même config que la prod)
 #   - Pas de SMTP
 #   - Nginx en HTTP sur localhost:80
-#   - Fichiers sources dans ~/expatriate365 (système de fichiers Linux natif)
+#   - Déploiement via api.zip (pas de build depuis les sources)
+#
+# Prérequis :
+#   - Avoir généré api.zip localement (dotnet publish → zip)
+#   - Placer api.zip dans ~/api.zip (ou indiquer le chemin au démarrage)
 #
 # Usage depuis WSL2 :
-#   cd ~ && git clone <ton-repo> expatriate365
-#   sed 's/\r//' expatriate365/scripts/setup-local-wsl.sh | sudo bash -s
-#
-# Ou :
 #   cp /mnt/c/dev/expatriate365/scripts/setup-local-wsl.sh /tmp/
 #   sudo bash /tmp/setup-local-wsl.sh
+#
+# Valeurs par défaut (Entrée = accepter) :
+#   Chemin du projet    ~/expatriate365
+#   Chemin api.zip      ~/api.zip
+#   Channel .NET        9.0
+#   Nom de la base      expatriate365_local
+#   Utilisateur MySQL   expatriate365_user
+#   Email super admin   super_admin@localhost
+#
+# Champs obligatoires (pas de valeur par défaut) :
+#   Mot de passe utilisateur MySQL  (≥ 12 caractères)
+#   Mot de passe root MySQL
+#   Mot de passe super admin        (≥ 8 caractères)
 # =============================================================================
 set -euo pipefail
 
@@ -38,16 +51,22 @@ APP_DLL="server.dll"
 API_PORT="5001"
 DOMAIN="localhost"
 
-# Répertoire du projet (système de fichiers Linux natif — meilleur que /mnt/c/)
-read -rp "  Chemin du projet [~/expatriate365] : " PROJECT_DIR
-PROJECT_DIR="${PROJECT_DIR:-$HOME/expatriate365}"
-PROJECT_DIR="${PROJECT_DIR/#\~/$HOME}"
-[[ ! -d "$PROJECT_DIR" ]] && error "Répertoire introuvable : $PROJECT_DIR"
+# ── Chemin du zip API ─────────────────────────────────────────────────────────
+echo ""
+read -rp "  Chemin vers api.zip [~/api.zip] : " API_ZIP
+API_ZIP="${API_ZIP:-$HOME/api.zip}"
+API_ZIP="${API_ZIP/#\~/$HOME}"
+[[ ! -f "$API_ZIP" ]] && error "Fichier introuvable : $API_ZIP"
+log "api.zip trouvé : $API_ZIP"
 
-API_DIR="$PROJECT_DIR/server"
-FRONTEND_DIR="$PROJECT_DIR/client"
+# ── Frontend (optionnel — pour ng serve) ──────────────────────────────────────
+echo ""
+read -rp "  Chemin du projet frontend [~/expatriate365] : " FRONTEND_BASE
+FRONTEND_BASE="${FRONTEND_BASE:-$HOME/expatriate365}"
+FRONTEND_BASE="${FRONTEND_BASE/#\~/$HOME}"
+FRONTEND_DIR="$FRONTEND_BASE/client"
 
-# Version .NET
+# ── Version .NET ──────────────────────────────────────────────────────────────
 echo ""
 info "Version .NET à utiliser pour ce projet :"
 echo "  [1] .NET 9  (net9.0  — défaut de ce projet)"
@@ -61,11 +80,12 @@ else
 fi
 info "Channel sélectionné : .NET $DOTNET_CHANNEL"
 
-# Clé JWT
+# ── JWT ───────────────────────────────────────────────────────────────────────
 JWT_KEY=$(openssl rand -base64 64 | tr -d '\n')
 log "Clé JWT générée automatiquement."
 
-# Base de données MySQL
+# ── MySQL ─────────────────────────────────────────────────────────────────────
+echo ""
 read -rp "  Nom de la base MySQL [${APP_NAME}_local] : " DB_NAME
 DB_NAME="${DB_NAME:-${APP_NAME}_local}"
 read -rp "  Utilisateur MySQL [${APP_NAME}_user] : " DB_USER
@@ -75,18 +95,20 @@ read -rsp "  Mot de passe utilisateur MySQL (≥12 car.) : " DB_PASSWORD; echo
 read -rsp "  Mot de passe root MySQL : " MYSQL_ROOT_PASSWORD; echo
 [[ ${#MYSQL_ROOT_PASSWORD} -lt 4 ]] && error "Mot de passe root MySQL trop court."
 
-# Super admin
+# ── Super admin ───────────────────────────────────────────────────────────────
+echo ""
 read -rp "  Email super admin [super_admin@localhost] : " SEED_ADMIN_EMAIL
 SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-super_admin@localhost}"
 read -rsp "  Mot de passe super admin (≥8 car.) : " SEED_ADMIN_PASSWORD; echo
 [[ ${#SEED_ADMIN_PASSWORD} -lt 8 ]] && error "Mot de passe trop court."
 
+# ── Récapitulatif ─────────────────────────────────────────────────────────────
 echo ""
 info "Récapitulatif :"
-echo "  APP_NAME    : $APP_NAME"
-echo "  Projet      : $PROJECT_DIR"
-echo "  API port    : $API_PORT"
+echo "  api.zip     : $API_ZIP"
+echo "  Frontend    : $FRONTEND_DIR"
 echo "  .NET        : channel $DOTNET_CHANNEL"
+echo "  API port    : $API_PORT"
 echo "  Base MySQL  : $DB_NAME (user: $DB_USER)"
 echo "  Super admin : $SEED_ADMIN_EMAIL"
 echo ""
@@ -99,7 +121,7 @@ read -rp "Confirmer ? (oui/non) : " CONFIRM
 section "1. Outils système"
 apt update -y
 DEBIAN_FRONTEND=noninteractive apt install -y \
-    curl wget git unzip nginx \
+    curl wget git unzip rsync nginx \
     software-properties-common apt-transport-https gnupg
 log "Outils installés."
 
@@ -144,7 +166,6 @@ section "3. .NET 9 + .NET 10"
 DOTNET_INSTALL_DIR="/opt/dotnet"
 mkdir -p "$DOTNET_INSTALL_DIR"
 
-# Téléchargement unique du script d'installation
 wget -q https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh
 chmod +x /tmp/dotnet-install.sh
 
@@ -166,19 +187,17 @@ else
     log ".NET 10 installé."
 fi
 
-# ── Symlink vers le channel sélectionné ──────────────────────────────────────
 ln -sf "$DOTNET_INSTALL_DIR/dotnet" /usr/local/bin/dotnet
 grep -q "DOTNET_ROOT" /etc/environment 2>/dev/null || echo "DOTNET_ROOT=$DOTNET_INSTALL_DIR" >> /etc/environment
 
 info "SDKs disponibles :"
 dotnet --list-sdks
-info "Channel actif pour ce projet : .NET $DOTNET_CHANNEL ($(dotnet --version))"
+info "Channel actif pour ce projet : .NET $DOTNET_CHANNEL"
 
 # =============================================================================
-# 3. UTILISATEUR SYSTÈME
+# 4. UTILISATEUR SYSTÈME
 # =============================================================================
 section "4. Utilisateur système $APP_NAME"
-
 if id "$APP_NAME" &>/dev/null; then
     log "Utilisateur $APP_NAME déjà existant — ignoré."
 else
@@ -187,7 +206,7 @@ else
 fi
 
 # =============================================================================
-# 4. ARBORESCENCE
+# 5. ARBORESCENCE
 # =============================================================================
 section "5. Arborescence /var/www/$APP_NAME"
 mkdir -p "/var/www/${APP_NAME}/api/downloads/{attachments,branding,avatars,docs}"
@@ -203,7 +222,7 @@ find "/var/www/${APP_NAME}/api/downloads" -type d -exec chmod g+s {} \;
 log "Répertoires créés."
 
 # =============================================================================
-# 5. FICHIER DE SECRETS
+# 6. FICHIER DE SECRETS
 # =============================================================================
 section "6. Fichier de secrets /etc/$APP_NAME/env"
 mkdir -p "/etc/${APP_NAME}"
@@ -250,11 +269,10 @@ chmod 600 "/etc/${APP_NAME}/env"
 log "Fichier /etc/${APP_NAME}/env créé (chmod 600)."
 
 # =============================================================================
-# 6. SERVICE SYSTEMD
+# 7. SERVICE SYSTEMD
 # =============================================================================
 section "7. Service systemd ${APP_NAME}-api"
 
-# WSL2 : systemd peut ne pas être disponible — détection automatique
 if [[ -d /run/systemd/system ]]; then
     cat > "/etc/systemd/system/${APP_NAME}-api.service" <<SERVICE
 [Unit]
@@ -277,12 +295,12 @@ SERVICE
     systemctl enable "${APP_NAME}-api"
     log "Service systemd ${APP_NAME}-api configuré."
 else
-    warn "systemd non disponible dans ce WSL2 — le service sera lancé manuellement."
-    warn "Pour démarrer l'API : sudo -u ${APP_NAME} dotnet /var/www/${APP_NAME}/api/${APP_DLL}"
+    warn "systemd non disponible dans ce WSL2 — service à lancer manuellement."
+    warn "  sudo -u ${APP_NAME} dotnet /var/www/${APP_NAME}/api/${APP_DLL}"
 fi
 
 # =============================================================================
-# 7. NGINX — HTTP local (pas de SSL)
+# 8. NGINX — HTTP local (pas de SSL)
 # =============================================================================
 section "8. Nginx — vhost localhost"
 
@@ -353,53 +371,76 @@ service nginx restart
 log "Nginx configuré sur http://localhost"
 
 # =============================================================================
-# 8. BUILD API + DÉPLOIEMENT LOCAL
+# 9. DÉPLOIEMENT API DEPUIS api.zip
 # =============================================================================
-section "9. Build et déploiement de l'API"
+section "9. Déploiement API depuis api.zip"
 
-info "Build de l'API depuis $API_DIR..."
-cd "$API_DIR"
-dotnet publish -c Release -o "/var/www/${APP_NAME}/api" --nologo -q
-chown -R "${APP_NAME}:${APP_NAME}" "/var/www/${APP_NAME}/api"
-chown -R "${APP_NAME}:www-data" "/var/www/${APP_NAME}/api/downloads"
-chmod -R 750 "/var/www/${APP_NAME}/api/downloads"
-find "/var/www/${APP_NAME}/api/downloads" -type d -exec chmod g+s {} \;
-log "API déployée dans /var/www/${APP_NAME}/api"
+EXTRACT_DIR="/tmp/${APP_NAME}-api-extract"
+API_DEPLOY_DIR="/var/www/${APP_NAME}/api"
 
-# ── Migrations ────────────────────────────────────────────────────────────────
+info "Extraction de $API_ZIP..."
+rm -rf "$EXTRACT_DIR"
+mkdir -p "$EXTRACT_DIR"
+unzip -o "$API_ZIP" -d "$EXTRACT_DIR"
+log "Extraction terminée."
+
+info "Déploiement vers $API_DEPLOY_DIR..."
+rsync -av \
+    --exclude='downloads/attachments' \
+    --exclude='downloads/branding' \
+    --exclude='downloads/avatars' \
+    --exclude='downloads/docs' \
+    --exclude='logs' \
+    "$EXTRACT_DIR/" "$API_DEPLOY_DIR/"
+
+# Recréer les dossiers exclus au cas où
+mkdir -p "${API_DEPLOY_DIR}/downloads/{attachments,branding,avatars,docs}"
+mkdir -p "${API_DEPLOY_DIR}/logs"
+
+# Permissions
+chown -R "${APP_NAME}:${APP_NAME}" "$API_DEPLOY_DIR"
+chown -R "${APP_NAME}:www-data" "${API_DEPLOY_DIR}/downloads"
+chmod -R 750 "${API_DEPLOY_DIR}/downloads"
+find "${API_DEPLOY_DIR}/downloads" -type d -exec chmod g+s {} \;
+log "API déployée dans $API_DEPLOY_DIR"
+
+# Nettoyage
+rm -rf "$EXTRACT_DIR"
+
+# ── Migrations EF Core ────────────────────────────────────────────────────────
 info "Application des migrations..."
 set -a; source <(grep -v '^#' "/etc/${APP_NAME}/env" | sed 's/\r//'); set +a
-cd "/var/www/${APP_NAME}/api"
+cd "$API_DEPLOY_DIR"
 dotnet "${APP_DLL}" -- ef database update 2>/dev/null \
-    || warn "Migration EF ignorée — utilisez 'dotnet ef database update' manuellement si nécessaire."
+    || warn "Migration EF ignorée — lance 'dotnet ef database update' manuellement si nécessaire."
 
 # ── Démarrage ─────────────────────────────────────────────────────────────────
 if [[ -d /run/systemd/system ]]; then
     service "${APP_NAME}-api" start || systemctl start "${APP_NAME}-api" || true
     log "Service ${APP_NAME}-api démarré."
 else
-    warn "Lance l'API manuellement dans un terminal :"
-    warn "  sudo -u ${APP_NAME} ASPNETCORE_URLS=http://0.0.0.0:${API_PORT} dotnet /var/www/${APP_NAME}/api/${APP_DLL}"
+    warn "Lance l'API manuellement :"
+    warn "  sudo -u ${APP_NAME} dotnet /var/www/${APP_NAME}/api/${APP_DLL}"
 fi
 
 # =============================================================================
-# 9. BUILD FRONTEND
+# 10. FRONTEND (optionnel — ng serve)
 # =============================================================================
-section "10. Build frontend Angular"
+section "10. Frontend Angular"
 
-if ! command -v ng &>/dev/null && ! command -v npx &>/dev/null; then
-    warn "Angular CLI introuvable — installe Node.js puis relance :"
-    warn "  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
-    warn "  sudo apt install -y nodejs"
-    warn "  npm install -g @angular/cli"
+if [[ -d "$FRONTEND_DIR" ]]; then
+    if ! command -v node &>/dev/null; then
+        warn "Node.js introuvable — installe-le puis lance ng serve :"
+        warn "  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
+        warn "  sudo apt install -y nodejs && npm install -g @angular/cli"
+    else
+        info "Pour démarrer le frontend avec hot reload :"
+        info "  cd $FRONTEND_DIR && ng serve --host 0.0.0.0"
+        info "  → accède via http://localhost (nginx proxifie le port 4200)"
+    fi
 else
-    info "Build Angular depuis $FRONTEND_DIR..."
-    cd "$FRONTEND_DIR"
-    npm ci --silent
-    npx ng build --configuration production --output-path "/var/www/${APP_NAME}/frontend" 2>/dev/null \
-        || warn "Build Angular échoué — lance 'ng serve --host 0.0.0.0' à la place pour le dev."
-    chown -R www-data:www-data "/var/www/${APP_NAME}/frontend"
-    log "Frontend déployé dans /var/www/${APP_NAME}/frontend"
+    warn "Dossier frontend introuvable ($FRONTEND_DIR) — ng serve non disponible."
+    warn "Le frontend peut aussi être déployé via un zip séparé dans /var/www/${APP_NAME}/frontend/"
 fi
 
 # =============================================================================
@@ -410,16 +451,15 @@ echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━
 echo -e "${GREEN}  ✓ Setup local terminé${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "  Frontend     : http://localhost"
+echo "  Frontend     : http://localhost  (via ng serve --host 0.0.0.0)"
 echo "  API          : http://localhost/api/v1"
 echo "  Scalar       : http://localhost/scalar"
 echo "  Super admin  : $SEED_ADMIN_EMAIL"
 echo ""
-echo "  Pour redéployer l'API après un changement :"
-echo "    cd $API_DIR && dotnet publish -c Release -o /var/www/${APP_NAME}/api"
-echo "    sudo service ${APP_NAME}-api restart"
+echo "  Pour redéployer l'API (nouveau api.zip) :"
+echo "    cp /mnt/c/.../api.zip ~/api.zip"
+echo "    sudo bash /tmp/setup-local-wsl.sh"
 echo ""
-echo "  Pour le dev frontend (hot reload) :"
+echo "  Pour démarrer le frontend :"
 echo "    cd $FRONTEND_DIR && ng serve --host 0.0.0.0"
-echo "    → accède via http://localhost (nginx proxifie le port 4200)"
 echo ""
