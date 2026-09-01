@@ -9,11 +9,11 @@
 #   - setgid       : les nouveaux fichiers héritent automatiquement du groupe www-data
 #
 # Exécution depuis la machine locale (Git Bash) :
-#   ssh root@acm365hub.poweryoursaas.com "bash -s" < scripts/setup-download.sh
+#   sed 's/\r//' scripts/setup-download.sh | ssh root@acm365hub.poweryoursaas.com "bash -s"
 #
-# Ou en deux étapes :
+# Ou en deux étapes (évite les problèmes de fins de ligne CRLF) :
 #   scp scripts/setup-download.sh root@acm365hub.poweryoursaas.com:/tmp/setup-download.sh
-#   ssh root@acm365hub.poweryoursaas.com "bash /tmp/setup-download.sh"
+#   ssh root@acm365hub.poweryoursaas.com "sed -i 's/\r//' /tmp/setup-download.sh && bash /tmp/setup-download.sh"
 set -euo pipefail
 
 APP_NAME="expatriate365"
