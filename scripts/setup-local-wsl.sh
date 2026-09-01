@@ -7,23 +7,26 @@
 #   - MySQL (même config que la prod)
 #   - Pas de SMTP
 #   - Nginx en HTTP sur localhost:80
-#   - Déploiement via api.zip (pas de build depuis les sources)
+#   - Déploiement API    via api.zip      → /var/www/expatriate365/api/
+#   - Déploiement Front  via frontend.zip → /var/www/expatriate365/frontend/
+#   - Options --reset / --seed en fin de déploiement
 #
 # Prérequis :
-#   - Avoir généré api.zip localement (dotnet publish → zip)
-#   - Placer api.zip dans ~/api.zip (ou indiquer le chemin au démarrage)
+#   - api.zip      : dotnet publish -c Release → zip du dossier publish
+#   - frontend.zip : ng build --configuration production → zip du dossier dist
+#   - Placer les zips dans ~/ (ou indiquer les chemins au démarrage)
 #
 # Usage depuis WSL2 :
 #   cp /mnt/c/dev/expatriate365/scripts/setup-local-wsl.sh /tmp/
 #   sudo bash /tmp/setup-local-wsl.sh
 #
 # Valeurs par défaut (Entrée = accepter) :
-#   Chemin du projet    ~/expatriate365
-#   Chemin api.zip      ~/api.zip
-#   Channel .NET        9.0
-#   Nom de la base      expatriate365_local
-#   Utilisateur MySQL   expatriate365_user
-#   Email super admin   super_admin@localhost
+#   Chemin api.zip        ~/api.zip
+#   Chemin frontend.zip   ~/frontend.zip
+#   Channel .NET          9.0
+#   Nom de la base        expatriate365_local
+#   Utilisateur MySQL     expatriate365_user
+#   Email super admin     super_admin@localhost
 #
 # Champs obligatoires (pas de valeur par défaut) :
 #   Mot de passe utilisateur MySQL  (≥ 12 caractères)
@@ -51,7 +54,7 @@ APP_DLL="server.dll"
 API_PORT="5001"
 DOMAIN="localhost"
 
-# ── Chemin du zip API ─────────────────────────────────────────────────────────
+# ── Chemin api.zip ────────────────────────────────────────────────────────────
 echo ""
 read -rp "  Chemin vers api.zip [~/api.zip] : " API_ZIP
 API_ZIP="${API_ZIP:-$HOME/api.zip}"
@@ -59,12 +62,12 @@ API_ZIP="${API_ZIP/#\~/$HOME}"
 [[ ! -f "$API_ZIP" ]] && error "Fichier introuvable : $API_ZIP"
 log "api.zip trouvé : $API_ZIP"
 
-# ── Frontend (optionnel — pour ng serve) ──────────────────────────────────────
-echo ""
-read -rp "  Chemin du projet frontend [~/expatriate365] : " FRONTEND_BASE
-FRONTEND_BASE="${FRONTEND_BASE:-$HOME/expatriate365}"
-FRONTEND_BASE="${FRONTEND_BASE/#\~/$HOME}"
-FRONTEND_DIR="$FRONTEND_BASE/client"
+# ── Chemin frontend.zip ───────────────────────────────────────────────────────
+read -rp "  Chemin vers frontend.zip [~/frontend.zip] : " FRONTEND_ZIP
+FRONTEND_ZIP="${FRONTEND_ZIP:-$HOME/frontend.zip}"
+FRONTEND_ZIP="${FRONTEND_ZIP/#\~/$HOME}"
+[[ ! -f "$FRONTEND_ZIP" ]] && error "Fichier introuvable : $FRONTEND_ZIP"
+log "frontend.zip trouvé : $FRONTEND_ZIP"
 
 # ── Version .NET ──────────────────────────────────────────────────────────────
 echo ""
@@ -73,11 +76,7 @@ echo "  [1] .NET 9  (net9.0  — défaut de ce projet)"
 echo "  [2] .NET 10 (net10.0 — si vous avez migré le .csproj)"
 read -rp "  Votre choix [1] : " _DOTNET_CHOICE
 _DOTNET_CHOICE="${_DOTNET_CHOICE:-1}"
-if [[ "$_DOTNET_CHOICE" == "2" ]]; then
-    DOTNET_CHANNEL="10.0"
-else
-    DOTNET_CHANNEL="9.0"
-fi
+[[ "$_DOTNET_CHOICE" == "2" ]] && DOTNET_CHANNEL="10.0" || DOTNET_CHANNEL="9.0"
 info "Channel sélectionné : .NET $DOTNET_CHANNEL"
 
 # ── JWT ───────────────────────────────────────────────────────────────────────
@@ -102,15 +101,29 @@ SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-super_admin@localhost}"
 read -rsp "  Mot de passe super admin (≥8 car.) : " SEED_ADMIN_PASSWORD; echo
 [[ ${#SEED_ADMIN_PASSWORD} -lt 8 ]] && error "Mot de passe trop court."
 
+# ── Seed / Reset ──────────────────────────────────────────────────────────────
+echo ""
+info "Gestion de la base de données après déploiement :"
+echo "  [1] Conserver la base existante (défaut)"
+echo "  [2] --reset : recréer le schéma (rôles + super_admin seulement)"
+echo "  [3] --seed  : recréer le schéma + injecter les données de démo"
+read -rp "  Votre choix [1] : " _DB_ACTION
+_DB_ACTION="${_DB_ACTION:-1}"
+_HAS_RESET=false
+_HAS_SEED=false
+[[ "$_DB_ACTION" == "2" ]] && _HAS_RESET=true
+[[ "$_DB_ACTION" == "3" ]] && _HAS_SEED=true
+
 # ── Récapitulatif ─────────────────────────────────────────────────────────────
 echo ""
 info "Récapitulatif :"
-echo "  api.zip     : $API_ZIP"
-echo "  Frontend    : $FRONTEND_DIR"
-echo "  .NET        : channel $DOTNET_CHANNEL"
-echo "  API port    : $API_PORT"
-echo "  Base MySQL  : $DB_NAME (user: $DB_USER)"
-echo "  Super admin : $SEED_ADMIN_EMAIL"
+echo "  api.zip      : $API_ZIP"
+echo "  frontend.zip : $FRONTEND_ZIP"
+echo "  .NET         : channel $DOTNET_CHANNEL"
+echo "  API port     : $API_PORT"
+echo "  Base MySQL   : $DB_NAME (user: $DB_USER)"
+echo "  Super admin  : $SEED_ADMIN_EMAIL"
+echo "  DB action    : $( [[ "$_HAS_RESET" == true ]] && echo "--reset" || ( [[ "$_HAS_SEED" == true ]] && echo "--seed" || echo "conserver" ) )"
 echo ""
 read -rp "Confirmer ? (oui/non) : " CONFIRM
 [[ "$CONFIRM" != "oui" ]] && { warn "Annulé."; exit 0; }
@@ -169,7 +182,6 @@ mkdir -p "$DOTNET_INSTALL_DIR"
 wget -q https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh
 chmod +x /tmp/dotnet-install.sh
 
-# ── .NET 9 ────────────────────────────────────────────────────────────────────
 if dotnet --list-sdks 2>/dev/null | grep -q "^9\."; then
     log ".NET 9 déjà installé — ignoré."
 else
@@ -178,7 +190,6 @@ else
     log ".NET 9 installé."
 fi
 
-# ── .NET 10 ───────────────────────────────────────────────────────────────────
 if dotnet --list-sdks 2>/dev/null | grep -q "^10\."; then
     log ".NET 10 déjà installé — ignoré."
 else
@@ -353,13 +364,22 @@ server {
         proxy_set_header Host \$host;
     }
 
-    # ── Frontend Angular (ng serve --host 0.0.0.0) ───────────────────────────
+    # ── Frontend Angular ──────────────────────────────────────────────────────
+    root  /var/www/${APP_NAME}/frontend;
+    index index.html;
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|avif)\$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location ~* (manifest\.webmanifest|ngsw\.json|ngsw-worker\.js|safety-worker\.js)\$ {
+        expires 0;
+        add_header Cache-Control "no-store, no-cache";
+    }
+
     location / {
-        proxy_pass         http://127.0.0.1:4200;
-        proxy_http_version 1.1;
-        proxy_set_header   Upgrade \$http_upgrade;
-        proxy_set_header   Connection "upgrade";
-        proxy_set_header   Host \$host;
+        try_files \$uri \$uri/ /index.html;
     }
 }
 NGINX
@@ -371,18 +391,17 @@ service nginx restart
 log "Nginx configuré sur http://localhost"
 
 # =============================================================================
-# 9. DÉPLOIEMENT API DEPUIS api.zip
+# 9. DÉPLOIEMENT API depuis api.zip
 # =============================================================================
-section "9. Déploiement API depuis api.zip"
+section "9. Déploiement API"
 
-EXTRACT_DIR="/tmp/${APP_NAME}-api-extract"
 API_DEPLOY_DIR="/var/www/${APP_NAME}/api"
+EXTRACT_DIR="/tmp/${APP_NAME}-api-extract"
 
 info "Extraction de $API_ZIP..."
 rm -rf "$EXTRACT_DIR"
 mkdir -p "$EXTRACT_DIR"
 unzip -o "$API_ZIP" -d "$EXTRACT_DIR"
-log "Extraction terminée."
 
 info "Déploiement vers $API_DEPLOY_DIR..."
 rsync -av \
@@ -393,73 +412,82 @@ rsync -av \
     --exclude='logs' \
     "$EXTRACT_DIR/" "$API_DEPLOY_DIR/"
 
-# Recréer les dossiers exclus au cas où
 mkdir -p "${API_DEPLOY_DIR}/downloads/{attachments,branding,avatars,docs}"
 mkdir -p "${API_DEPLOY_DIR}/logs"
 
-# Permissions
 chown -R "${APP_NAME}:${APP_NAME}" "$API_DEPLOY_DIR"
 chown -R "${APP_NAME}:www-data" "${API_DEPLOY_DIR}/downloads"
 chmod -R 750 "${API_DEPLOY_DIR}/downloads"
 find "${API_DEPLOY_DIR}/downloads" -type d -exec chmod g+s {} \;
+rm -rf "$EXTRACT_DIR"
 log "API déployée dans $API_DEPLOY_DIR"
 
-# Nettoyage
-rm -rf "$EXTRACT_DIR"
-
-# ── Migrations EF Core ────────────────────────────────────────────────────────
-info "Application des migrations..."
-set -a; source <(grep -v '^#' "/etc/${APP_NAME}/env" | sed 's/\r//'); set +a
-cd "$API_DEPLOY_DIR"
-dotnet "${APP_DLL}" -- ef database update 2>/dev/null \
-    || warn "Migration EF ignorée — lance 'dotnet ef database update' manuellement si nécessaire."
-
-# ── Démarrage ─────────────────────────────────────────────────────────────────
-if [[ -d /run/systemd/system ]]; then
-    service "${APP_NAME}-api" start || systemctl start "${APP_NAME}-api" || true
-    log "Service ${APP_NAME}-api démarré."
-else
-    warn "Lance l'API manuellement :"
-    warn "  sudo -u ${APP_NAME} dotnet /var/www/${APP_NAME}/api/${APP_DLL}"
-fi
+# ── Mémoriser les options choisies pour le résumé ────────────────────────────
+_DB_ACTION_LABEL="conserver"
+[[ "$_HAS_RESET" == true ]] && _DB_ACTION_LABEL="--reset"
+[[ "$_HAS_SEED"  == true ]] && _DB_ACTION_LABEL="--seed"
+log "API prête — démarrage à effectuer manuellement (voir résumé)."
 
 # =============================================================================
-# 10. FRONTEND (optionnel — ng serve)
+# 10. DÉPLOIEMENT FRONTEND depuis frontend.zip
 # =============================================================================
-section "10. Frontend Angular"
+section "10. Déploiement Frontend"
 
-if [[ -d "$FRONTEND_DIR" ]]; then
-    if ! command -v node &>/dev/null; then
-        warn "Node.js introuvable — installe-le puis lance ng serve :"
-        warn "  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
-        warn "  sudo apt install -y nodejs && npm install -g @angular/cli"
-    else
-        info "Pour démarrer le frontend avec hot reload :"
-        info "  cd $FRONTEND_DIR && ng serve --host 0.0.0.0"
-        info "  → accède via http://localhost (nginx proxifie le port 4200)"
-    fi
-else
-    warn "Dossier frontend introuvable ($FRONTEND_DIR) — ng serve non disponible."
-    warn "Le frontend peut aussi être déployé via un zip séparé dans /var/www/${APP_NAME}/frontend/"
-fi
+FRONTEND_DEPLOY_DIR="/var/www/${APP_NAME}/frontend"
+FRONTEND_EXTRACT="/tmp/${APP_NAME}-frontend-extract"
+
+info "Extraction de $FRONTEND_ZIP..."
+rm -rf "$FRONTEND_EXTRACT"
+mkdir -p "$FRONTEND_EXTRACT"
+unzip -o "$FRONTEND_ZIP" -d "$FRONTEND_EXTRACT"
+
+info "Déploiement vers $FRONTEND_DEPLOY_DIR..."
+rsync -av --delete "$FRONTEND_EXTRACT/" "$FRONTEND_DEPLOY_DIR/"
+chown -R www-data:www-data "$FRONTEND_DEPLOY_DIR"
+rm -rf "$FRONTEND_EXTRACT"
+log "Frontend déployé dans $FRONTEND_DEPLOY_DIR"
+
+service nginx reload
 
 # =============================================================================
 # RÉSUMÉ
 # =============================================================================
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${GREEN}  ✓ Setup local terminé${NC}"
+echo -e "${GREEN}  ✓ Setup local terminé — démarrage manuel requis${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "  Frontend     : http://localhost  (via ng serve --host 0.0.0.0)"
+echo "  Application  : http://localhost"
 echo "  API          : http://localhost/api/v1"
 echo "  Scalar       : http://localhost/scalar"
 echo "  Super admin  : $SEED_ADMIN_EMAIL"
+echo "  DB action    : $_DB_ACTION_LABEL (à passer au démarrage de l'API)"
 echo ""
-echo "  Pour redéployer l'API (nouveau api.zip) :"
+echo -e "${CYAN}  ── Démarrer le backend ──────────────────────────────────────────${NC}"
+if [[ -d /run/systemd/system ]]; then
+echo "  sudo systemctl start ${APP_NAME}-api"
+echo "  sudo systemctl status ${APP_NAME}-api"
+else
+echo "  # Terminal dédié (WSL2 sans systemd) :"
+echo "  sudo -u ${APP_NAME} dotnet /var/www/${APP_NAME}/api/${APP_DLL}"
+fi
+if [[ "$_HAS_RESET" == true ]]; then
+echo ""
+echo "  # Puis appliquer le reset (dans un autre terminal après démarrage) :"
+echo "  sudo -u ${APP_NAME} dotnet /var/www/${APP_NAME}/api/${APP_DLL} --reset"
+fi
+if [[ "$_HAS_SEED" == true ]]; then
+echo ""
+echo "  # Puis appliquer le seed (dans un autre terminal après démarrage) :"
+echo "  sudo -u ${APP_NAME} dotnet /var/www/${APP_NAME}/api/${APP_DLL} --seed"
+fi
+echo ""
+echo -e "${CYAN}  ── Frontend ─────────────────────────────────────────────────────${NC}"
+echo "  Le frontend est servi par nginx (fichiers statiques)."
+echo "  → Accède directement via http://localhost"
+echo ""
+echo -e "${CYAN}  ── Redéployer (nouveaux zips) ───────────────────────────────────${NC}"
 echo "    cp /mnt/c/.../api.zip ~/api.zip"
+echo "    cp /mnt/c/.../frontend.zip ~/frontend.zip"
 echo "    sudo bash /tmp/setup-local-wsl.sh"
-echo ""
-echo "  Pour démarrer le frontend :"
-echo "    cd $FRONTEND_DIR && ng serve --host 0.0.0.0"
 echo ""
