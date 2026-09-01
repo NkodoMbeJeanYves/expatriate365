@@ -500,13 +500,15 @@ fi
 # 9. ARBORESCENCE
 # =============================================================================
 section "9. Arborescence /var/www/$APP_NAME"
-mkdir -p "/var/www/${APP_NAME}/api/wwwroot/{attachments,branding,avatars,docs}"
+mkdir -p "/var/www/${APP_NAME}/api/downloads/{attachments,branding,avatars,docs}"
 mkdir -p "/var/www/${APP_NAME}/api/logs"
 mkdir -p "/var/www/${APP_NAME}/frontend"
 
 chown -R "${APP_NAME}:${APP_NAME}" "/var/www/${APP_NAME}/api"
 chown -R www-data:www-data          "/var/www/${APP_NAME}/frontend"
 chmod -R 755 "/var/www/${APP_NAME}"
+# downloads/ doit être lisible par nginx (www-data) pour les alias
+chmod -R 755 "/var/www/${APP_NAME}/api/downloads"
 log "Répertoires créés."
 next "Étape 10/16 — Écriture du fichier de secrets /etc/$APP_NAME/env"
 
@@ -551,7 +553,7 @@ Email__FromAddress=${SMTP_FROM}
 Email__PortalDomain=${DOMAIN}
 
 # Stockage fichiers
-FileStorage__BasePath=/var/www/${APP_NAME}/api/wwwroot
+FileStorage__BasePath=/var/www/${APP_NAME}/api/downloads
 FileStorage__UrlPrefix=https://${DOMAIN}
 
 # Mémo déploiement (utilisés par les scripts, pas par l'API)
@@ -842,18 +844,20 @@ echo "→ Décompression…"
 mkdir -p "\${API_DIR}"
 unzip -o "/tmp/\${APP_NAME}-api.zip" -d "/tmp/\${APP_NAME}-api-extract/"
 
-rsync -av --exclude='wwwroot/attachments' --exclude='wwwroot/branding' \
-          --exclude='wwwroot/avatars'     --exclude='wwwroot/docs' \
+rsync -av --exclude='downloads/attachments' --exclude='downloads/branding' \
+          --exclude='downloads/avatars'     --exclude='downloads/docs' \
           --exclude='logs' \
           "/tmp/\${APP_NAME}-api-extract/" "\${API_DIR}/"
 
-mkdir -p "\${API_DIR}/wwwroot/{attachments,branding,avatars,docs}"
+mkdir -p "\${API_DIR}/downloads/{attachments,branding,avatars,docs}"
 mkdir -p "\${API_DIR}/logs"
 
 # ── Permissions ───────────────────────────────────────────────────────────────
 echo "→ Permissions…"
 chown -R "\${APP_NAME}:\${APP_NAME}" "\${API_DIR}"
 chmod -R 755 "\${API_DIR}"
+# downloads/ lisible par nginx (www-data) pour les alias statiques
+chmod -R 755 "\${API_DIR}/downloads"
 
 # ── Chargement des variables d'environnement (sans les afficher) ──────────────
 set -a
