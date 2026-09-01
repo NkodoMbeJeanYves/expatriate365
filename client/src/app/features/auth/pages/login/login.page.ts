@@ -6,6 +6,7 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
+import { TenantService } from '@core/tenant/tenant.service';
 import { environment } from '@env/environment';
 
 @Component({
@@ -68,8 +69,9 @@ import { environment } from '@env/environment';
   `,
 })
 export class LoginPageComponent {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
+  private readonly auth          = inject(AuthService);
+  private readonly tenantService = inject(TenantService);
+  private readonly router        = inject(Router);
 
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -86,9 +88,10 @@ export class LoginPageComponent {
     this.errorMessage.set(null);
     const { email, password } = this.form.getRawValue();
     this.auth.login({ email: email!, password: password! }).subscribe({
-      next: (res) => {
+      next: async (res) => {
         const isSuperAdmin = res.user.roles?.includes('super_admin');
         const hasTenant   = !!res.user.tenant_id;
+        if (hasTenant) await this.tenantService.bootstrap();
         this.router.navigateByUrl(isSuperAdmin && !hasTenant ? '/select-tenant' : '/dashboard');
       },
       error: (err) => {

@@ -43,10 +43,10 @@ export const appConfig: ApplicationConfig = {
       themeService.init();
       translate.use(localStorage.getItem('exp365_lang') ?? 'fr');
       await authService.bootstrap();
-      if (localStorage.getItem('exp365_auth')) {
+      if (authStore.isAuthenticated() && authStore.currentUser()?.tenant_id) {
         await tenantService.bootstrap();
-        authStore.restoreSession();
       }
+      authStore.restoreSession();
     }),
   ],
 };
