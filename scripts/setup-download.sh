@@ -8,7 +8,12 @@
 #   - Permissions  : 750 (rwxr-x---) sur les dossiers
 #   - setgid       : les nouveaux fichiers héritent automatiquement du groupe www-data
 #
-# Usage : sudo bash setup-download.sh
+# Exécution depuis la machine locale (Git Bash) :
+#   ssh root@acm365hub.poweryoursaas.com "bash -s" < scripts/setup-download.sh
+#
+# Ou en deux étapes :
+#   scp scripts/setup-download.sh root@acm365hub.poweryoursaas.com:/tmp/setup-download.sh
+#   ssh root@acm365hub.poweryoursaas.com "bash /tmp/setup-download.sh"
 set -euo pipefail
 
 APP_NAME="expatriate365"

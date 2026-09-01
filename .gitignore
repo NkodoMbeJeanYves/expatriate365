@@ -89,4 +89,5 @@ _mysqlcheck/
 
 /server/wwwroot/
 /server/uploads/
+/server/downloads/
 /server/logs/
