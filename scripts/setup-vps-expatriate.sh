@@ -510,6 +510,8 @@ chmod -R 755 "/var/www/${APP_NAME}"
 # downloads/ : propriétaire = service app, groupe = www-data pour que nginx puisse lire via alias
 chown -R "${APP_NAME}:www-data" "/var/www/${APP_NAME}/api/downloads"
 chmod -R 750 "/var/www/${APP_NAME}/api/downloads"
+# setgid : les nouveaux fichiers uploadés par l'API héritent du groupe www-data
+find "/var/www/${APP_NAME}/api/downloads" -type d -exec chmod g+s {} \;
 log "Répertoires créés."
 next "Étape 10/16 — Écriture du fichier de secrets /etc/$APP_NAME/env"
 
@@ -609,7 +611,7 @@ server {
     root  /var/www/${APP_NAME}/frontend;
     index index.html;
 
-    client_max_body_size 50M;
+    client_max_body_size 20M;
 
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|avif)\$ {
         expires 1y;
@@ -860,6 +862,8 @@ chmod -R 755 "\${API_DIR}"
 # downloads/ : groupe www-data pour que nginx lise via alias, 750 pour éviter l'accès public direct
 chown -R "\${APP_NAME}:www-data" "\${API_DIR}/downloads"
 chmod -R 750 "\${API_DIR}/downloads"
+# setgid : les nouveaux fichiers uploadés par l'API héritent du groupe www-data
+find "\${API_DIR}/downloads" -type d -exec chmod g+s {} \;
 
 # ── Chargement des variables d'environnement (sans les afficher) ──────────────
 set -a
