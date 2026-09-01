@@ -94,7 +94,7 @@ import { PostDto } from '@models/post.model';
                 </h3>
                 <div class="flex flex-col gap-2">
                   @for (doc of documents(); track doc.id) {
-                    <a [href]="doc.file_url" target="_blank" rel="noopener"
+                    <a [href]="doc.file_url" [download]="doc.file_name" target="_blank" rel="noopener"
                        class="flex items-center gap-3 p-3 rounded-lg border border-gray-200
                               dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800
                               transition-colors no-underline">

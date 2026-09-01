@@ -641,25 +641,26 @@ server {
         proxy_read_timeout 86400s;
     }
 
-    location /attachments/ {
-        alias /var/www/${APP_NAME}/api/wwwroot/attachments/;
+    location /downloads/avatars/ {
+        alias /var/www/${APP_NAME}/api/downloads/avatars/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
-    location /branding/ {
-        alias /var/www/${APP_NAME}/api/wwwroot/branding/;
+    location /downloads/branding/ {
+        alias /var/www/${APP_NAME}/api/downloads/branding/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
-    location /avatars/ {
-        alias /var/www/${APP_NAME}/api/wwwroot/avatars/;
+    location /downloads/attachments/ {
+        alias /var/www/${APP_NAME}/api/downloads/attachments/;
         expires 30d;
-        add_header Cache-Control "public, immutable";
+        add_header Cache-Control "public";
     }
-    location /docs/ {
-        alias /var/www/${APP_NAME}/api/wwwroot/docs/;
+    location /downloads/docs/ {
+        alias /var/www/${APP_NAME}/api/downloads/docs/;
         expires 7d;
         add_header Cache-Control "public";
+        add_header Content-Disposition "attachment";
     }
 
     location /scalar/ {

@@ -64,7 +64,7 @@ import { DatePipe } from '@angular/common';
 
               <!-- Documents list -->
               @for (doc of documents(); track doc.id) {
-                <a [href]="doc.file_url" target="_blank" rel="noopener"
+                <a [href]="doc.file_url" [download]="doc.file_name" target="_blank" rel="noopener"
                   class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                   <i class="pi pi-file-pdf text-red-500 text-xl"></i>
                   <span class="text-sm text-gray-700 truncate flex-1">{{ doc.file_name }}</span>

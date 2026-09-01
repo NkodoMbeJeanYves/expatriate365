@@ -102,7 +102,7 @@ import { DocumentFormDrawerComponent } from '../../components/document-form-draw
               <div class="text-xs text-gray-400">{{ formatSize(doc.file_size_bytes) }}</div>
 
               <div class="flex items-center gap-2 pt-1 border-t border-gray-50">
-                <a [href]="doc.file_url" target="_blank" rel="noopener">
+                <a [href]="doc.file_url" [download]="doc.file_name" target="_blank" rel="noopener">
                   <p-button size="small" icon="pi pi-download" [pTooltip]="'documents.download' | translate" severity="secondary" />
                 </a>
                 <p-button size="small" icon="pi pi-pencil" [pTooltip]="'common.edit' | translate" severity="secondary"
