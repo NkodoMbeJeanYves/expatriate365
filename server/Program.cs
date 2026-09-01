@@ -110,19 +110,25 @@ try
     app.UseSerilogRequestLogging();
     app.UseCors();
 
-    var wwwroot = app.Environment.WebRootPath
-        ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+    var downloadPath = Path.Combine(app.Environment.ContentRootPath, "downloads");
+    
+    Directory.CreateDirectory(downloadPath);
 
     foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
-        Directory.CreateDirectory(Path.Combine(wwwroot, sub));
+    {
+        if (!Directory.Exists(Path.Combine(downloadPath, sub)))
+        {
+            Directory.CreateDirectory(Path.Combine(downloadPath, sub));
+        }
+    }
 
     app.UseStaticFiles();
     foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
     {
         app.UseStaticFiles(new StaticFileOptions
         {
-            FileProvider = new PhysicalFileProvider(Path.Combine(wwwroot, sub)),
-            RequestPath  = $"/{sub}",
+            FileProvider = new PhysicalFileProvider(Path.Combine(downloadPath, sub)),
+            RequestPath  = $"/downloads/{sub}",
         });
     }
 

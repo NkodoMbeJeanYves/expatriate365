@@ -9,7 +9,7 @@ pour éviter les conflits avec d'autres applications sur le même VPS.
 | `/logos/` | `/branding/` |
 | `/photos/` | `/avatars/` |
 | `/documents/` | `/docs/` |
-| `POST /api/v1/upload` | `POST /api/v1/attachments` |
+| `POST /api/v1/upload` | `POST /api/v1/upload` |
 
 ---
 
@@ -128,7 +128,7 @@ journalctl -u expatriate365-api -n 30 --no-pager
 Tester un upload :
 
 ```bash
-curl -s -X POST "https://ton-domaine.com/api/v1/attachments?folder=branding" \
+curl -s -X POST "https://ton-domaine.com/api/v1/upload?folder=branding" \
   -H "Authorization: Bearer TON_TOKEN" \
   -F "file=@/tmp/test.png" | jq .
 ```

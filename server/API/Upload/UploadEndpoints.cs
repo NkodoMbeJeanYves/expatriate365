@@ -16,7 +16,7 @@ public static class UploadEndpoints
 
     public static void MapUploadEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/v1/attachments", async (
+        app.MapPost("/api/v1/upload", async (
             IFormFile file,
             IWebHostEnvironment env,
             IConfiguration config,
@@ -42,8 +42,9 @@ public static class UploadEndpoints
 
             var ext = Path.GetExtension(file.FileName);
             var uniqueName = $"{Guid.NewGuid()}{ext}";
-            var wwwroot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
-            var targetDir = Path.Combine(wwwroot, targetFolder);
+            var downloadRootPath = "downloads"; // Dossier racine pour les fichiers téléchargés
+            var downloadPath = Path.Combine(env.ContentRootPath, downloadRootPath);
+            var targetDir = Path.Combine(downloadPath, targetFolder);
             Directory.CreateDirectory(targetDir);
 
             var filePath = Path.Combine(targetDir, uniqueName);
@@ -55,7 +56,7 @@ public static class UploadEndpoints
             var urlPrefix = config["FileStorage:UrlPrefix"]?.TrimEnd('/')
                 ?? $"{request.Scheme}://{request.Host}";
                 Console.WriteLine($"[Upload] Using URL prefix '{urlPrefix}' for file access: '{request.Scheme}://{request.Host}'");
-            var fileUrl = $"{urlPrefix}/{targetFolder}/{uniqueName}";
+            var fileUrl = $"{urlPrefix}/{downloadRootPath}/{targetFolder}/{uniqueName}";
 Console.WriteLine($"[Upload] File saved to '{filePath}', accessible at '{fileUrl}'");
             return Results.Ok(new
             {
