@@ -37,7 +37,6 @@ APP_NAME="expatriate365"
 APP_DLL="server.dll"
 API_PORT="5001"
 DOMAIN="localhost"
-DOTNET_CHANNEL="9.0"
 
 # Répertoire du projet (système de fichiers Linux natif — meilleur que /mnt/c/)
 read -rp "  Chemin du projet [~/expatriate365] : " PROJECT_DIR
@@ -47,6 +46,20 @@ PROJECT_DIR="${PROJECT_DIR/#\~/$HOME}"
 
 API_DIR="$PROJECT_DIR/server"
 FRONTEND_DIR="$PROJECT_DIR/client"
+
+# Version .NET
+echo ""
+info "Version .NET à utiliser pour ce projet :"
+echo "  [1] .NET 9  (net9.0  — défaut de ce projet)"
+echo "  [2] .NET 10 (net10.0 — si vous avez migré le .csproj)"
+read -rp "  Votre choix [1] : " _DOTNET_CHOICE
+_DOTNET_CHOICE="${_DOTNET_CHOICE:-1}"
+if [[ "$_DOTNET_CHOICE" == "2" ]]; then
+    DOTNET_CHANNEL="10.0"
+else
+    DOTNET_CHANNEL="9.0"
+fi
+info "Channel sélectionné : .NET $DOTNET_CHANNEL"
 
 # Clé JWT
 JWT_KEY=$(openssl rand -base64 64 | tr -d '\n')
@@ -73,6 +86,7 @@ info "Récapitulatif :"
 echo "  APP_NAME    : $APP_NAME"
 echo "  Projet      : $PROJECT_DIR"
 echo "  API port    : $API_PORT"
+echo "  .NET        : channel $DOTNET_CHANNEL"
 echo "  Base MySQL  : $DB_NAME (user: $DB_USER)"
 echo "  Super admin : $SEED_ADMIN_EMAIL"
 echo ""
@@ -124,39 +138,47 @@ SQL
 log "Base ${DB_NAME} + utilisateur ${DB_USER} configurés."
 
 # =============================================================================
-# 3. INSTALLATION .NET
+# 3. INSTALLATION .NET (9 + 10)
 # =============================================================================
-section "2. .NET $DOTNET_CHANNEL"
+section "3. .NET 9 + .NET 10"
 DOTNET_INSTALL_DIR="/opt/dotnet"
+mkdir -p "$DOTNET_INSTALL_DIR"
 
-if command -v dotnet &>/dev/null; then
-    _installed_major=$(dotnet --version 2>/dev/null | cut -d. -f1 || echo "0")
-    _required_major=$(echo "$DOTNET_CHANNEL" | cut -d. -f1)
-    if [[ "$_installed_major" -ge "$_required_major" ]]; then
-        log ".NET $(dotnet --version) déjà installé — ignoré."
-    else
-        warn ".NET $_installed_major présent mais channel $DOTNET_CHANNEL requis — mise à jour."
-        goto_install=true
-    fi
+# Téléchargement unique du script d'installation
+wget -q https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh
+chmod +x /tmp/dotnet-install.sh
+
+# ── .NET 9 ────────────────────────────────────────────────────────────────────
+if dotnet --list-sdks 2>/dev/null | grep -q "^9\."; then
+    log ".NET 9 déjà installé — ignoré."
 else
-    goto_install=true
+    info "Installation .NET 9..."
+    /tmp/dotnet-install.sh --channel 9.0 --install-dir "$DOTNET_INSTALL_DIR"
+    log ".NET 9 installé."
 fi
 
-if [[ "${goto_install:-false}" == true ]]; then
-    mkdir -p "$DOTNET_INSTALL_DIR"
-    wget -q https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh
-    chmod +x /tmp/dotnet-install.sh
-    /tmp/dotnet-install.sh --channel "$DOTNET_CHANNEL" --install-dir "$DOTNET_INSTALL_DIR"
-    ln -sf "$DOTNET_INSTALL_DIR/dotnet" /usr/local/bin/dotnet
-    grep -q "DOTNET_ROOT" /etc/environment 2>/dev/null || echo "DOTNET_ROOT=$DOTNET_INSTALL_DIR" >> /etc/environment
-    log ".NET channel $DOTNET_CHANNEL installé."
+# ── .NET 10 ───────────────────────────────────────────────────────────────────
+if dotnet --list-sdks 2>/dev/null | grep -q "^10\."; then
+    log ".NET 10 déjà installé — ignoré."
+else
+    info "Installation .NET 10..."
+    /tmp/dotnet-install.sh --channel 10.0 --install-dir "$DOTNET_INSTALL_DIR"
+    log ".NET 10 installé."
 fi
-dotnet --version
+
+# ── Symlink vers le channel sélectionné ──────────────────────────────────────
+ln -sf "$DOTNET_INSTALL_DIR/dotnet" /usr/local/bin/dotnet
+grep -q "DOTNET_ROOT" /etc/environment 2>/dev/null || echo "DOTNET_ROOT=$DOTNET_INSTALL_DIR" >> /etc/environment
+
+info "SDKs disponibles :"
+dotnet --list-sdks
+info "Channel actif pour ce projet : .NET $DOTNET_CHANNEL ($(dotnet --version))"
 
 # =============================================================================
 # 3. UTILISATEUR SYSTÈME
 # =============================================================================
 section "4. Utilisateur système $APP_NAME"
+
 if id "$APP_NAME" &>/dev/null; then
     log "Utilisateur $APP_NAME déjà existant — ignoré."
 else
