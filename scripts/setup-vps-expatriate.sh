@@ -507,8 +507,9 @@ mkdir -p "/var/www/${APP_NAME}/frontend"
 chown -R "${APP_NAME}:${APP_NAME}" "/var/www/${APP_NAME}/api"
 chown -R www-data:www-data          "/var/www/${APP_NAME}/frontend"
 chmod -R 755 "/var/www/${APP_NAME}"
-# downloads/ doit être lisible par nginx (www-data) pour les alias
-chmod -R 755 "/var/www/${APP_NAME}/api/downloads"
+# downloads/ : propriétaire = service app, groupe = www-data pour que nginx puisse lire via alias
+chown -R "${APP_NAME}:www-data" "/var/www/${APP_NAME}/api/downloads"
+chmod -R 750 "/var/www/${APP_NAME}/api/downloads"
 log "Répertoires créés."
 next "Étape 10/16 — Écriture du fichier de secrets /etc/$APP_NAME/env"
 
@@ -856,8 +857,9 @@ mkdir -p "\${API_DIR}/logs"
 echo "→ Permissions…"
 chown -R "\${APP_NAME}:\${APP_NAME}" "\${API_DIR}"
 chmod -R 755 "\${API_DIR}"
-# downloads/ lisible par nginx (www-data) pour les alias statiques
-chmod -R 755 "\${API_DIR}/downloads"
+# downloads/ : groupe www-data pour que nginx lise via alias, 750 pour éviter l'accès public direct
+chown -R "\${APP_NAME}:www-data" "\${API_DIR}/downloads"
+chmod -R 750 "\${API_DIR}/downloads"
 
 # ── Chargement des variables d'environnement (sans les afficher) ──────────────
 set -a
