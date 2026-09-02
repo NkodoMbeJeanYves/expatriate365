@@ -5,7 +5,7 @@
 # Prérequis : setup-local-wsl.sh déjà exécuté
 #
 # Usage :
-#   cp /mnt/c/dev/expatriate365/scripts/deploy-local-api.sh /tmp/
+#   sed 's/\r//' /mnt/c/dev/expatriate365/scripts/deploy-local-api.sh > /tmp/deploy-local-api.sh
 #   sudo bash /tmp/deploy-local-api.sh
 #
 # Valeur par défaut : ~/api.zip
