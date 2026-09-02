@@ -69,7 +69,7 @@ export interface CreateMemberRequest {
   category_id?: string;
   joined_date: string;
   expiry_date?: string;
-  photo_url?: string;
+  photo_url?: string | null;
   address?: string;
   profession?: string;
   date_of_birth?: string;

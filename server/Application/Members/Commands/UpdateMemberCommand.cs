@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using server.Application.Common;
 using server.Application.Members.DTOs;
 using server.Infrastructure.Persistence;
@@ -20,7 +22,7 @@ public class UpdateMemberCommandValidator : AbstractValidator<UpdateMemberComman
     }
 }
 
-public class UpdateMemberCommandHandler(AppDbContext db)
+public class UpdateMemberCommandHandler(AppDbContext db, IWebHostEnvironment env, IConfiguration config)
     : IRequestHandler<UpdateMemberCommand, ServiceResult<MemberDto>>
 {
     public async Task<ServiceResult<MemberDto>> Handle(UpdateMemberCommand request, CancellationToken ct)
@@ -39,7 +41,15 @@ public class UpdateMemberCommandHandler(AppDbContext db)
         member.User.Phone = dto.Phone;
         member.CategoryId = !string.IsNullOrWhiteSpace(dto.CategoryId) && Guid.TryParse(dto.CategoryId, out var catId) ? catId : null;
         member.ExpiryDate = dto.ExpiryDate is not null ? DateOnly.Parse(dto.ExpiryDate) : null;
-        if (dto.PhotoUrl is not null) member.PhotoUrl = dto.PhotoUrl;
+
+        // null = suppression intentionnelle de la photo
+        if (dto.PhotoUrl != member.PhotoUrl)
+        {
+            if (member.PhotoUrl is not null && dto.PhotoUrl is null)
+                DeletePhysicalFile(member.PhotoUrl);
+            member.PhotoUrl = dto.PhotoUrl;
+        }
+
         member.Address = dto.Address;
         member.Profession = dto.Profession;
         member.DateOfBirth = dto.DateOfBirth is not null ? DateOnly.Parse(dto.DateOfBirth) : null;
@@ -66,5 +76,24 @@ public class UpdateMemberCommandHandler(AppDbContext db)
             member.IsActive, member.CreatedAt.ToString("O"), member.UpdatedAt?.ToString("O"),
             member.User.EmailVerifiedAt?.ToString("O"), member.User.Role
         ));
+    }
+
+    private void DeletePhysicalFile(string fileUrl)
+    {
+        try
+        {
+            var urlPrefix = (config["FileStorage:UrlPrefix"]?.TrimEnd('/') ?? "").TrimEnd('/');
+            var relativePath = urlPrefix.Length > 0 && fileUrl.StartsWith(urlPrefix)
+                ? fileUrl[urlPrefix.Length..].TrimStart('/')
+                : new Uri(fileUrl).AbsolutePath.TrimStart('/');
+
+            var fullPath = Path.Combine(env.ContentRootPath, relativePath.Replace('/', Path.DirectorySeparatorChar));
+            if (File.Exists(fullPath))
+                File.Delete(fullPath);
+        }
+        catch
+        {
+            // suppression best-effort : on ne bloque pas la mise à jour si le fichier est introuvable
+        }
     }
 }

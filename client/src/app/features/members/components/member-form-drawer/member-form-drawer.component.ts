@@ -446,7 +446,7 @@ export class MemberFormDrawerComponent implements OnInit {
     const v = this.form.getRawValue();
     const toDateStr = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : undefined);
 
-    const photo = this.photoUrl() ?? undefined;
+    const photo = this.photoUrl(); // null = suppression intentionnelle, undefined ne serait pas sérialisé
     const id = this.memberId();
     const obs = id
       ? this.api.update(id, {
