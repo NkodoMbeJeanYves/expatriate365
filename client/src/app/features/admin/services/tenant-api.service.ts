@@ -19,7 +19,7 @@ export interface UpdateTenantSettingsRequest {
   base_currency?: string;
   currency_symbol?: string;
   country_code?: string;
-  logo_url?: string;
+  logo_url?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

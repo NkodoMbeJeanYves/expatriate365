@@ -285,7 +285,7 @@ export class AdminSettingsPage implements OnInit {
 
   removeLogo(): void {
     this.tenantStore.patch({ logo_url: undefined });
-    this.tenantApi.updateSettings({ logo_url: null as unknown as undefined }).subscribe();
+    this.tenantApi.updateSettings({ logo_url: null }).subscribe();
   }
 
   save(): void {
