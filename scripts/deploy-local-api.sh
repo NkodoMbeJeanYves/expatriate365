@@ -76,7 +76,14 @@ log "Fichiers déployés."
 # ── DB action (--reset / --seed) — s'exécute et se termine sans démarrer le serveur
 if [[ -n "$_FLAG" ]]; then
     info "Application de $_FLAG..."
-    sudo -u "${APP_NAME}" dotnet "${DEPLOY_DIR}/${APP_DLL}" "$_FLAG"
+    # Charger le fichier d'env (normalement chargé par systemd uniquement)
+    set -o allexport
+    # shellcheck source=/dev/null
+    source "/etc/${APP_NAME}/env"
+    set +o allexport
+    sudo -u "${APP_NAME}" \
+        --preserve-env \
+        dotnet "${DEPLOY_DIR}/${APP_DLL}" "$_FLAG"
     log "DB action $_FLAG terminée."
 fi
 
