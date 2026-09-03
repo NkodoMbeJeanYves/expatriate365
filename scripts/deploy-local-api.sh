@@ -76,13 +76,11 @@ log "Fichiers déployés."
 # ── DB action (--reset / --seed) — s'exécute et se termine sans démarrer le serveur
 if [[ -n "$_FLAG" ]]; then
     info "Application de $_FLAG..."
-    # su -s /bin/bash permet de sourcer l'env systemd et d'exécuter en tant qu'APP_NAME
-    su -s /bin/bash -c "
-        set -o allexport
-        source '/etc/${APP_NAME}/env'
-        set +o allexport
-        exec dotnet '${DEPLOY_DIR}/${APP_DLL}' '${_FLAG}'
-    " "${APP_NAME}"
+    set -a
+    # shellcheck source=/dev/null
+    source <(grep -v '^#' "/etc/${APP_NAME}/env" | { grep -v '^_DEPLOY' || true; } | sed 's/\r//')
+    set +a
+    dotnet "${DEPLOY_DIR}/${APP_DLL}" "$_FLAG"
     log "DB action $_FLAG terminée."
 fi
 
