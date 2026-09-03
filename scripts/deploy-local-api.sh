@@ -3,8 +3,12 @@
 # Expatriate365 — Redéploiement backend (local WSL2)
 #
 # Prérequis : setup-local-wsl.sh déjà exécuté
+# IL FAUt ABSOLUMENT copier api.zip depuis le PC Windows vers /tmp/ avant d'exécuter ce script
+# IL FAUT QUE LES PARAMETRES DE CONNEXION appsetting.json soient corrects pour la base locale (expatriate365_local)
+# dans ENVIRONMENT=Development, la base peut etre differente mais user et password doivent etre identiques à ceux de la base locale (expatriate365_local)
 #
 # Usage :
+#   cp /mnt/c/asp/expatriate365/publish/api.zip /tmp/
 #   sed 's/\r//' /mnt/c/asp/expatriate365/scripts/deploy-local-api.sh > /tmp/deploy-local-api.sh
 #   sudo bash /tmp/deploy-local-api.sh
 #

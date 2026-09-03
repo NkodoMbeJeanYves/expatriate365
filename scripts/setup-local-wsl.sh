@@ -344,16 +344,16 @@ server {
     }
 
     # ── Fichiers uploadés ─────────────────────────────────────────────────────
-    location /downloads/avatars/ {
+    location ^~ /downloads/avatars/ {
         alias /var/www/${APP_NAME}/api/downloads/avatars/;
     }
-    location /downloads/branding/ {
+    location ^~ /downloads/branding/ {
         alias /var/www/${APP_NAME}/api/downloads/branding/;
     }
-    location /downloads/attachments/ {
+    location ^~ /downloads/attachments/ {
         alias /var/www/${APP_NAME}/api/downloads/attachments/;
     }
-    location /downloads/docs/ {
+    location ^~ /downloads/docs/ {
         alias /var/www/${APP_NAME}/api/downloads/docs/;
         add_header Content-Disposition "attachment";
     }
@@ -368,7 +368,7 @@ server {
     root  /var/www/${APP_NAME}/frontend;
     index index.html;
 
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|avif)\$ {
+    location ~* ^/(assets|static)/.*\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|avif)\$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }

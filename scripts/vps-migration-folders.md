@@ -80,30 +80,24 @@ SELECT receipt_file_url FROM payments WHERE receipt_file_url IS NOT NULL LIMIT 5
 Éditer `/etc/nginx/sites-available/expatriate365` et remplacer les anciens blocs `location` :
 
 ```nginx
-# Remplacer ceci :
-location /uploads/   { alias /var/www/expatriate365/api/wwwroot/uploads/;   ... }
-location /logos/     { alias /var/www/expatriate365/api/wwwroot/logos/;     ... }
-location /photos/    { alias /var/www/expatriate365/api/wwwroot/photos/;    ... }
-location /documents/ { alias /var/www/expatriate365/api/wwwroot/documents/; ... }
-
-# Par ceci :
-location /attachments/ {
-    alias /var/www/expatriate365/api/wwwroot/attachments/;
+# Remplacer les anciens chemins par les routes actuelles :
+location ^~ /downloads/attachments/ {
+    alias /var/www/expatriate365/api/downloads/attachments/;
     expires 30d;
     add_header Cache-Control "public, immutable";
 }
-location /branding/ {
-    alias /var/www/expatriate365/api/wwwroot/branding/;
+location ^~ /downloads/branding/ {
+    alias /var/www/expatriate365/api/downloads/branding/;
     expires 30d;
     add_header Cache-Control "public, immutable";
 }
-location /avatars/ {
-    alias /var/www/expatriate365/api/wwwroot/avatars/;
+location ^~ /downloads/avatars/ {
+    alias /var/www/expatriate365/api/downloads/avatars/;
     expires 30d;
     add_header Cache-Control "public, immutable";
 }
-location /docs/ {
-    alias /var/www/expatriate365/api/wwwroot/docs/;
+location ^~ /downloads/docs/ {
+    alias /var/www/expatriate365/api/downloads/docs/;
     expires 7d;
     add_header Cache-Control "public";
 }
