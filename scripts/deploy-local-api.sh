@@ -73,6 +73,13 @@ find "${DEPLOY_DIR}/downloads" -type d -exec chmod g+s {} \;
 rm -rf "$EXTRACT"
 log "Fichiers déployés."
 
+# ── DB action (--reset / --seed) — s'exécute et se termine sans démarrer le serveur
+if [[ -n "$_FLAG" ]]; then
+    info "Application de $_FLAG..."
+    sudo -u "${APP_NAME}" dotnet "${DEPLOY_DIR}/${APP_DLL}" "$_FLAG"
+    log "DB action $_FLAG terminée."
+fi
+
 # ── Redémarrage ───────────────────────────────────────────────────────────────
 systemctl start "${APP_NAME}-api"
 sleep 2
@@ -83,12 +90,5 @@ systemctl is-active --quiet "${APP_NAME}-api" \
 # ── Résumé ────────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}✓ API redéployée — http://localhost/api/v1  |  http://localhost/scalar${NC}"
-
-if [[ -n "$_FLAG" ]]; then
-    echo ""
-    warn "Action DB : $_FLAG — exécuter dans un terminal séparé APRÈS démarrage :"
-    echo "  sudo -u ${APP_NAME} dotnet ${DEPLOY_DIR}/${APP_DLL} $_FLAG"
-fi
-
 echo ""
 echo "  Logs : sudo journalctl -u ${APP_NAME}-api -f"
