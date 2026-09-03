@@ -5,7 +5,7 @@
 # Prérequis : setup-local-wsl.sh déjà exécuté
 #
 # Usage :
-#   sed 's/\r//' /mnt/c/dev/expatriate365/scripts/deploy-local-frontend.sh > /tmp/deploy-local-frontend.sh
+#   sed 's/\r//' /mnt/c/asp/expatriate365/scripts/deploy-local-frontend.sh > /tmp/deploy-local-frontend.sh
 #   sudo bash /tmp/deploy-local-frontend.sh
 #
 # Valeur par défaut : ~/frontend.zip

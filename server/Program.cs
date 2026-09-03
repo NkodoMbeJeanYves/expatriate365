@@ -62,7 +62,7 @@ try
         p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
     var cs = builder.Configuration.GetConnectionString("MySql")
-        ?? throw new InvalidOperationException("Connection string 'Default' not found.");
+        ?? throw new InvalidOperationException("Connection string 'MySql' not found.");
     builder.Services.AddDbContext<AppDbContext>(o =>
         o.UseMySql(cs, ServerVersion.AutoDetect(cs)));
 

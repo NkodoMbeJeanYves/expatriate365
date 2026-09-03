@@ -4,6 +4,13 @@ import { resolve } from 'path';
 const src = resolve(__dirname, 'src');
 
 export default defineConfig({
+  root: 'src',
+  build: {
+    rollupOptions: {
+      input: 'src/index.html',
+    },
+  },
+  assetsInclude: ['**/*.html'],
   resolve: {
     alias: {
       '@core': resolve(src, 'app/core'),
