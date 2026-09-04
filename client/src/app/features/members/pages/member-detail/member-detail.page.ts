@@ -44,7 +44,8 @@ import { TranslatePipe } from '@ngx-translate/core';
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <p-avatar
-              [label]="initials()"
+              [image]="member()?.photo_url || ''"
+              [label]="member()?.photo_url ? '' : initials()"
               shape="circle"
               size="xlarge"
               styleClass="text-xl min-w-16" />
