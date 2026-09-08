@@ -64,7 +64,15 @@ try
     var cs = builder.Configuration.GetConnectionString("MySql")
         ?? throw new InvalidOperationException("Connection string 'MySql' not found.");
     builder.Services.AddDbContext<AppDbContext>(o =>
-        o.UseMySql(cs, ServerVersion.AutoDetect(cs)));
+        o.UseMySql(
+            cs,
+            ServerVersion.AutoDetect(cs),
+            mySqlOptions => mySqlOptions
+                .EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null)
+                .CommandTimeout(60)));
 
     builder.Services.AddMediatR(cfg =>
         cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));

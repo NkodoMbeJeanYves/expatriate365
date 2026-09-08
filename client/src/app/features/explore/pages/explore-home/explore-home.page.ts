@@ -6,18 +6,27 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { ExploreApiService } from '../../services/explore-api.service';
 import { PublicTenant } from '@core/auth/models/user.model';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-explore-home',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ButtonModule, ProgressSpinnerModule, TranslatePipe, LangSwitcherComponent],
+  imports: [
+    RouterLink,
+    ButtonModule,
+    ProgressSpinnerModule,
+    TranslatePipe,
+    LangSwitcherComponent,
+    ToastModule,
+  ],
   template: `
     <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
-
       <!-- Header -->
-      <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4
-                     flex items-center justify-between">
+      <header
+        class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4
+                     flex items-center justify-between"
+      >
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
             <i class="pi pi-globe text-white text-sm"></i>
@@ -27,7 +36,12 @@ import { PublicTenant } from '@core/auth/models/user.model';
         <div class="flex items-center gap-3">
           <app-lang-switcher />
           <a routerLink="/auth/login">
-            <p-button [label]="'auth.login' | translate" icon="pi pi-sign-in" severity="secondary" size="small" />
+            <p-button
+              [label]="'auth.login' | translate"
+              icon="pi pi-sign-in"
+              severity="secondary"
+              size="small"
+            />
           </a>
         </div>
       </header>
@@ -50,16 +64,23 @@ import { PublicTenant } from '@core/auth/models/user.model';
         } @else {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             @for (t of tenants(); track t.id) {
-              <a [routerLink]="['/explore', t.slug]"
-                 class="flex items-center gap-4 bg-white dark:bg-gray-900 border border-gray-200
+              <a
+                [routerLink]="['/explore', t.slug]"
+                class="flex items-center gap-4 bg-white dark:bg-gray-900 border border-gray-200
                         dark:border-gray-700 rounded-xl p-5 hover:border-primary-400 hover:shadow-md
-                        transition-all duration-150 no-underline">
+                        transition-all duration-150 no-underline"
+              >
                 @if (t.logo_url) {
-                  <img [src]="t.logo_url" [alt]="t.name"
-                       class="w-14 h-14 rounded-xl object-cover shrink-0" />
+                  <img
+                    [src]="t.logo_url"
+                    [alt]="t.name"
+                    class="w-14 h-14 rounded-xl object-cover shrink-0"
+                  />
                 } @else {
-                  <div class="w-14 h-14 rounded-xl bg-primary-100 dark:bg-primary-900/30
-                              flex items-center justify-center shrink-0">
+                  <div
+                    class="w-14 h-14 rounded-xl bg-primary-100 dark:bg-primary-900/30
+                              flex items-center justify-center shrink-0"
+                  >
                     <i class="pi pi-users text-2xl text-primary-600 dark:text-primary-400"></i>
                   </div>
                 }
@@ -74,6 +95,7 @@ import { PublicTenant } from '@core/auth/models/user.model';
         }
       </main>
     </div>
+    <p-toast position="bottom-left" />
   `,
 })
 export class ExploreHomePage implements OnInit {
@@ -84,8 +106,11 @@ export class ExploreHomePage implements OnInit {
 
   ngOnInit(): void {
     this.api.getTenants().subscribe({
-      next: (list) => { this.tenants.set(list); this.loading.set(false); },
-      error: ()    => this.loading.set(false),
+      next: (list) => {
+        this.tenants.set(list);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 }
