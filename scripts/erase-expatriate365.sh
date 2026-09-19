@@ -32,6 +32,31 @@ warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
 error()   { echo -e "${RED}[✗]${NC} $*"; exit 1; }
 section() { echo -e "\n${CYAN}━━━ $* ━━━${NC}"; }
 
+prompt_value() {
+    local prompt_text="$1"
+    local variable_name="$2"
+    echo -n "$prompt_text"
+    IFS= read -r "$variable_name"
+}
+
+prompt_secret() {
+    local prompt_text="$1"
+    local variable_name="$2"
+    echo -n "$prompt_text"
+    IFS= read -r -s "$variable_name"
+    echo
+}
+
+env_get() {
+    local key="$1"
+    [[ -f "$ENV_FILE" ]] && grep -E "^${key}=" "$ENV_FILE" 2>/dev/null \
+        | head -1 | cut -d= -f2- | sed 's/^['"'"']//;s/['"'"']$//' || true
+}
+
+mask_value() {
+    [[ -n "$1" ]] && echo "<défini, masqué>" || echo "<non défini>"
+}
+
 [[ $EUID -ne 0 ]] && error "Ce script doit être exécuté en root : sudo bash $0"
 
 APP_NAME="expatriate365"
@@ -40,6 +65,29 @@ NGINX_CONF="/etc/nginx/sites-available/${APP_NAME}"
 ENV_FILE="/etc/${APP_NAME}/env"
 DEPLOY_SCRIPT="/usr/local/bin/deploy-${APP_NAME}-api.sh"
 WWW_DIR="/var/www/${APP_NAME}"
+
+# Lire ces valeurs avant la suppression du fichier d'environnement.
+ENV_DB_CONNECTION="$(env_get 'ConnectionStrings__MySql')"
+ENV_DB_NAME="$(echo "$ENV_DB_CONNECTION" | sed -n 's/.*Database=\([^;]*\).*/\1/p')"
+ENV_DB_USER="$(echo "$ENV_DB_CONNECTION" | sed -n 's/.*User=\([^;]*\).*/\1/p')"
+ENV_DB_PASSWORD="$(echo "$ENV_DB_CONNECTION" | sed -n 's/.*Password=\([^;]*\).*/\1/p')"
+
+# Afficher l'état actuel avant toute action destructive. Les secrets ne sont
+# jamais affichés en clair.
+section "Configuration actuelle"
+if [[ -f "$ENV_FILE" ]]; then
+    echo "Fichier : $ENV_FILE"
+    echo "  FrontendBaseUrl          : $(env_get 'FrontendBaseUrl')"
+    echo "  _DEPLOY_API_PORT         : $(env_get '_DEPLOY_API_PORT')"
+    echo "  _DEPLOY_APP_DLL          : $(env_get '_DEPLOY_APP_DLL')"
+    echo "  Base MySQL               : ${ENV_DB_NAME:-<non définie>}"
+    echo "  Utilisateur MySQL        : ${ENV_DB_USER:-<non défini>}"
+    echo "  Mot de passe MySQL       : $(mask_value "$ENV_DB_PASSWORD")"
+    echo "  Clé JWT                  : $(mask_value "$(env_get 'Jwt__SecretKey')")"
+    echo "  Mot de passe SMTP        : $(mask_value "$(env_get 'Email__Password')")"
+else
+    warn "Fichier d'environnement introuvable : $ENV_FILE"
+fi
 
 # =============================================================================
 # AVERTISSEMENT
@@ -60,7 +108,7 @@ warn "Optionnel (à confirmer) :"
 echo "  • Base MySQL + utilisateur DB"
 echo "  • Utilisateur système ${APP_NAME}"
 echo ""
-read -rp "Confirmer la suppression ? (oui/non) : " CONFIRM
+prompt_value "Confirmer la suppression ? (oui/non) : " CONFIRM
 [[ "$CONFIRM" != "oui" ]] && { warn "Annulé."; exit 0; }
 
 # =============================================================================
@@ -156,15 +204,17 @@ section "6. Base MySQL (optionnel)"
 # Lire les credentials depuis l'env si encore disponible (supprimé à l'étape 3)
 # Demander explicitement
 echo ""
-read -rp "Supprimer la base MySQL et l'utilisateur DB ? (oui/non) [non] : " _DROP_DB
+prompt_value "Supprimer la base MySQL et l'utilisateur DB ? (oui/non) [non] : " _DROP_DB
 _DROP_DB="${_DROP_DB:-non}"
 
 if [[ "$_DROP_DB" == "oui" ]]; then
-    read -rp "  Nom de la base MySQL [${APP_NAME}] : " DB_NAME
-    DB_NAME="${DB_NAME:-${APP_NAME}}"
-    read -rp "  Utilisateur MySQL [${APP_NAME}_user] : " DB_USER
-    DB_USER="${DB_USER:-${APP_NAME}_user}"
-    read -rsp "  Mot de passe root MySQL : " MYSQL_ROOT_PASSWORD; echo
+    DB_NAME_DEFAULT="${ENV_DB_NAME:-${APP_NAME}}"
+    DB_USER_DEFAULT="${ENV_DB_USER:-${APP_NAME}_user}"
+    prompt_value "  Nom de la base MySQL [${DB_NAME_DEFAULT}] : " DB_NAME
+    DB_NAME="${DB_NAME:-$DB_NAME_DEFAULT}"
+    prompt_value "  Utilisateur MySQL [${DB_USER_DEFAULT}] : " DB_USER
+    DB_USER="${DB_USER:-$DB_USER_DEFAULT}"
+    prompt_secret "  Mot de passe root MySQL : " MYSQL_ROOT_PASSWORD
 
     _mysql_root() {
         if MYSQL_PWD="" mysql --user=root --execute="SELECT 1;" 2>/dev/null; then
