@@ -16,7 +16,7 @@
 #   ssh root@acm365hub.poweryoursaas.com "sed -i 's/\r//' /tmp/setup-download.sh && bash /tmp/setup-download.sh"
 set -euo pipefail
 
-APP_NAME="expatriate365"
+APP_NAME="expatriate"
 BASE_DIR="/var/www/${APP_NAME}/api"
 DOWNLOAD_DIR="${BASE_DIR}/downloads"
 

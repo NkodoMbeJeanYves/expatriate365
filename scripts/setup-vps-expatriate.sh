@@ -78,8 +78,19 @@ _env_get() {
     [[ -f "/etc/${APP_NAME}/env" ]] && grep -E "^${1}=" "/etc/${APP_NAME}/env" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/^["\x27]//;s/["\x27]$//' || true
 }
 
+_env_preview() {
+    local key="$1" value="$2" sensitive="${3:-false}"
+    [[ -z "$value" ]] && return 0
+    if [[ "$sensitive" == true ]]; then
+        info "  Variable détectée — ${key} : (valeur masquée)"
+    else
+        info "  Variable détectée — ${key} : ${value}"
+    fi
+}
+
 # ── Domaine ──────────────────────────────────────────────────────────────────
 _SAVED_DOMAIN=$(_env_get "FrontendBaseUrl" | sed 's|https://||')
+_env_preview "FrontendBaseUrl" "$_SAVED_DOMAIN"
 _DEFAULT_DOMAIN="${_SAVED_DOMAIN:-acm365hub.poweryoursaas.com}"
 info "Domaine public — sera utilisé pour le certificat SSL et la configuration Nginx."
 info "  Le DNS doit déjà pointer vers l'IP de ce VPS (vérifiez avant de continuer)."
@@ -90,6 +101,7 @@ DOMAIN="${DOMAIN:-$_DEFAULT_DOMAIN}"
 
 # ── Port interne API ──────────────────────────────────────────────────────────
 _SAVED_PORT=$(_env_get "_DEPLOY_API_PORT")
+_env_preview "_DEPLOY_API_PORT" "$_SAVED_PORT"
 _DEFAULT_PORT="${_SAVED_PORT:-5001}"
 info "Port interne de l'API — utilisé par le service .NET et le reverse proxy Nginx."
 info "  Ce port n'est pas exposé publiquement (Nginx fait le pont)."
@@ -101,6 +113,7 @@ API_PORT="${API_PORT:-$_DEFAULT_PORT}"
 
 # ── Nom de la base de données ─────────────────────────────────────────────────
 _SAVED_DB_NAME=$(_env_get "ConnectionStrings__MySql" | sed 's/.*Database=\([^;]*\).*/\1/')
+_env_preview "ConnectionStrings__MySql.Database" "$_SAVED_DB_NAME"
 _DEFAULT_DB_NAME="${_SAVED_DB_NAME:-${APP_NAME}_prod}"
 info "Nom de la base de données MySQL qui sera créée pour ce projet."
 info "  Chaque projet doit avoir sa propre base (school365 = school365_prod)."
@@ -110,6 +123,7 @@ DB_NAME="${DB_NAME:-$_DEFAULT_DB_NAME}"
 
 # ── DLL principale ────────────────────────────────────────────────────────────
 _SAVED_DLL=$(_env_get "_DEPLOY_APP_DLL")
+_env_preview "_DEPLOY_APP_DLL" "$_SAVED_DLL"
 _DEFAULT_DLL="${_SAVED_DLL:-server.dll}"
 info "Nom du fichier DLL principal — point d'entrée de l'API ASP.NET Core."
 info "  C'est le fichier que systemd lancera avec : dotnet <APP_DLL>"
@@ -159,6 +173,7 @@ echo ""
 
 # ── Utilisateur DB ────────────────────────────────────────────────────────────
 _SAVED_DB_USER=$(_env_get "ConnectionStrings__MySql" | sed 's/.*User=\([^;]*\).*/\1/')
+_env_preview "ConnectionStrings__MySql.User" "$_SAVED_DB_USER"
 _DEFAULT_DB_USER="${_SAVED_DB_USER:-${APP_NAME}_user}"
 info "Nom d'utilisateur MySQL dédié à ce projet (sera créé s'il n'existe pas)."
 info "  Il n'aura accès qu'à la base $DB_NAME — jamais à root."
@@ -170,6 +185,7 @@ next "Mot de passe pour cet utilisateur DB"
 # ── Mot de passe DB ───────────────────────────────────────────────────────────
 echo ""
 _SAVED_DB_PASS=$(_env_get "ConnectionStrings__MySql" | sed 's/.*Password=\([^;]*\).*/\1/')
+_env_preview "ConnectionStrings__MySql.Password" "$_SAVED_DB_PASS" true
 info "Mot de passe de l'utilisateur MySQL '$DB_USER' — sera stocké dans /etc/${APP_NAME}/env."
 info "  Minimum 12 caractères. La saisie est masquée (rien ne s'affiche)."
 if [[ -n "$_SAVED_DB_PASS" ]]; then
@@ -195,6 +211,7 @@ next "Clé secrète JWT (signature des tokens d'authentification)"
 # ── Clé JWT ───────────────────────────────────────────────────────────────────
 echo ""
 _SAVED_JWT=$(_env_get "Jwt__SecretKey")
+_env_preview "Jwt__SecretKey" "$_SAVED_JWT" true
 info "Clé secrète JWT — utilisée pour signer et vérifier les tokens d'authentification."
 info "  Minimum 32 caractères. Appuyez Entrée pour laisser le script en générer une."
 info "  IMPORTANT : notez-la après l'installation (affichée dans le résumé final)."
@@ -219,6 +236,7 @@ info "─── Super Admin (1/2) — Email ────────────
 info "  Compte administrateur global (aucun tenant, accès complet)."
 info "  Utilisé pour se connecter à l'application au premier démarrage."
 _SAVED_SADMIN_EMAIL=$(_env_get "Seed__SuperAdminEmail")
+_env_preview "Seed__SuperAdminEmail" "$_SAVED_SADMIN_EMAIL"
 [[ -n "$_SAVED_SADMIN_EMAIL" ]] && info "  Valeur actuelle : $_SAVED_SADMIN_EMAIL"
 read -rp "  Email super admin [Entrée = conserver / défaut super_admin@${DOMAIN}] : " SEED_ADMIN_EMAIL
 SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-${_SAVED_SADMIN_EMAIL:-super_admin@${DOMAIN}}}"
@@ -228,6 +246,7 @@ info "─── Super Admin (2/2) — Mot de passe ─────────�
 info "  Mot de passe initial du compte super_admin."
 info "  Minimum 8 caractères. La saisie est masquée."
 _SAVED_SADMIN_PASS=$(_env_get "Seed__SuperAdminPassword")
+_env_preview "Seed__SuperAdminPassword" "$_SAVED_SADMIN_PASS" true
 if [[ -n "$_SAVED_SADMIN_PASS" ]]; then
     info "  Mot de passe super admin : déjà défini (masqué) — Entrée pour conserver."
     read -rsp "  Mot de passe [Entrée = conserver] : " SEED_ADMIN_PASSWORD; echo
@@ -244,6 +263,7 @@ info "─── SMTP (1/5) — Adresse email expéditrice ───────�
 info "  Email utilisé comme expéditeur dans les emails envoyés par l'application."
 info "  Aussi utilisé comme contact pour le certificat SSL Let's Encrypt."
 _SAVED_SMTP_FROM=$(_env_get "Email__FromAddress")
+_env_preview "Email__FromAddress" "$_SAVED_SMTP_FROM"
 [[ -n "$_SAVED_SMTP_FROM" ]] && info "  Valeur actuelle : $_SAVED_SMTP_FROM"
 read -rp "  Email SMTP (From) [Entrée = conserver] : " SMTP_FROM
 SMTP_FROM="${SMTP_FROM:-$_SAVED_SMTP_FROM}"
@@ -252,6 +272,7 @@ echo ""
 info "─── SMTP (2/5) — Serveur SMTP ────────────────────────────────────────────"
 info "  Adresse du serveur qui enverra les emails."
 _SAVED_SMTP_HOST=$(_env_get "Email__SmtpHost")
+_env_preview "Email__SmtpHost" "$_SAVED_SMTP_HOST"
 info "  Gmail: smtp.gmail.com | OVH/LWS: ssl0.ovh.net | Office365: smtp.office365.com"
 [[ -n "$_SAVED_SMTP_HOST" ]] && info "  Valeur actuelle : $_SAVED_SMTP_HOST"
 read -rp "  Hôte SMTP [Entrée = conserver] : " SMTP_HOST
@@ -262,6 +283,7 @@ info "─── SMTP (3/5) — Port SMTP ─────────────
 info "  587 = STARTTLS (recommandé pour Gmail, OVH, Office365)."
 info "  465 = SSL/TLS direct (moins courant)."
 _SAVED_SMTP_PORT=$(_env_get "Email__SmtpPort")
+_env_preview "Email__SmtpPort" "$_SAVED_SMTP_PORT"
 [[ -n "$_SAVED_SMTP_PORT" ]] && info "  Valeur actuelle : $_SAVED_SMTP_PORT"
 read -rp "  Port SMTP [Entrée = conserver / défaut 587] : " SMTP_PORT
 SMTP_PORT="${SMTP_PORT:-${_SAVED_SMTP_PORT:-587}}"
@@ -270,6 +292,7 @@ echo ""
 info "─── SMTP (4/5) — Identifiant de connexion ────────────────────────────────"
 info "  Généralement votre adresse email complète (ex: monapp@gmail.com)."
 _SAVED_SMTP_USER=$(_env_get "Email__Username")
+_env_preview "Email__Username" "$_SAVED_SMTP_USER"
 [[ -n "$_SAVED_SMTP_USER" ]] && info "  Valeur actuelle : $_SAVED_SMTP_USER"
 read -rp "  Identifiant SMTP [Entrée = conserver] : " SMTP_USER
 SMTP_USER="${SMTP_USER:-$_SAVED_SMTP_USER}"
@@ -281,6 +304,7 @@ info "  Créez un App Password sur https://myaccount.google.com/apppasswords"
 info "  Pour OVH/LWS/Office365 : mot de passe de la boîte email."
 info "  La saisie est masquée (rien ne s'affiche)."
 _SAVED_SMTP_PASS=$(_env_get "Email__Password")
+_env_preview "Email__Password" "$_SAVED_SMTP_PASS" true
 if [[ -n "$_SAVED_SMTP_PASS" ]]; then
     info "  Mot de passe SMTP : déjà défini (masqué) — appuyez Entrée pour conserver."
     read -rp "  Mot de passe SMTP [Entrée = conserver] : " -s SMTP_PASSWORD; echo
@@ -306,33 +330,48 @@ read -rp "Confirmer et lancer l'installation ? (oui/non) : " CONFIRM
 [[ "$CONFIRM" != "oui" ]] && { warn "Installation annulée."; exit 0; }
 
 echo ""
-info "Lancement de l'installation — 16 étapes automatiques."
-info "Les composants déjà présents (MySQL, .NET, UFW) seront détectés et ignorés."
-next "Étape 2/16 — Mise à jour du système"
+info "Vous pouvez reprendre à partir d'une étape déjà préparée."
+info "  Exemple : saisissez 12 pour reprendre directement à SSL / Let's Encrypt."
+read -rp "Reprendre à partir de l'étape [2-16, Entrée = 2] : " RESUME_FROM_STEP
+RESUME_FROM_STEP="${RESUME_FROM_STEP:-2}"
+[[ "$RESUME_FROM_STEP" =~ ^([2-9]|1[0-6])$ ]] || error "L'étape de reprise doit être comprise entre 2 et 16."
+if [[ "$RESUME_FROM_STEP" -eq 12 ]]; then
+    [[ -f "/etc/nginx/sites-available/${APP_NAME}-http" ]] || error "Le vhost HTTP de l'étape 11 est introuvable. Reprenez à partir de l'étape 11."
+fi
+
+echo ""
+info "Lancement de l'installation à partir de l'étape ${RESUME_FROM_STEP}."
+info "Les étapes précédentes seront ignorées."
+next "Étape ${RESUME_FROM_STEP}/16"
 echo ""
 
 # =============================================================================
 # 2. MISE À JOUR SYSTÈME
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 2 ]]; then
 section "2. Mise à jour du système"
 apt update -y
 DEBIAN_FRONTEND=noninteractive apt upgrade -y
 log "Système mis à jour."
 next "Étape 3/16 — Outils essentiels (curl, nginx, certbot, ufw…)"
+fi
 
 # =============================================================================
 # 3. OUTILS ESSENTIELS
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 3 ]]; then
 section "3. Outils essentiels"
 DEBIAN_FRONTEND=noninteractive apt install -y \
     curl wget git unzip nginx certbot python3-certbot-nginx ufw \
     software-properties-common apt-transport-https gnupg lsb-release
 log "Outils installés / déjà présents."
 next "Étape 4/16 — Dépendances Chromium (PuppeteerSharp / génération PDF)"
+fi
 
 # =============================================================================
 # 4. DÉPENDANCES CHROMIUM
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 4 ]]; then
 # section "4. Dépendances Chromium (PuppeteerSharp)"
 # DEBIAN_FRONTEND=noninteractive apt install -y \
 #     ca-certificates fonts-liberation libasound2t64 libatk-bridge2.0-0 libatk1.0-0 \
@@ -383,10 +422,12 @@ apt install -y libgtk-3-0 || apt install -y libgtk-3-0t64
 
 log "Dépendances Chromium OK."
 next "Étape 5/16 — Pare-feu UFW"
+fi
 
 # =============================================================================
 # 5. PARE-FEU UFW
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 5 ]]; then
 section "5. Pare-feu UFW"
 if ufw status | grep -q "Status: active"; then
     skip "UFW déjà actif"
@@ -403,10 +444,12 @@ else
     log "Pare-feu configuré."
 fi
 next "Étape 6/16 — Installation .NET $DOTNET_CHANNEL (peut prendre 1-2 min)"
+fi
 
 # =============================================================================
 # 6. INSTALLATION .NET
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 6 ]]; then
 section "6. .NET $DOTNET_CHANNEL"
 DOTNET_INSTALL_DIR="/opt/dotnet"
 
@@ -432,21 +475,30 @@ if [[ "$_dotnet_ok" == false ]]; then
     dotnet --version
     log ".NET channel $DOTNET_CHANNEL installé."
 fi
+fi
 
 # =============================================================================
 # 7. MYSQL — Base + utilisateur applicatif
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 7 ]]; then
 section "7. MySQL — Base $DB_NAME"
 
 _mysql_root() {
     # Passage du mot de passe via variable d'environnement — jamais en argument de commande
-    if MYSQL_PWD="" mysql --user=root --execute="SELECT 1;" 2>/dev/null; then
-        MYSQL_PWD="" mysql --user=root "$@"
-    elif MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root --execute="SELECT 1;" 2>/dev/null; then
-        MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root "$@"
-    else
-        error "Connexion MySQL root impossible. Vérifiez le mot de passe root MySQL saisi."
-    fi
+    while true; do
+        if MYSQL_PWD="" mysql --user=root --execute="SELECT 1;" 2>/dev/null; then
+            MYSQL_PWD="" mysql --user=root "$@"
+            return
+        elif MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root --execute="SELECT 1;" 2>/dev/null; then
+            MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root "$@"
+            return
+        fi
+
+        warn "Connexion MySQL root refusée avec le mot de passe saisi."
+        read -rp "  Saisissez à nouveau le mot de passe root MySQL (Entrée pour réessayer) : " -s MYSQL_ROOT_PASSWORD
+        echo
+        [[ ${#MYSQL_ROOT_PASSWORD} -lt 12 ]] && warn "Le mot de passe root MySQL doit faire au moins 12 caractères."
+    done
 }
 
 if systemctl is-active --quiet mysql; then
@@ -469,7 +521,7 @@ fi
 
 # ── Choix : base existante ou nouvelle ───────────────────────────────────────
 DB_EXISTS=false
-if MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root --execute "USE ${DB_NAME};" 2>/dev/null; then
+if _mysql_root --execute "USE ${DB_NAME};" 2>/dev/null; then
     DB_EXISTS=true
 fi
 
@@ -500,7 +552,7 @@ fi
 
 # ── Création / recréation de la base ─────────────────────────────────────────
 if [[ "$FRESH_DB" == true ]]; then
-    MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root <<SQL
+    _mysql_root <<SQL
 DROP DATABASE IF EXISTS ${DB_NAME};
 CREATE DATABASE ${DB_NAME}
     CHARACTER SET utf8mb4
@@ -512,7 +564,7 @@ FLUSH PRIVILEGES;
 SQL
     log "Base ${DB_NAME} recréée (vide) + utilisateur ${DB_USER} configuré."
 else
-    MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" mysql --user=root <<SQL
+    _mysql_root <<SQL
 CREATE DATABASE IF NOT EXISTS ${DB_NAME}
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
@@ -524,10 +576,12 @@ SQL
     log "Base ${DB_NAME} conservée + utilisateur ${DB_USER} configuré."
 fi
 next "Étape 8/16 — Création de l'utilisateur système $APP_NAME"
+fi
 
 # =============================================================================
 # 8. UTILISATEUR SYSTÈME
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 8 ]]; then
 section "8. Utilisateur système $APP_NAME"
 if id "$APP_NAME" &>/dev/null; then
     skip "Utilisateur $APP_NAME déjà existant"
@@ -535,10 +589,12 @@ else
     adduser --system --no-create-home --group "$APP_NAME"
     log "Utilisateur $APP_NAME créé."
 fi
+fi
 
 # =============================================================================
 # 9. ARBORESCENCE
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 9 ]]; then
 section "9. Arborescence /var/www/$APP_NAME"
 mkdir -p "/var/www/${APP_NAME}/api/downloads/{attachments,branding,avatars,docs}"
 mkdir -p "/var/www/${APP_NAME}/api/logs"
@@ -554,10 +610,12 @@ chmod -R 750 "/var/www/${APP_NAME}/api/downloads"
 find "/var/www/${APP_NAME}/api/downloads" -type d -exec chmod g+s {} \;
 log "Répertoires créés."
 next "Étape 10/16 — Écriture du fichier de secrets /etc/$APP_NAME/env"
+fi
 
 # =============================================================================
 # 10. FICHIER DE SECRETS (/etc/$APP_NAME/env)
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 10 ]]; then
 section "10. Fichier de secrets /etc/$APP_NAME/env"
 mkdir -p "/etc/${APP_NAME}"
 
@@ -610,10 +668,12 @@ chown root:root "/etc/${APP_NAME}/env"
 sed -i 's/\r//' "/etc/${APP_NAME}/env"
 log "Fichier /etc/${APP_NAME}/env créé (chmod 600)."
 next "Étape 11/16 — Configuration Nginx (vhost $DOMAIN)"
+fi
 
 # =============================================================================
 # 11. NGINX — Vhost $APP_NAME
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 11 ]]; then
 section "11. Nginx — vhost $DOMAIN"
 
 cat > "/etc/nginx/sites-available/${APP_NAME}" <<NGINX
@@ -733,10 +793,12 @@ NGINX_HTTP
 ln -sf "/etc/nginx/sites-available/${APP_NAME}-http" "/etc/nginx/sites-enabled/${APP_NAME}"
 nginx -t && systemctl reload nginx
 log "Vhost Nginx $DOMAIN configuré (HTTP-only — SSL à l'étape 12)."
+fi
 
 # =============================================================================
 # 12. SSL / LET'S ENCRYPT
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 12 ]]; then
 section "12. Certificat SSL Let's Encrypt"
 warn "Assurez-vous que $DOMAIN pointe vers l'IP de ce VPS avant de continuer."
 info "  Vérifiez la propagation DNS : dig $DOMAIN +short"
@@ -764,11 +826,13 @@ else
     warn "  certbot --nginx -d ${DOMAIN} -d www.${DOMAIN}"
     warn "Puis : systemctl reload nginx"
 fi
+fi
 next "Étape 13/16 — Création du service systemd ${APP_NAME}-api"
 
 # =============================================================================
 # 13. SERVICE SYSTEMD
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 13 ]]; then
 section "13. Service systemd ${APP_NAME}-api"
 
 cat > "/etc/systemd/system/${APP_NAME}-api.service" <<SYSTEMD
@@ -802,11 +866,13 @@ systemctl daemon-reload
 systemctl enable "${APP_NAME}-api"
 log "Service systemd ${APP_NAME}-api créé et activé."
 warn "Le service ne peut pas démarrer tant que le binaire n'est pas déployé dans /var/www/${APP_NAME}/api/"
+fi
 next "Étape 14/16 — Logrotate"
 
 # =============================================================================
 # 14. LOGROTATE
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 14 ]]; then
 section "14. Logrotate"
 cat > "/etc/logrotate.d/${APP_NAME}" <<LOGROTATE
 /var/www/${APP_NAME}/api/logs/*.log {
@@ -824,11 +890,13 @@ cat > "/etc/logrotate.d/${APP_NAME}" <<LOGROTATE
 }
 LOGROTATE
 log "Logrotate configuré."
+fi
 next "Étape 15/16 — Génération du script de déploiement sur le VPS"
 
 # =============================================================================
 # 15. SCRIPT DE DÉPLOIEMENT SUR LE VPS
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 15 ]]; then
 section "15. Script /usr/local/bin/deploy-${APP_NAME}-api.sh"
 
 cat > "/usr/local/bin/deploy-${APP_NAME}-api.sh" <<DEPLOY
@@ -978,11 +1046,13 @@ DEPLOY
 
 chmod +x "/usr/local/bin/deploy-${APP_NAME}-api.sh"
 log "Script /usr/local/bin/deploy-${APP_NAME}-api.sh créé."
+fi
 next "Étape 16/16 — Vérifications finales (dernière étape)"
 
 # =============================================================================
 # 16. VÉRIFICATIONS FINALES
 # =============================================================================
+if [[ "$RESUME_FROM_STEP" -le 16 ]]; then
 section "16. Vérifications finales"
 
 echo ""
@@ -1042,3 +1112,4 @@ cat <<SUMMARY
   ──────────────────────────────────────────────────────
 
 SUMMARY
+fi

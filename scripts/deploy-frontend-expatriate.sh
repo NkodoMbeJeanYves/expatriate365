@@ -13,22 +13,22 @@
 #        cd client && npm run build && cd ..
 #
 #   2. Créer l'archive :
-#        tar -czf /tmp/expatriate365-frontend.tar.gz -C client/dist/client/browser .
+#        tar -czf /tmp/expatriate-frontend.tar.gz -C client/dist/client/browser .
 #
 #   3. Transférer l'archive et le script :
-#        scp /tmp/expatriate365-frontend.tar.gz root@acm365hub.poweryoursaas.com:/tmp/
-#        scp scripts/deploy-frontend-expatriate.sh root@acm365hub.poweryoursaas.com:/tmp/
+#        scp /tmp/expatriate-frontend.tar.gz root@167.86.96.89:/tmp/
+#        scp scripts/deploy-frontend-expatriate.sh root@167.86.96.89:/tmp/
 #
 #   4. Se connecter et exécuter :
-#        ssh root@acm365hub.poweryoursaas.com
+#        ssh root@167.86.96.89
 #        sed -i 's/\r//' /tmp/deploy-frontend-expatriate.sh
 #        bash /tmp/deploy-frontend-expatriate.sh --remote
 # =============================================================================
 set -euo pipefail
 
 # ─── Paramètres — modifiables ─────────────────────────────────────────────────
-APP_NAME="expatriate365"                       # doit correspondre à APP_NAME saisi lors du setup
-DOMAIN="acm365hub.poweryoursaas.com"           # domaine SSH du VPS
+APP_NAME="expatriate"                       # doit correspondre à APP_NAME saisi lors du setup
+DOMAIN="167.86.96.89"           # domaine SSH du VPS
 BUILD_DIR="client/dist/client/browser"
 ARCHIVE_LOCAL="/tmp/${APP_NAME}-frontend.tar.gz"
 ARCHIVE_REMOTE="/tmp/${APP_NAME}-frontend.tar.gz"

@@ -16,26 +16,29 @@
 #
 # =============================================================================
 # Apres deploiement effectuer ces 03 commandes
-#   sudo systemctl daemon-reload && sudo systemctl restart expatriate365-api && sudo systemctl status expatriate365-api 
-#   sudo systemctl restart expatriate365-api
-#   sudo systemctl status expatriate365-api
+#   sudo systemctl daemon-reload && sudo systemctl restart expatriate-api && sudo systemctl status expatriate-api 
+#   sudo systemctl restart expatriate-api
+#   sudo systemctl status expatriate-api
 #
 # ============================================================================
 # Remettre l'environnement a neuf (backend)
 # sudo lsof -i :5001
 # La commande precedente affichera le PID du processus a supprimer
 # sudo kill -9 <PID>
-# sudo systemctl stop expatriate365-api && sudo systemctl restart expatriate365-api
-# sudo systemctl restart expatriate365-api
+# sudo systemctl stop expatriate-api && sudo systemctl restart expatriate-api
 # Verifier toujour le journal apres un deploiement (backend)
-# journalctl -u expatriate365-api -f
+# journalctl -u expatriate-api -f
+
+# =============================================================================
+# Commande pour relancer le backend sans deployer (APP_NAME="expatriate")
+# systemctl stop expatriate-api && set -a && source <(grep -v '^#' /etc/expatriate/env | grep -v '^_DEPLOY' | sed 's/\r//') && set +a && dotnet /var/www/expatriate/api/server.dll --seed; code=\$?; systemctl start expatriate-api;
 # =============================================================================
 set -euo pipefail
 
 # ─── Paramètres — modifiables ─────────────────────────────────────────────────
-APP_NAME="expatriate365"                       # doit correspondre à APP_NAME saisi lors du setup
+APP_NAME="expatriate"                       # doit correspondre à APP_NAME saisi lors du setup
 APP_DLL="server.dll"                           # DLL principale du projet
-DOMAIN="acm365hub.poweryoursaas.com"           # domaine SSH du VPS
+DOMAIN="167.86.96.89"           # domaine SSH du VPS
 PROJECT="server/server.csproj"
 PUBLISH_DIR="./publish/api"
 ZIP_LOCAL="./publish/${APP_NAME}-api.zip"
@@ -125,6 +128,31 @@ scp "$_tmp_deploy" root@"$DOMAIN":"$DEPLOY_SCRIPT_REMOTE"
 ssh root@"$DOMAIN" "chmod +x ${DEPLOY_SCRIPT_REMOTE}"
 rm -f "$_tmp_deploy"
 echo "[✓] Script de déploiement mis à jour : ${DEPLOY_SCRIPT_REMOTE}"
+
+# ─── Préparation des dossiers d'upload ───────────────────────────────────────
+echo "→ Correction des droits des dossiers d'upload sur $DOMAIN..."
+ssh root@"$DOMAIN" "APP_NAME='$APP_NAME' bash -s" <<'REMOTE_UPLOAD_SETUP'
+set -euo pipefail
+
+BASE_DIR="/var/www/${APP_NAME}/api"
+DOWNLOAD_DIR="${BASE_DIR}/downloads"
+
+echo "→ Création des dossiers d'upload..."
+mkdir -p "${DOWNLOAD_DIR}/attachments"
+mkdir -p "${DOWNLOAD_DIR}/avatars"
+mkdir -p "${DOWNLOAD_DIR}/branding"
+mkdir -p "${DOWNLOAD_DIR}/docs"
+
+echo "→ Attribution des droits..."
+chown -R "${APP_NAME}:www-data" "${DOWNLOAD_DIR}"
+chmod -R 750 "${DOWNLOAD_DIR}"
+find "${DOWNLOAD_DIR}" -type d -exec chmod g+s {} \;
+
+echo "→ Vérification et rechargement de Nginx..."
+nginx -t
+systemctl reload nginx
+echo "✓ Dossiers d'upload configurés."
+REMOTE_UPLOAD_SETUP
 
 # ─── 6. Déploiement ──────────────────────────────────────────────────────────
 REMOTE_ARGS=""
