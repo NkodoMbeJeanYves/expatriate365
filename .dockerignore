@@ -1,0 +1,13 @@
+server/obj/
+server/bin/
+server/publish/
+server/downloads/
+server/logs/
+server/*.user
+server/*.suo
+server/.vs/
+server/appsettings.Development.json
+client/node_modules/
+client/.angular/
+scripts/
+.git/
