@@ -8,6 +8,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { ExploreApiService } from '../../services/explore-api.service';
+import { DirectoryApiService } from '@directory/services/directory-api.service';
 import { PostSummaryDto } from '@models/post.model';
 import { PublicTenant } from '@core/auth/models/user.model';
 
@@ -41,6 +42,37 @@ import { PublicTenant } from '@core/auth/models/user.model';
       </header>
 
       <main class="max-w-5xl mx-auto px-6 py-8">
+
+        <!-- Directory banner -->
+        @if (directoryCount() > 0) {
+          <div class="mb-6 flex items-center justify-between gap-4
+                      bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700
+                      rounded-xl px-5 py-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                   style="background: #FEF3C7">
+                <i class="pi pi-briefcase" style="color: #D97706"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900 dark:text-white text-sm">
+                  {{ 'explore.directory_banner_title' | translate : { count: directoryCount() } }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ 'explore.directory_banner_subtitle' | translate }}
+                </p>
+              </div>
+            </div>
+            <a [routerLink]="['/directory', slug()]">
+              <p-button
+                [label]="'explore.directory_banner_cta' | translate"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                size="small"
+                severity="warning"
+              />
+            </a>
+          </div>
+        }
 
         <!-- Search -->
         <div class="mb-6 flex gap-3">
@@ -104,25 +136,31 @@ import { PublicTenant } from '@core/auth/models/user.model';
   `,
 })
 export class ExploreFeedPage implements OnInit {
-  private readonly api   = inject(ExploreApiService);
-  private readonly route = inject(ActivatedRoute);
+  private readonly api       = inject(ExploreApiService);
+  private readonly directory = inject(DirectoryApiService);
+  private readonly route     = inject(ActivatedRoute);
 
-  readonly slug       = signal('');
-  readonly tenant     = signal<PublicTenant | null>(null);
-  readonly posts      = signal<PostSummaryDto[]>([]);
-  readonly total      = signal(0);
-  readonly loading    = signal(true);
-  readonly loadingMore = signal(false);
-  readonly page       = signal(1);
-  readonly limit      = 12;
-  readonly hasMore    = computed(() => this.posts().length < this.total());
-  searchTerm          = '';
+  readonly slug           = signal('');
+  readonly tenant         = signal<PublicTenant | null>(null);
+  readonly posts          = signal<PostSummaryDto[]>([]);
+  readonly total          = signal(0);
+  readonly loading        = signal(true);
+  readonly loadingMore    = signal(false);
+  readonly page           = signal(1);
+  readonly limit          = 12;
+  readonly hasMore        = computed(() => this.posts().length < this.total());
+  readonly directoryCount = signal(0);
+  searchTerm              = '';
 
   ngOnInit(): void {
     const s = this.route.snapshot.paramMap.get('slug') ?? '';
     this.slug.set(s);
     this.loadTenant(s);
     this.loadPosts(1);
+    this.directory.getDirectory(s).subscribe({
+      next: (members) => this.directoryCount.set(members.length),
+      error: () => {},
+    });
   }
 
   private loadTenant(slug: string): void {

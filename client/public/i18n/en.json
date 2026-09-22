@@ -208,7 +208,10 @@
     "cta_subtitle": "Log in to share your own experience and interact with other members.",
     "files": "attachment(s)",
     "no_files": "No attachment",
-    "cta_button": "Log in"
+    "cta_button": "Log in",
+    "directory_banner_title": "{{count}} professional(s) in this community",
+    "directory_banner_subtitle": "Some members have shared their expertise. Browse the directory.",
+    "directory_banner_cta": "View directory"
   },
   "errors": {
     "required": "This field is required",
