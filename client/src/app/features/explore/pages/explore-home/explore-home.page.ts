@@ -4,6 +4,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
+import { BrandLogoComponent } from '@shared/components/brand-logo/brand-logo.component';
 import { ExploreApiService } from '../../services/explore-api.service';
 import { PublicTenant } from '@core/auth/models/user.model';
 import { ToastModule } from 'primeng/toast';
@@ -18,6 +19,7 @@ import { ToastModule } from 'primeng/toast';
     ProgressSpinnerModule,
     TranslatePipe,
     LangSwitcherComponent,
+    BrandLogoComponent,
     ToastModule,
   ],
   template: `
@@ -27,12 +29,7 @@ import { ToastModule } from 'primeng/toast';
         class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4
                      flex items-center justify-between"
       >
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
-            <i class="pi pi-globe text-white text-sm"></i>
-          </div>
-          <span class="font-bold text-gray-900 dark:text-white text-lg">Expatriate365</span>
-        </div>
+        <app-brand-logo />
         <div class="flex items-center gap-3">
           <app-lang-switcher />
           <a routerLink="/auth/login">

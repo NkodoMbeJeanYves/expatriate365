@@ -3,12 +3,13 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
+import { BrandLogoComponent } from '@shared/components/brand-logo/brand-logo.component';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ButtonModule, TranslatePipe, LangSwitcherComponent],
+  imports: [RouterLink, ButtonModule, TranslatePipe, LangSwitcherComponent, BrandLogoComponent],
   template: `
     <div class="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
 
@@ -16,14 +17,7 @@ import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-swi
       <header class="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur
                      border-b border-gray-100 dark:border-gray-800 px-6 py-4
                      flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center shadow">
-            <i class="pi pi-globe text-white"></i>
-          </div>
-          <span class="font-bold text-gray-900 dark:text-white text-xl tracking-tight">
-            Expatriate<span class="text-primary-600">365</span>
-          </span>
-        </div>
+        <app-brand-logo />
         <div class="flex items-center gap-3">
           <app-lang-switcher />
           <a routerLink="/explore">
