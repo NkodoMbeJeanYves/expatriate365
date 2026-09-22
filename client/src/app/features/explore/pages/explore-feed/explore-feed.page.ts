@@ -68,7 +68,7 @@ import { PublicTenant } from '@core/auth/models/user.model';
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 size="small"
-                severity="warning"
+                severity="secondary"
               />
             </a>
           </div>

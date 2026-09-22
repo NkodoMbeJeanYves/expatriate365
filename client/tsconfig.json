@@ -26,6 +26,7 @@
       "@env/*":           ["environments/*"],
       "@auth/*":          ["app/features/auth/*"],
       "@members/*":       ["app/features/members/*"],
+      "@directory/*":     ["app/features/directory/*"],
       "@contributions/*": ["app/features/contributions/*"],
       "@payments/*":      ["app/features/payments/*"],
       "@finances/*":      ["app/features/finances/*"],
