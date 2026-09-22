@@ -3,7 +3,7 @@ import { authGuard, hasRoleGuard } from '@core/auth/auth.guard';
 import { STAFF_ROLES } from '@core/auth/models/role.model';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'explore', pathMatch: 'full' },
+  { path: '', loadComponent: () => import('./features/landing/landing.page').then((m) => m.LandingPage) },
   {
     path: 'auth',
     loadComponent: () => import('@layouts/auth-layout/auth-layout').then((m) => m.AuthLayoutComponent),

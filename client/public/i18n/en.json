@@ -698,5 +698,32 @@
     "logo": "Association logo",
     "upload_logo": "Change logo",
     "logo_hint": "Accepted formats: JPG, PNG, WebP, SVG — max 5 MB"
+  },
+  "landing": {
+    "nav_explore": "Explore",
+    "nav_login": "Sign in",
+    "hero_badge": "The platform for expats from Cameroon and beyond",
+    "hero_title": "Stay connected to your community, wherever you are",
+    "hero_subtitle": "Expatriate365 brings together Cameroonian and African expatriates on one platform: contributions, elections, mutual aid, events and much more.",
+    "hero_cta_explore": "Discover communities",
+    "hero_cta_login": "Access my account",
+    "features_title": "Everything your community needs",
+    "features_subtitle": "One platform to manage your association life from anywhere.",
+    "feat_community_title": "Community feed",
+    "feat_community_desc": "Follow publications and announcements from your community in real time.",
+    "feat_vote_title": "Elections & votes",
+    "feat_vote_desc": "Vote remotely to elect your representatives with full transparency.",
+    "feat_meetings_title": "Meetings & minutes",
+    "feat_meetings_desc": "Attend general assemblies and access meeting minutes.",
+    "feat_contributions_title": "Online contributions",
+    "feat_contributions_desc": "Pay your membership fees and track your receipts from anywhere.",
+    "feat_welfare_title": "Solidarity & mutual aid",
+    "feat_welfare_desc": "Request or provide support during difficult times.",
+    "feat_docs_title": "Official documents",
+    "feat_docs_desc": "Access statutes, reports and documents from your association.",
+    "cta_title": "Find your community",
+    "cta_subtitle": "Dozens of expatriate associations already use Expatriate365. Join yours.",
+    "cta_button": "Explore communities",
+    "footer_tagline": "The African expatriate community platform"
   }
 }

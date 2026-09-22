@@ -698,5 +698,32 @@
     "logo": "Logo de l'association",
     "upload_logo": "Changer le logo",
     "logo_hint": "Formats acceptés : JPG, PNG, WebP, SVG — max 5 Mo"
+  },
+  "landing": {
+    "nav_explore": "Explorer",
+    "nav_login": "Se connecter",
+    "hero_badge": "La plateforme des expatriés du 237 et d'ailleurs",
+    "hero_title": "Restez connecté à votre communauté, où que vous soyez",
+    "hero_subtitle": "Expatriate365 rassemble les expatriés camerounais et africains autour d'une plateforme commune : cotisations, élections, entraide, événements et bien plus.",
+    "hero_cta_explore": "Découvrir les communautés",
+    "hero_cta_login": "Accéder à mon espace",
+    "features_title": "Tout ce dont votre communauté a besoin",
+    "features_subtitle": "Une seule plateforme pour gérer la vie associative à distance.",
+    "feat_community_title": "Fil d'actualité",
+    "feat_community_desc": "Suivez les publications et annonces de votre communauté en temps réel.",
+    "feat_vote_title": "Élections & votes",
+    "feat_vote_desc": "Votez à distance pour élire vos représentants en toute transparence.",
+    "feat_meetings_title": "Réunions & PV",
+    "feat_meetings_desc": "Participez aux assemblées générales et consultez les procès-verbaux.",
+    "feat_contributions_title": "Cotisations en ligne",
+    "feat_contributions_desc": "Payez vos cotisations et suivez vos reçus depuis n'importe où.",
+    "feat_welfare_title": "Solidarité & entraide",
+    "feat_welfare_desc": "Demandez ou apportez un soutien lors des moments difficiles.",
+    "feat_docs_title": "Documents officiels",
+    "feat_docs_desc": "Accédez aux statuts, rapports et documents de votre association.",
+    "cta_title": "Trouvez votre communauté",
+    "cta_subtitle": "Des dizaines d'associations d'expatriés utilisent déjà Expatriate365. Rejoignez la vôtre.",
+    "cta_button": "Explorer les communautés",
+    "footer_tagline": "La communauté des expatriés africains"
   }
 }
