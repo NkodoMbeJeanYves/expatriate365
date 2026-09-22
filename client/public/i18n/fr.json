@@ -110,6 +110,8 @@
     "mfa_code": "Code de vérification",
     "mfa_submit": "Vérifier",
     "quick_access": "Accès rapide (dev)",
+    "explore_hint": "Pas encore membre ?",
+    "explore_link": "Découvrir les communautés",
     "select_tenant_title": "Sélectionner une communauté",
     "select_tenant_subtitle": "Choisissez la communauté que vous souhaitez gérer",
     "no_tenants": "Aucune communauté trouvée"

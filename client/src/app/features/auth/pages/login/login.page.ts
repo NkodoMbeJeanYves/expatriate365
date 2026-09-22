@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
@@ -13,7 +13,7 @@ import { environment } from '@env/environment';
   selector: 'app-login-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, InputTextModule, PasswordModule, ButtonModule, TranslatePipe],
+  imports: [ReactiveFormsModule, InputTextModule, PasswordModule, ButtonModule, TranslatePipe, RouterLink],
   template: `
     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-8">
 
@@ -48,6 +48,15 @@ import { environment } from '@env/environment';
           styleClass="w-full justify-center mt-1"
           [loading]="loading()" />
       </form>
+
+      <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-400">
+        {{ 'auth.explore_hint' | translate }}
+        <a routerLink="/explore"
+           class="font-medium ml-1 hover:underline"
+           style="color: #059669">
+          {{ 'auth.explore_link' | translate }} →
+        </a>
+      </div>
 
       @if (quickAccounts.length) {
         <div class="mt-6 pt-5 border-t border-gray-100 dark:border-gray-800">
