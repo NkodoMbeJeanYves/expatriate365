@@ -20,6 +20,7 @@ export interface Member {
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
   is_active: boolean;
+  is_directory_visible?: boolean;
   created_at: string;
   updated_at?: string;
   email_verified_at?: string;
@@ -80,6 +81,7 @@ export interface CreateMemberRequest {
 
 export interface UpdateMemberRequest extends CreateMemberRequest {
   is_active: boolean;
+  is_directory_visible?: boolean;
 }
 
 export interface PagedMembersResult {

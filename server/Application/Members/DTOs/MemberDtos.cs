@@ -74,7 +74,19 @@ public record UpdateMemberRequest(
     string? Gender,
     string? EmergencyContactName,
     string? EmergencyContactPhone,
-    bool IsActive
+    bool IsActive,
+    bool IsDirectoryVisible = false
+);
+
+public record DirectoryMemberDto(
+    string Id,
+    string FirstName,
+    string LastName,
+    string? Profession,
+    string? PhotoUrl,
+    string? Address,
+    string TenantName,
+    string TenantSlug
 );
 
 public record PatchMemberStatusRequest(string Status);

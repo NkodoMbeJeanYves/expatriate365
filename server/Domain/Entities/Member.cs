@@ -19,6 +19,7 @@ public class Member
     public string? EmergencyContactName { get; set; }
     public string? EmergencyContactPhone { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsDirectoryVisible { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

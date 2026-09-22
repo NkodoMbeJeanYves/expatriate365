@@ -57,6 +57,7 @@ public class UpdateMemberCommandHandler(AppDbContext db, IWebHostEnvironment env
         member.EmergencyContactName = dto.EmergencyContactName;
         member.EmergencyContactPhone = dto.EmergencyContactPhone;
         member.IsActive = dto.IsActive;
+        member.IsDirectoryVisible = dto.IsDirectoryVisible;
 
         await db.SaveChangesAsync(ct);
 

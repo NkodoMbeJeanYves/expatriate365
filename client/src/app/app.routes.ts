@@ -51,6 +51,10 @@ export const routes: Routes = [
       { path: ':slug/:id', loadComponent: () => import('./features/explore/pages/explore-post/explore-post.page').then(m => m.ExplorePostPage) },
     ],
   },
+  {
+    path: 'directory/:slug',
+    loadComponent: () => import('./features/directory/pages/directory.page').then((m) => m.DirectoryPage),
+  },
   { path: 'forbidden', loadComponent: () => import('@shared/components/forbidden/forbidden.component').then((m) => m.ForbiddenComponent) },
   { path: '**', redirectTo: 'dashboard' },
 ];

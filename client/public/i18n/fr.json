@@ -268,6 +268,8 @@
     "gender_other": "Autre",
     "emergency_contact": "Contact d'urgence",
     "emergency_phone": "Téléphone d'urgence",
+    "directory_visible": "Visible dans l'annuaire professionnel",
+    "directory_visible_hint": "En cochant cette case, votre nom et votre profession seront visibles publiquement dans l'annuaire de la communauté.",
     "expiry_date": "Date d'expiration",
     "status_pending": "En attente",
     "status_active": "Actif",
@@ -724,6 +726,22 @@
     "cta_title": "Trouvez votre communauté",
     "cta_subtitle": "Des dizaines d'associations d'expatriés utilisent déjà Expatriate365. Rejoignez la vôtre.",
     "cta_button": "Explorer les communautés",
-    "footer_tagline": "La communauté des expatriés africains"
+    "footer_tagline": "La communauté des expatriés africains",
+    "directory_badge": "Nouveau",
+    "directory_title": "Trouvez un professionnel dans votre communauté",
+    "directory_desc": "Médecin, avocat, ingénieur, comptable... Les membres volontaires partagent leur expertise. Trouvez rapidement un compatriote qualifié près de chez vous.",
+    "directory_cta": "Accéder à l'annuaire",
+    "prof_doctor": "Médecin",
+    "prof_lawyer": "Avocat",
+    "prof_engineer": "Ingénieur",
+    "prof_accountant": "Comptable"
+  },
+  "directory": {
+    "title": "Annuaire professionnel",
+    "subtitle": "Trouvez un professionnel parmi les membres de cette communauté.",
+    "search_placeholder": "Rechercher par nom ou métier...",
+    "all_professions": "Tous les métiers",
+    "empty": "Aucun professionnel inscrit dans cet annuaire pour le moment.",
+    "results": "professionnel(s) trouvé(s)"
   }
 }

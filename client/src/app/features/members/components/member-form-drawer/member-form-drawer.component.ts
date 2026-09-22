@@ -236,6 +236,20 @@ import { MembersStore } from '../../store/members.store';
             <input pInputText formControlName="emergency_contact_phone" class="w-full" />
           </div>
         </div>
+
+        <!-- ── Annuaire professionnel ── -->
+        <div class="mt-4 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" formControlName="is_directory_visible"
+                   class="w-4 h-4 rounded accent-primary-600" />
+            <span class="text-sm font-medium text-gray-800 dark:text-gray-200">
+              {{ 'members.directory_visible' | translate }}
+            </span>
+          </label>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-7">
+            {{ 'members.directory_visible_hint' | translate }}
+          </p>
+        </div>
       </form>
 
       <div
@@ -331,6 +345,7 @@ export class MemberFormDrawerComponent implements OnInit {
     address: new FormControl(''),
     emergency_contact_name: new FormControl(''),
     emergency_contact_phone: new FormControl(''),
+    is_directory_visible: new FormControl(false),
   });
 
   private _referenceLoaded = false;
@@ -429,6 +444,7 @@ export class MemberFormDrawerComponent implements OnInit {
           address: m.address ?? '',
           emergency_contact_name: m.emergency_contact_name ?? '',
           emergency_contact_phone: m.emergency_contact_phone ?? '',
+          is_directory_visible: m.is_directory_visible ?? false,
         });
       },
       error: () => this.error.set('Impossible de charger le membre.'),
@@ -465,6 +481,7 @@ export class MemberFormDrawerComponent implements OnInit {
           emergency_contact_name: v.emergency_contact_name || undefined,
           emergency_contact_phone: v.emergency_contact_phone || undefined,
           is_active: true,
+          is_directory_visible: v.is_directory_visible ?? false,
         })
       : this.api.create({
           first_name: v.first_name!,

@@ -106,6 +106,47 @@ import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-swi
         </div>
       </section>
 
+      <!-- ── Annuaire professionnel ─────────────────────────────────────────── -->
+      <section class="py-16 px-6 bg-gray-50 dark:bg-gray-900">
+        <div class="max-w-5xl mx-auto flex flex-col lg:flex-row items-center gap-10">
+          <div class="flex-1">
+            <div class="inline-flex items-center gap-2 bg-amber-100 dark:bg-amber-900/40
+                        text-amber-700 dark:text-amber-300 text-xs font-semibold
+                        px-3 py-1.5 rounded-full mb-4">
+              <i class="pi pi-briefcase text-xs"></i>
+              {{ 'landing.directory_badge' | translate }}
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+              {{ 'landing.directory_title' | translate }}
+            </h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+              {{ 'landing.directory_desc' | translate }}
+            </p>
+            <a routerLink="/explore">
+              <p-button
+                [label]="'landing.directory_cta' | translate"
+                icon="pi pi-briefcase"
+                severity="secondary"
+              />
+            </a>
+          </div>
+          <div class="flex-1 grid grid-cols-2 gap-3">
+            @for (p of exampleProfessions; track p.icon) {
+              <div class="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-xl p-4
+                          border border-gray-100 dark:border-gray-700">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                     [style.background]="p.bg">
+                  <i [class]="'pi ' + p.icon" [style.color]="p.color"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {{ p.label | translate }}
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
       <!-- ── Communautés (CTA explore) ──────────────────────────────────────── -->
       <section class="py-16 px-6 bg-primary-600 dark:bg-primary-700 text-center">
         <h2 class="text-2xl font-bold text-white mb-3">
@@ -134,6 +175,13 @@ import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-swi
 })
 export class LandingPage {
   readonly year = new Date().getFullYear();
+
+  readonly exampleProfessions = [
+    { icon: 'pi-heart', label: 'landing.prof_doctor',   bg: '#FFF1F2', color: '#E11D48' },
+    { icon: 'pi-briefcase', label: 'landing.prof_lawyer', bg: '#EEF2FF', color: '#4F46E5' },
+    { icon: 'pi-wrench', label: 'landing.prof_engineer', bg: '#F0FDF4', color: '#16A34A' },
+    { icon: 'pi-building', label: 'landing.prof_accountant', bg: '#FFFBEB', color: '#D97706' },
+  ];
 
   readonly features = [
     {

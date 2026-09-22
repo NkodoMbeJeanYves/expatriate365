@@ -268,6 +268,8 @@
     "gender_other": "Other",
     "emergency_contact": "Emergency contact",
     "emergency_phone": "Emergency phone",
+    "directory_visible": "Visible in the professional directory",
+    "directory_visible_hint": "By checking this box, your name and profession will be publicly visible in the community directory.",
     "expiry_date": "Expiry date",
     "status_pending": "Pending",
     "status_active": "Active",
@@ -724,6 +726,22 @@
     "cta_title": "Find your community",
     "cta_subtitle": "Dozens of expatriate associations already use Expatriate365. Join yours.",
     "cta_button": "Explore communities",
-    "footer_tagline": "The African expatriate community platform"
+    "footer_tagline": "The African expatriate community platform",
+    "directory_badge": "New",
+    "directory_title": "Find a professional in your community",
+    "directory_desc": "Doctor, lawyer, engineer, accountant... Volunteer members share their expertise. Quickly find a qualified compatriot near you.",
+    "directory_cta": "Browse the directory",
+    "prof_doctor": "Doctor",
+    "prof_lawyer": "Lawyer",
+    "prof_engineer": "Engineer",
+    "prof_accountant": "Accountant"
+  },
+  "directory": {
+    "title": "Professional directory",
+    "subtitle": "Find a professional among the members of this community.",
+    "search_placeholder": "Search by name or profession...",
+    "all_professions": "All professions",
+    "empty": "No professionals listed in this directory yet.",
+    "results": "professional(s) found"
   }
 }
