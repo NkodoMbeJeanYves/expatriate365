@@ -407,7 +407,11 @@
     "mark_paid": "Mark as paid",
     "no_requests": "No requests found",
     "confirm_approve": "Approve this request?",
-    "confirm_reject": "Reject this request?"
+    "confirm_reject": "Reject this request?",
+    "type_death": "Death",
+    "type_illness": "Illness",
+    "type_birth": "Birth",
+    "type_financial_hardship": "Financial hardship"
   },
   "events": {
     "title": "Events",
@@ -439,7 +443,12 @@
     "cancel_event": "Cancel event",
     "no_events": "No events found",
     "edit_event": "Edit event",
-    "add_event": "Create event"
+    "add_event": "Create event",
+    "type_general": "General",
+    "type_training": "Training",
+    "type_social": "Social",
+    "type_sports": "Sports",
+    "type_administrative": "Administrative"
   },
   "meetings": {
     "title": "Meetings",
@@ -482,7 +491,7 @@
     "vote_count": "{{count}} votes",
     "nominate": "Nominate",
     "vote": "Vote",
-    "already_voted": "Already voted",
+    "already_voted": "You have already voted",
     "already_voted_full": "You have already voted in this election",
     "board_only": "Board members only",
     "results": "Results",
@@ -502,13 +511,13 @@
     "publish_results": "Publish results",
     "no_elections": "No elections found",
     "no_candidates": "No candidates",
-    "already_voted": "You have already voted",
     "vote_success": "Vote recorded successfully",
     "max_choices_hint": "Number of candidates a member can choose",
     "add_candidate": "Add candidate",
     "candidate_member": "Member",
     "candidate_statement": "Statement / Presentation",
-    "candidate_order": "Display order"
+    "candidate_order": "Display order",
+    "type_president": "President election"
   },
   "communications": {
     "title": "Communications",

@@ -205,7 +205,7 @@ export class ElectionListPage implements OnInit {
     return this.translate.instant('elections.status_' + s);
   }
   private typeLabelFn(t: string): string {
-    return t === 'board' ? this.translate.instant('elections.type_board') : t === 'custom' ? this.translate.instant('elections.type_custom') : t;
+    return this.translate.instant('elections.type_' + t);
   }
 
   protected openForm(e?: ElectionDto): void { this.formDrawer().open(e); }

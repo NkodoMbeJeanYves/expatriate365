@@ -7,7 +7,7 @@ import { WelfareApiService } from '../../services/welfare-api.service';
 import { WelfareRequest, WELFARE_TYPES } from '@models/welfare.model';
 import { MembersApiService } from '@members/services/members-api.service';
 import { MemberListItem } from '@core/models/member.model';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-welfare-request-drawer',
@@ -64,8 +64,9 @@ import { TranslatePipe } from '@ngx-translate/core';
   `,
 })
 export class WelfareRequestDrawerComponent {
-  private readonly api = inject(WelfareApiService);
+  private readonly api       = inject(WelfareApiService);
   private readonly membersApi = inject(MembersApiService);
+  private readonly translate  = inject(TranslateService);
   protected readonly drawerRef = viewChild<Drawer>('drawerEl');
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -75,7 +76,9 @@ export class WelfareRequestDrawerComponent {
   saving = signal(false);
   error = signal<string | null>(null);
   members = signal<MemberListItem[]>([]);
-  welfareTypes = [...WELFARE_TYPES];
+  get welfareTypes() {
+    return [...WELFARE_TYPES].map(t => ({ label: this.translate.instant('welfare.type_' + t.value), value: t.value }));
+  }
 
   form = { member_id: '', type: 'other', description: '', amount_requested: 0, notes: '' };
 

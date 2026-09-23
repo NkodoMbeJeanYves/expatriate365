@@ -84,7 +84,7 @@ export class ElectionFormDrawerComponent implements OnInit {
 
   ngOnInit(): void {
     this.typeOptions = [...ELECTION_TYPES].map(t => ({
-      label: t === 'board' ? this.translate.instant('elections.type_board') : t === 'custom' ? this.translate.instant('elections.type_custom') : t,
+      label: this.translate.instant('elections.type_' + t),
       value: t,
     }));
   }

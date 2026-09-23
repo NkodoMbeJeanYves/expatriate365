@@ -407,7 +407,11 @@
     "mark_paid": "Marquer comme versé",
     "no_requests": "Aucune demande trouvée",
     "confirm_approve": "Approuver cette demande ?",
-    "confirm_reject": "Rejeter cette demande ?"
+    "confirm_reject": "Rejeter cette demande ?",
+    "type_death": "Décès",
+    "type_illness": "Maladie",
+    "type_birth": "Naissance",
+    "type_financial_hardship": "Difficulté financière"
   },
   "events": {
     "title": "Événements",
@@ -439,7 +443,12 @@
     "cancel_event": "Annuler l'événement",
     "no_events": "Aucun événement trouvé",
     "edit_event": "Modifier l'événement",
-    "add_event": "Créer un événement"
+    "add_event": "Créer un événement",
+    "type_general": "Général",
+    "type_training": "Formation",
+    "type_social": "Social",
+    "type_sports": "Sportif",
+    "type_administrative": "Administratif"
   },
   "meetings": {
     "title": "Réunions",
@@ -482,7 +491,7 @@
     "vote_count": "{{count}} voix",
     "nominate": "Se porter candidat",
     "vote": "Voter",
-    "already_voted": "Déjà voté",
+    "already_voted": "Vous avez déjà voté",
     "already_voted_full": "Vous avez déjà voté pour cette élection",
     "board_only": "Réservé au bureau",
     "results": "Résultats",
@@ -502,13 +511,13 @@
     "publish_results": "Publier les résultats",
     "no_elections": "Aucune élection trouvée",
     "no_candidates": "Aucun candidat",
-    "already_voted": "Vous avez déjà voté",
     "vote_success": "Vote enregistré avec succès",
     "max_choices_hint": "Nombre de candidats qu'un membre peut choisir",
     "add_candidate": "Ajouter un candidat",
     "candidate_member": "Membre",
     "candidate_statement": "Programme / Présentation",
-    "candidate_order": "Ordre d'affichage"
+    "candidate_order": "Ordre d'affichage",
+    "type_president": "Président"
   },
   "communications": {
     "title": "Communications",

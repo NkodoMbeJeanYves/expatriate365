@@ -85,7 +85,7 @@ export class EventFormDrawerComponent implements OnInit {
   protected readonly drawerTitle = computed(() => this.editing() ? this.translate.instant('events.edit_event') : this.translate.instant('events.add_event'));
   private currentId: string | null = null;
 
-  protected readonly eventTypes = [...EVENT_TYPES].map(t => ({ label: t.charAt(0).toUpperCase() + t.slice(1), value: t }));
+  protected readonly eventTypes = [...EVENT_TYPES].map(t => ({ label: this.translate.instant('events.type_' + t), value: t }));
 
   protected form = this.fb.group({
     title: ['', Validators.required],

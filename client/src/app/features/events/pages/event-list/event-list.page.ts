@@ -12,7 +12,7 @@ import { EventsStore } from '../../store/events.store';
 import { EventFormDrawerComponent } from '../../components/event-form-drawer/event-form-drawer.component';
 import { EventRegistrationsDrawerComponent } from '../../components/event-registrations-drawer/event-registrations-drawer.component';
 import { EventsApiService } from '../../services/events-api.service';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthStore } from '@core/auth/auth.store';
 import { STAFF_ROLES } from '@core/auth/models/role.model';
 
@@ -156,6 +156,7 @@ export class EventListPage implements OnInit {
   protected readonly store    = inject(EventsStore);
   private readonly api        = inject(EventsApiService);
   private readonly authStore  = inject(AuthStore);
+  private readonly translate  = inject(TranslateService);
   protected readonly isStaff  = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
 
   private readonly formDrawer = viewChild.required<EventFormDrawerComponent>('formDrawer');
@@ -165,7 +166,7 @@ export class EventListPage implements OnInit {
   protected filterType: string | null = null;
 
   protected readonly statusOptions = [...EVENT_STATUSES].map(s => ({ label: s.charAt(0).toUpperCase() + s.slice(1), value: s }));
-  protected readonly typeOptions = [...EVENT_TYPES].map(t => ({ label: t.charAt(0).toUpperCase() + t.slice(1), value: t }));
+  protected readonly typeOptions = [...EVENT_TYPES].map(t => ({ label: this.translate.instant('events.type_' + t), value: t }));
 
   ngOnInit(): void {
     this.store.loadEvents();
