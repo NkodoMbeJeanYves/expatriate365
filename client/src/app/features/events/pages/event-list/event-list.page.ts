@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -13,6 +13,8 @@ import { EventFormDrawerComponent } from '../../components/event-form-drawer/eve
 import { EventRegistrationsDrawerComponent } from '../../components/event-registrations-drawer/event-registrations-drawer.component';
 import { EventsApiService } from '../../services/events-api.service';
 import { TranslatePipe } from '@ngx-translate/core';
+import { AuthStore } from '@core/auth/auth.store';
+import { STAFF_ROLES } from '@core/auth/models/role.model';
 
 @Component({
   selector: 'app-event-list',
@@ -32,7 +34,9 @@ import { TranslatePipe } from '@ngx-translate/core';
           <h1 class="text-2xl font-bold text-gray-800">{{ 'events.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'events.subtitle' | translate }}</p>
         </div>
-        <p-button [label]="'events.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+        @if (isStaff()) {
+          <p-button [label]="'events.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+        }
       </div>
 
       <!-- Stats -->
@@ -106,19 +110,21 @@ import { TranslatePipe } from '@ngx-translate/core';
               <div class="px-4 pb-3 flex gap-2 border-t border-gray-50 pt-3">
                 <p-button icon="pi pi-users" size="small" severity="secondary" [text]="true"
                   [pTooltip]="'events.registrations' | translate" (onClick)="openRegistrations(ev)" />
-                @if (ev.status === 'draft') {
-                  <p-button icon="pi pi-send" size="small" severity="info" [text]="true"
-                    [pTooltip]="'events.publish' | translate" (onClick)="publish(ev)" />
-                  <p-button icon="pi pi-pencil" size="small" severity="secondary" [text]="true"
-                    [pTooltip]="'common.edit' | translate" (onClick)="openForm(ev)" />
-                }
-                @if (ev.status === 'published') {
-                  <p-button icon="pi pi-check-circle" size="small" severity="success" [text]="true"
-                    pTooltip="Terminer" (onClick)="complete(ev)" />
-                  <p-button icon="pi pi-pencil" size="small" severity="secondary" [text]="true"
-                    [pTooltip]="'common.edit' | translate" (onClick)="openForm(ev)" />
-                  <p-button icon="pi pi-times-circle" size="small" severity="danger" [text]="true"
-                    pTooltip="Annuler" (onClick)="cancelEvent(ev)" />
+                @if (isStaff()) {
+                  @if (ev.status === 'draft') {
+                    <p-button icon="pi pi-send" size="small" severity="info" [text]="true"
+                      [pTooltip]="'events.publish' | translate" (onClick)="publish(ev)" />
+                    <p-button icon="pi pi-pencil" size="small" severity="secondary" [text]="true"
+                      [pTooltip]="'common.edit' | translate" (onClick)="openForm(ev)" />
+                  }
+                  @if (ev.status === 'published') {
+                    <p-button icon="pi pi-check-circle" size="small" severity="success" [text]="true"
+                      pTooltip="Terminer" (onClick)="complete(ev)" />
+                    <p-button icon="pi pi-pencil" size="small" severity="secondary" [text]="true"
+                      [pTooltip]="'common.edit' | translate" (onClick)="openForm(ev)" />
+                    <p-button icon="pi pi-times-circle" size="small" severity="danger" [text]="true"
+                      pTooltip="Annuler" (onClick)="cancelEvent(ev)" />
+                  }
                 }
               </div>
             </div>
@@ -147,8 +153,10 @@ import { TranslatePipe } from '@ngx-translate/core';
   `,
 })
 export class EventListPage implements OnInit {
-  protected readonly store = inject(EventsStore);
-  private readonly api = inject(EventsApiService);
+  protected readonly store    = inject(EventsStore);
+  private readonly api        = inject(EventsApiService);
+  private readonly authStore  = inject(AuthStore);
+  protected readonly isStaff  = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
 
   private readonly formDrawer = viewChild.required<EventFormDrawerComponent>('formDrawer');
   private readonly regsDrawer = viewChild.required<EventRegistrationsDrawerComponent>('regsDrawer');

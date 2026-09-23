@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -9,6 +9,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MeetingDto, MeetingMinuteDto, MEETING_STATUSES, MEETING_TYPES } from '@models/meeting.model';
+import { AuthStore } from '@core/auth/auth.store';
+import { STAFF_ROLES } from '@core/auth/models/role.model';
 import { MeetingsStore } from '../../store/meetings.store';
 import { MeetingsApiService } from '../../services/meetings-api.service';
 import { MeetingFormDrawerComponent } from '../../components/meeting-form-drawer/meeting-form-drawer.component';
@@ -32,7 +34,9 @@ import { MeetingMinutesDrawerComponent } from '../../components/meeting-minutes-
           <h1 class="text-2xl font-bold text-gray-800">{{ 'meetings.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'meetings.subtitle' | translate }}</p>
         </div>
-        <p-button [label]="'meetings.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+        @if (isStaff()) {
+          <p-button [label]="'meetings.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+        }
       </div>
 
       <!-- Stats -->
@@ -107,17 +111,19 @@ import { MeetingMinutesDrawerComponent } from '../../components/meeting-minutes-
                     [pTooltip]="'meetings.attendances' | translate" (onClick)="openAttendance(m)" />
                   <p-button icon="pi pi-file-edit" size="small" severity="secondary" [text]="true"
                     [pTooltip]="'meetings.minutes' | translate" (onClick)="openMinutes(m)" />
-                  @if (m.status === 'scheduled') {
-                    <p-button icon="pi pi-play" size="small" severity="info" [text]="true"
-                      [pTooltip]="'meetings.start_meeting' | translate" (onClick)="start(m)" />
-                    <p-button icon="pi pi-pencil" size="small" severity="secondary" [text]="true"
-                      [pTooltip]="'common.edit' | translate" (onClick)="openForm(m)" />
-                    <p-button icon="pi pi-times" size="small" severity="danger" [text]="true"
-                      [pTooltip]="'common.cancel' | translate" (onClick)="cancel(m)" />
-                  }
-                  @if (m.status === 'in_progress') {
-                    <p-button icon="pi pi-stop-circle" size="small" severity="success" [text]="true"
-                      [pTooltip]="'meetings.end_meeting' | translate" (onClick)="close(m)" />
+                  @if (isStaff()) {
+                    @if (m.status === 'scheduled') {
+                      <p-button icon="pi pi-play" size="small" severity="info" [text]="true"
+                        [pTooltip]="'meetings.start_meeting' | translate" (onClick)="start(m)" />
+                      <p-button icon="pi pi-pencil" size="small" severity="secondary" [text]="true"
+                        [pTooltip]="'common.edit' | translate" (onClick)="openForm(m)" />
+                      <p-button icon="pi pi-times" size="small" severity="danger" [text]="true"
+                        [pTooltip]="'common.cancel' | translate" (onClick)="cancel(m)" />
+                    }
+                    @if (m.status === 'in_progress') {
+                      <p-button icon="pi pi-stop-circle" size="small" severity="success" [text]="true"
+                        [pTooltip]="'meetings.end_meeting' | translate" (onClick)="close(m)" />
+                    }
                   }
                 </div>
               </div>
@@ -146,9 +152,11 @@ import { MeetingMinutesDrawerComponent } from '../../components/meeting-minutes-
   `,
 })
 export class MeetingListPage implements OnInit {
-  protected readonly store = inject(MeetingsStore);
-  private readonly api = inject(MeetingsApiService);
-  private readonly translate = inject(TranslateService);
+  protected readonly store    = inject(MeetingsStore);
+  private readonly api        = inject(MeetingsApiService);
+  private readonly translate  = inject(TranslateService);
+  private readonly authStore  = inject(AuthStore);
+  protected readonly isStaff  = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
 
   private readonly formDrawer = viewChild.required<MeetingFormDrawerComponent>('formDrawer');
   private readonly attendanceDrawer = viewChild.required<MeetingAttendanceDrawerComponent>('attendanceDrawer');

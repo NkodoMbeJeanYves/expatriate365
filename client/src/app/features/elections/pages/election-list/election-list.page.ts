@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -9,6 +9,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
 import { ElectionDto, ELECTION_STATUSES, ELECTION_TYPES } from '@models/election.model';
 import { AuthStore } from '@core/auth/auth.store';
+import { STAFF_ROLES } from '@core/auth/models/role.model';
 import { ElectionsStore } from '../../store/elections.store';
 import { ElectionsApiService } from '../../services/elections-api.service';
 import { ElectionFormDrawerComponent } from '../../components/election-form-drawer/election-form-drawer.component';
@@ -38,7 +39,9 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
           <h1 class="text-2xl font-bold text-gray-800">{{ 'elections.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'elections.subtitle' | translate }}</p>
         </div>
-        <p-button [label]="'elections.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+        @if (isStaff()) {
+          <p-button [label]="'elections.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+        }
       </div>
 
       <!-- Stats -->
@@ -135,18 +138,22 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
                         [pTooltip]="'elections.vote' | translate" (onClick)="openVote(e)" />
                     }
                   }
-                  <p-button icon="pi pi-stop-circle" size="small" severity="warn" [text]="true"
-                    [pTooltip]="'elections.close_election' | translate" (onClick)="closeElection(e)" />
+                  @if (isStaff()) {
+                    <p-button icon="pi pi-stop-circle" size="small" severity="warn" [text]="true"
+                      [pTooltip]="'elections.close_election' | translate" (onClick)="closeElection(e)" />
+                  }
                 }
-                @if (e.status === 'draft') {
-                  <p-button icon="pi pi-send" size="small" severity="success" [text]="true"
-                    [pTooltip]="'elections.open_voting' | translate" (onClick)="openElection(e)" />
-                  <p-button icon="pi pi-pencil" size="small" severity="secondary" [text]="true"
-                    [pTooltip]="'common.edit' | translate" (onClick)="openForm(e)" />
-                }
-                @if (e.status === 'closed') {
-                  <p-button icon="pi pi-chart-bar" size="small" severity="info" [text]="true"
-                    [pTooltip]="'elections.publish_results' | translate" (onClick)="publishResults(e)" />
+                @if (isStaff()) {
+                  @if (e.status === 'draft') {
+                    <p-button icon="pi pi-send" size="small" severity="success" [text]="true"
+                      [pTooltip]="'elections.open_voting' | translate" (onClick)="openElection(e)" />
+                    <p-button icon="pi pi-pencil" size="small" severity="secondary" [text]="true"
+                      [pTooltip]="'common.edit' | translate" (onClick)="openForm(e)" />
+                  }
+                  @if (e.status === 'closed') {
+                    <p-button icon="pi pi-chart-bar" size="small" severity="info" [text]="true"
+                      [pTooltip]="'elections.publish_results' | translate" (onClick)="publishResults(e)" />
+                  }
                 }
               </div>
             </div>
@@ -166,8 +173,9 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
   `,
 })
 export class ElectionListPage implements OnInit {
-  protected readonly store = inject(ElectionsStore);
+  protected readonly store     = inject(ElectionsStore);
   protected readonly authStore = inject(AuthStore);
+  protected readonly isStaff   = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
   private readonly api = inject(ElectionsApiService);
   private readonly translate = inject(TranslateService);
   private readonly toast = inject(ToastService);

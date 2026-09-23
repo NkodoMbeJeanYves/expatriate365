@@ -23,10 +23,10 @@ export const routes: Routes = [
       { path: 'contributions', loadChildren: () => import('@contributions/contributions.routes').then((m) => m.CONTRIBUTIONS_ROUTES) },
       { path: 'payments', loadChildren: () => import('@payments/payments.routes').then((m) => m.PAYMENTS_ROUTES) },
       { path: 'finances', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@finances/finances.routes').then((m) => m.FINANCES_ROUTES) },
-      { path: 'events', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@events/events.routes').then((m) => m.EVENTS_ROUTES) },
+      { path: 'events', loadChildren: () => import('@events/events.routes').then((m) => m.EVENTS_ROUTES) },
       { path: 'welfare', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@welfare/welfare.routes').then((m) => m.WELFARE_ROUTES) },
       { path: 'elections', loadChildren: () => import('@elections/elections.routes').then((m) => m.ELECTIONS_ROUTES) },
-      { path: 'meetings', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@meetings/meetings.routes').then((m) => m.MEETINGS_ROUTES) },
+      { path: 'meetings', loadChildren: () => import('@meetings/meetings.routes').then((m) => m.MEETINGS_ROUTES) },
       { path: 'communications', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@communications/communications.routes').then((m) => m.COMMUNICATIONS_ROUTES) },
       { path: 'documents', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@documents/documents.routes').then((m) => m.DOCUMENTS_ROUTES) },
       {
