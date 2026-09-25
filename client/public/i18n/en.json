@@ -275,6 +275,8 @@
     "emergency_phone": "Emergency phone",
     "directory_visible": "Visible in the professional directory",
     "directory_visible_hint": "By checking this box, your name and profession will be publicly visible in the community directory.",
+    "directory_visible_profession_required": "This member will not appear in the directory until the Profession field is filled in.",
+    "profession_required_for_directory": "Profession is required to appear in the professional directory.",
     "expiry_date": "Expiry date",
     "status_pending": "Pending",
     "status_active": "Active",

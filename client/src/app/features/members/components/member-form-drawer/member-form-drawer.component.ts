@@ -177,7 +177,12 @@ import { MembersStore } from '../../store/members.store';
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium">{{ 'members.profession' | translate }}</label>
-            <input pInputText formControlName="profession" class="w-full" />
+            <input pInputText formControlName="profession" class="w-full"
+                   [class.ng-invalid]="form.get('profession')?.invalid && form.get('profession')?.touched"
+                   [class.ng-dirty]="form.get('profession')?.touched" />
+            @if (form.get('profession')?.invalid && form.get('profession')?.touched) {
+              <small class="text-red-500 text-xs">{{ 'members.profession_required_for_directory' | translate }}</small>
+            }
           </div>
         </div>
 
@@ -249,6 +254,14 @@ import { MembersStore } from '../../store/members.store';
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-7">
             {{ 'members.directory_visible_hint' | translate }}
           </p>
+          @if (directoryVisibleWithoutProfession()) {
+            <div class="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 px-3 py-2">
+              <i class="pi pi-exclamation-triangle text-amber-500 text-sm mt-0.5 shrink-0"></i>
+              <p class="text-xs text-amber-700 dark:text-amber-400">
+                {{ 'members.directory_visible_profession_required' | translate }}
+              </p>
+            </div>
+          }
         </div>
       </form>
 
@@ -302,6 +315,12 @@ export class MemberFormDrawerComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+
+  private readonly _directoryVisible = signal(false);
+  private readonly _profession = signal('');
+  readonly directoryVisibleWithoutProfession = computed(
+    () => this._directoryVisible() && !this._profession().trim()
+  );
 
   private readonly _firstName = signal('');
   private readonly _lastName = signal('');
@@ -380,6 +399,8 @@ export class MemberFormDrawerComponent implements OnInit {
   ngOnInit(): void {
     this.form.get('first_name')!.valueChanges.subscribe((v) => this._firstName.set(v ?? ''));
     this.form.get('last_name')!.valueChanges.subscribe((v) => this._lastName.set(v ?? ''));
+    this.form.get('is_directory_visible')!.valueChanges.subscribe((v) => this._directoryVisible.set(!!v));
+    this.form.get('profession')!.valueChanges.subscribe((v) => this._profession.set(v ?? ''));
   }
 
   onPhotoSelected(event: Event): void {
@@ -454,6 +475,11 @@ export class MemberFormDrawerComponent implements OnInit {
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+    if (this.directoryVisibleWithoutProfession()) {
+      this.form.get('profession')!.setErrors({ required: true });
+      this.form.get('profession')!.markAsTouched();
       return;
     }
     this.loading.set(true);

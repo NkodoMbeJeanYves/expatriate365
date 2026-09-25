@@ -275,6 +275,8 @@
     "emergency_phone": "Téléphone d'urgence",
     "directory_visible": "Visible dans l'annuaire professionnel",
     "directory_visible_hint": "En cochant cette case, votre nom et votre profession seront visibles publiquement dans l'annuaire de la communauté.",
+    "directory_visible_profession_required": "Ce membre ne sera pas visible dans l'annuaire tant que le champ Profession n'est pas renseigné.",
+    "profession_required_for_directory": "La profession est requise pour apparaître dans l'annuaire professionnel.",
     "expiry_date": "Date d'expiration",
     "status_pending": "En attente",
     "status_active": "Actif",
