@@ -58,7 +58,7 @@ import { STAFF_ROLES } from '@core/auth/models/role.model';
             <div class="text-2xl font-bold text-green-700">{{ s.completed_count }}</div>
             <div class="text-xs text-green-600 mt-1">{{ 'events.status_completed' | translate }}</div>
           </div>
-          <div class="bg-purple-50 rounded-xl p-4 border border-purple-100 shadow-sm text-center">
+          <div class="col-span-2 md:col-span-1 bg-purple-50 rounded-xl p-4 border border-purple-100 shadow-sm text-center">
             <div class="text-2xl font-bold text-purple-700">{{ s.total_registrations }}</div>
             <div class="text-xs text-purple-600 mt-1">{{ 'events.registrations' | translate }}</div>
           </div>

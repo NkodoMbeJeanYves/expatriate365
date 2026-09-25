@@ -51,7 +51,7 @@ import { FinancesApiService } from '../../services/finances-api.service';
             <div class="text-2xl font-bold text-indigo-700">{{ summary()!.collection_rate }}%</div>
             <div class="text-xs text-indigo-600 mt-1">{{ 'finances.collection_rate' | translate }}</div>
           </div>
-          <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-center">
+          <div class="col-span-2 md:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-center">
             <div class="text-2xl font-bold text-gray-700">{{ summary()!.total_transactions }}</div>
             <div class="text-xs text-gray-500 mt-1">{{ 'finances.transactions' | translate }}</div>
           </div>
@@ -71,16 +71,16 @@ import { FinancesApiService } from '../../services/finances-api.service';
       }
 
       <!-- Filtres transactions -->
-      <div class="flex gap-3 flex-wrap items-center">
+      <div class="flex flex-col sm:flex-row gap-3 flex-wrap">
         <p-select [options]="typeOptions" [(ngModel)]="filterType" optionLabel="label" optionValue="value"
           [placeholder]="'finances.all_types' | translate" [showClear]="true" (onChange)="applyFilters()" />
         <p-select [options]="statusOptions" [(ngModel)]="filterStatus" optionLabel="label" optionValue="value"
           [placeholder]="'finances.all_statuses' | translate" [showClear]="true" (onChange)="applyFilters()" />
-        <div class="flex items-center gap-2 text-sm text-gray-500">
-          <label>{{ 'finances.date_from' | translate }}</label>
+        <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 text-sm text-gray-500">
+          <label class="text-right sm:text-left">{{ 'finances.date_from' | translate }}</label>
           <input type="date" [(ngModel)]="filterFrom" (change)="applyFilters()"
             class="border border-gray-200 rounded-lg px-2 py-1 text-sm" />
-          <label>{{ 'finances.date_to' | translate }}</label>
+          <label class="text-right sm:text-left">{{ 'finances.date_to' | translate }}</label>
           <input type="date" [(ngModel)]="filterTo" (change)="applyFilters()"
             class="border border-gray-200 rounded-lg px-2 py-1 text-sm" />
         </div>
