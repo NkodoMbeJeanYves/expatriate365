@@ -29,13 +29,13 @@ import { MeetingMinutesDrawerComponent } from '../../components/meeting-minutes-
   template: `
     <div class="p-6 flex flex-col gap-6">
       <!-- Header -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-800">{{ 'meetings.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'meetings.subtitle' | translate }}</p>
         </div>
         @if (isStaff()) {
-          <p-button [label]="'meetings.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+          <p-button [label]="'meetings.new' | translate" icon="pi pi-plus" (onClick)="openForm()" styleClass="self-start sm:self-auto" />
         }
       </div>
 
@@ -58,7 +58,7 @@ import { MeetingMinutesDrawerComponent } from '../../components/meeting-minutes-
             <div class="text-2xl font-bold text-green-700">{{ s.completed }}</div>
             <div class="text-xs text-green-600 mt-1">{{ 'meetings.status_completed' | translate }}</div>
           </div>
-          <div class="bg-red-50 rounded-xl p-4 border border-red-100 shadow-sm text-center">
+          <div class="col-span-2 md:col-span-1 bg-red-50 rounded-xl p-4 border border-red-100 shadow-sm text-center">
             <div class="text-2xl font-bold text-red-700">{{ s.cancelled }}</div>
             <div class="text-xs text-red-600 mt-1">{{ 'meetings.status_cancelled' | translate }}</div>
           </div>
@@ -106,7 +106,7 @@ import { MeetingMinutesDrawerComponent } from '../../components/meeting-minutes-
                 </div>
 
                 <!-- Actions -->
-                <div class="flex gap-1 shrink-0">
+                <div class="flex gap-1 shrink-0 flex-wrap justify-end">
                   <p-button icon="pi pi-users" size="small" severity="secondary" [text]="true"
                     [pTooltip]="'meetings.attendances' | translate" (onClick)="openAttendance(m)" />
                   <p-button icon="pi pi-file-edit" size="small" severity="secondary" [text]="true"

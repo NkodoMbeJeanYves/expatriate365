@@ -34,13 +34,13 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
   template: `
     <div class="p-6 flex flex-col gap-6">
       <!-- Header -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-800">{{ 'elections.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'elections.subtitle' | translate }}</p>
         </div>
         @if (isStaff()) {
-          <p-button [label]="'elections.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+          <p-button [label]="'elections.new' | translate" icon="pi pi-plus" (onClick)="openForm()" styleClass="self-start sm:self-auto" />
         }
       </div>
 
@@ -63,7 +63,7 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
             <div class="text-2xl font-bold text-orange-700">{{ s.closed }}</div>
             <div class="text-xs text-orange-600 mt-1">{{ 'elections.status_closed' | translate }}</div>
           </div>
-          <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-100 shadow-sm text-center">
+          <div class="col-span-2 md:col-span-1 bg-indigo-50 rounded-xl p-4 border border-indigo-100 shadow-sm text-center">
             <div class="text-2xl font-bold text-indigo-700">{{ s.results_published }}</div>
             <div class="text-xs text-indigo-600 mt-1">{{ 'elections.status_results_published' | translate }}</div>
           </div>

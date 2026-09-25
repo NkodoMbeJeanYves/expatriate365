@@ -23,15 +23,15 @@ import { PublicTenant } from '@core/auth/models/user.model';
       <!-- Header -->
       <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4
                      flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <a routerLink="/explore" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <div class="flex items-center gap-3 min-w-0">
+          <a routerLink="/explore" class="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
             <i class="pi pi-arrow-left"></i>
           </a>
           @if (tenant()?.logo_url) {
             <img [src]="tenant()!.logo_url!" [alt]="tenant()!.name"
-                 class="w-8 h-8 rounded-lg object-cover" />
+                 class="w-8 h-8 rounded-lg object-cover shrink-0" />
           }
-          <span class="font-bold text-gray-900 dark:text-white">{{ tenant()?.name ?? slug() }}</span>
+          <span class="font-bold text-gray-900 dark:text-white truncate">{{ tenant()?.name ?? slug() }}</span>
         </div>
         <div class="flex items-center gap-3">
           <app-lang-switcher />
@@ -77,7 +77,7 @@ import { PublicTenant } from '@core/auth/models/user.model';
         <!-- Search -->
         <div class="mb-6 flex gap-3">
           <input pInputText [(ngModel)]="searchTerm" [placeholder]="'common.search' | translate"
-                 class="w-64" (keyup.enter)="search()" />
+                 class="flex-1 min-w-0" (keyup.enter)="search()" />
           <p-button icon="pi pi-search" severity="secondary" (onClick)="search()" />
         </div>
 

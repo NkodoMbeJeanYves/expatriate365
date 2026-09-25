@@ -98,7 +98,7 @@ import { ToastService } from '@service/toast.service';
               <th class="text-left px-4 py-3">{{ 'common.status' | translate }}</th>
               <th class="text-left px-4 py-3 hidden md:table-cell">{{ 'members.category' | translate }}</th>
               <th class="text-left px-4 py-3 hidden lg:table-cell">{{ 'members.joined_date' | translate }}</th>
-              <th class="px-4 py-3" style="width:100px"></th>
+              <th class="px-4 py-3 w-24"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
