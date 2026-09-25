@@ -45,7 +45,7 @@ import { PagedResult } from '@shared/models/pagination.model';
 
       <!-- Stats -->
       @if (stats()) {
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-center">
             <div class="text-2xl font-bold text-indigo-700">{{ stats()!.total_board_members }}</div>
             <div class="text-xs text-gray-500 mt-1">{{ 'governance.board_member' | translate }}</div>
@@ -218,7 +218,7 @@ import { PagedResult } from '@shared/models/pagination.model';
           <label class="text-sm font-medium">{{ 'governance.adopted_at' | translate }}</label>
           <input pInputText type="date" formControlName="adopted_at" />
         </div>
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium text-green-700">{{ 'governance.votes_for' | translate }}</label>
             <input pInputText type="number" formControlName="votes_for" min="0" />

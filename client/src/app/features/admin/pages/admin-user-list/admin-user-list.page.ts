@@ -40,7 +40,7 @@ import { AdminApiService } from '../../services/admin-api.service';
 
       <!-- Stats -->
       @if (store.stats(); as s) {
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-center">
             <div class="text-2xl font-bold text-gray-800">{{ s.total_users }}</div>
             <div class="text-xs text-gray-500 mt-1">{{ 'admin.users' | translate }}</div>
