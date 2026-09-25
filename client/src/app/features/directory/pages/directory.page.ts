@@ -7,6 +7,8 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { DirectoryApiService, DirectoryMember } from '../services/directory-api.service';
@@ -17,7 +19,7 @@ import { DirectoryApiService, DirectoryMember } from '../services/directory-api.
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink, FormsModule, ButtonModule,
-    InputTextModule, ProgressSpinnerModule,
+    InputTextModule, IconFieldModule, InputIconModule, ProgressSpinnerModule,
     TranslatePipe, LangSwitcherComponent,
   ],
   template: `
@@ -61,16 +63,12 @@ import { DirectoryApiService, DirectoryMember } from '../services/directory-api.
 
         <!-- ── Filtres ── -->
         <div class="flex flex-col sm:flex-row gap-3 mb-8">
-          <div class="relative flex-1">
-            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-            <input
-              pInputText
-              [(ngModel)]="search"
-              (ngModelChange)="onFilter()"
-              [placeholder]="'directory.search_placeholder' | translate"
-              class="w-full pl-9 rounded-lg"
-            />
-          </div>
+          <p-iconfield class="flex-1">
+            <p-inputicon styleClass="pi pi-search" />
+            <input pInputText [(ngModel)]="search" (ngModelChange)="onFilter()"
+                   [placeholder]="'directory.search_placeholder' | translate"
+                   class="w-full" />
+          </p-iconfield>
           @if (professions().length) {
             <select
               [(ngModel)]="professionFilter"
