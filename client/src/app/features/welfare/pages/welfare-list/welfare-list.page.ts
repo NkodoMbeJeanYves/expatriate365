@@ -171,7 +171,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     <app-welfare-request-drawer #requestDrawer (saved)="onSaved()" />
 
     <!-- Approve dialog -->
-    <p-dialog [(visible)]="approveVisible" [header]="'welfare.approve_request' | translate" [modal]="true" [style]="{ width: '400px' }">
+    <p-dialog [(visible)]="approveVisible" [header]="'welfare.approve_request' | translate" [modal]="true" [style]="{ width: 'min(400px, calc(100vw - 2rem))' }">
       @if (selected()) {
         <div class="space-y-4 p-2">
           <div class="bg-gray-50 rounded-xl p-3 text-sm">
@@ -194,7 +194,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     </p-dialog>
 
     <!-- Reject dialog -->
-    <p-dialog [(visible)]="rejectVisible" [header]="'welfare.reject_request' | translate" [modal]="true" [style]="{ width: '400px' }">
+    <p-dialog [(visible)]="rejectVisible" [header]="'welfare.reject_request' | translate" [modal]="true" [style]="{ width: 'min(400px, calc(100vw - 2rem))' }">
       <div class="space-y-3 p-2">
         <p class="text-sm text-gray-600">Motif du rejet <span class="text-red-500">*</span></p>
         <textarea [(ngModel)]="rejectReason" rows="3" placeholder="Expliquez la raison du rejet…"

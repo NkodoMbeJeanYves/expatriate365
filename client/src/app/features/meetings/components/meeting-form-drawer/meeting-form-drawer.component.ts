@@ -17,7 +17,7 @@ import { MeetingsApiService } from '../../services/meetings-api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, DrawerModule, ButtonModule, InputTextModule, TextareaModule, SelectModule, DatePickerModule, InputNumberModule, TranslatePipe],
   template: `
-    <p-drawer #drawerEl [(visible)]="visible" [position]="'right'" [style]="{ width: '520px' }" [header]="drawerTitle()">
+    <p-drawer #drawerEl [(visible)]="visible" position="right" styleClass="!w-full sm:!w-[520px]" [header]="drawerTitle()">
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4 p-4">
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Titre *</label>

@@ -14,7 +14,7 @@ import { ElectionsApiService } from '../../services/elections-api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, DrawerModule, ButtonModule, CheckboxModule, TranslatePipe],
   template: `
-    <p-drawer [(visible)]="visible" [position]="'right'" [style]="{ width: '520px' }" [header]="election()?.title">
+    <p-drawer [(visible)]="visible" position="right" styleClass="!w-full sm:!w-[520px]" [header]="election()?.title">
       <div class="p-4 flex flex-col gap-6">
         @if (voted()) {
           <div class="flex flex-col items-center gap-4 py-10 text-center">

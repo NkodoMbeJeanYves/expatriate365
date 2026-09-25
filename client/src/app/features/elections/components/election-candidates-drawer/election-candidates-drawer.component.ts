@@ -19,7 +19,7 @@ import { PagedResult } from '@shared/models/pagination.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, DrawerModule, ButtonModule, SelectModule, TextareaModule, InputNumberModule, TranslatePipe],
   template: `
-    <p-drawer #drawerEl [(visible)]="visible" [position]="'right'" [style]="{ width: '600px' }" [header]="election()?.title + ' — Candidats'">
+    <p-drawer #drawerEl [(visible)]="visible" position="right" styleClass="!w-full sm:!w-[600px]" [header]="election()?.title + ' — Candidats'">
       <div class="p-4 flex flex-col gap-4">
         @if (election()?.status === 'draft') {
           <div class="bg-gray-50 rounded-xl border p-4 flex flex-col gap-3">

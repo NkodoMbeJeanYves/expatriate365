@@ -196,7 +196,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     <app-payment-form-drawer #formDrawer (saved)="onSaved()" />
 
     <!-- Receipt dialog -->
-    <p-dialog [(visible)]="receiptVisible" header="Reçu de paiement" [modal]="true" [style]="{ width: '480px' }" [closable]="true">
+    <p-dialog [(visible)]="receiptVisible" header="Reçu de paiement" [modal]="true" [style]="{ width: 'min(480px, calc(100vw - 2rem))' }" [closable]="true">
       <app-payment-receipt [payment]="selectedPayment()" />
       <ng-template pTemplate="footer">
         <button (click)="printReceipt()" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200">
@@ -206,7 +206,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     </p-dialog>
 
     <!-- Reverse dialog -->
-    <p-dialog [(visible)]="reverseVisible" header="Annuler le paiement" [modal]="true" [style]="{ width: '400px' }">
+    <p-dialog [(visible)]="reverseVisible" header="Annuler le paiement" [modal]="true" [style]="{ width: 'min(400px, calc(100vw - 2rem))' }">
       <div class="space-y-3 p-2">
         <p class="text-sm text-gray-600">Motif d'annulation <span class="text-red-500">*</span></p>
         <input [(ngModel)]="reverseReason" placeholder="Indiquez le motif…"

@@ -11,7 +11,7 @@ import { ElectionDto, ElectionResultDto } from '@models/election.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, DrawerModule, ButtonModule, TranslatePipe],
   template: `
-    <p-drawer [(visible)]="visible" [position]="'right'" [style]="{ width: '560px' }" [header]="election()?.title + ' — Résultats'">
+    <p-drawer [(visible)]="visible" position="right" styleClass="!w-full sm:!w-[560px]" [header]="election()?.title + ' — Résultats'">
       <div class="p-4 flex flex-col gap-4">
         <div class="text-sm text-gray-500 text-center">{{ election()?.vote_count }} vote(s) exprimé(s)</div>
 

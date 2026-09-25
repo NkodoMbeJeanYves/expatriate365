@@ -35,8 +35,8 @@ import { MeetingsApiService } from '../../services/meetings-api.service';
     <p-drawer
       #drawerEl
       [(visible)]="visible"
-      [position]="'right'"
-      [style]="{ width: '640px' }"
+      position="right"
+      styleClass="!w-full sm:!w-[640px]"
       [header]="meeting()?.title + ' — Compte-rendu'"
     >
       <div class="p-4 flex flex-col gap-4">

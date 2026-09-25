@@ -16,7 +16,7 @@ import { MeetingsApiService } from '../../services/meetings-api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, DrawerModule, ButtonModule, TagModule, SelectModule, InputTextModule, TranslatePipe],
   template: `
-    <p-drawer [(visible)]="visible" [position]="'right'" [style]="{ width: '700px' }" [header]="meeting()?.title + ' — Présences'">
+    <p-drawer [(visible)]="visible" position="right" styleClass="!w-full sm:!w-[700px]" [header]="meeting()?.title + ' — Présences'">
       <div class="p-4 flex flex-col gap-4">
         <div class="flex items-center gap-4 text-sm text-gray-600">
           <span><strong>{{ presentCount() }}</strong> présent(s)</span>

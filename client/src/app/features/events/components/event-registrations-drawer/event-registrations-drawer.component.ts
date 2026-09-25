@@ -19,7 +19,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     TagModule, SelectModule, TranslatePipe,
   ],
   template: `
-    <p-drawer [(visible)]="visible" [position]="'right'" [style]="{ width: '680px' }" [header]="event()?.title + ' — Inscriptions'">
+    <p-drawer [(visible)]="visible" position="right" styleClass="!w-full sm:!w-[680px]" [header]="event()?.title + ' — Inscriptions'">
       <div class="p-4 flex flex-col gap-4">
         @if (event()?.status === 'published') {
           <div class="flex gap-2">

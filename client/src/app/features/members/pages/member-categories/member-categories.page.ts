@@ -119,7 +119,7 @@ import { PERMISSIONS } from '@core/auth/models/permission.model';
       [(visible)]="dialogVisible"
       [header]="(editingId() ? 'members.edit_category' : 'members.new_category') | translate"
       [modal]="true"
-      [style]="{ width: '480px' }"
+      [style]="{ width: 'min(480px, calc(100vw - 2rem))' }"
       [draggable]="false">
       <form [formGroup]="form" class="flex flex-col gap-4 py-2">
         <div class="flex flex-col gap-1">
