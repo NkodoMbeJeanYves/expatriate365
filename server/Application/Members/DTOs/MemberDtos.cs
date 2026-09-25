@@ -22,6 +22,7 @@ public record MemberDto(
     string? EmergencyContactName,
     string? EmergencyContactPhone,
     bool IsActive,
+    bool IsDirectoryVisible,
     string CreatedAt,
     string? UpdatedAt,
     string? EmailVerifiedAt,

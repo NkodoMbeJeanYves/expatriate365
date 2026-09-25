@@ -103,7 +103,7 @@ public class CreateMemberCommandHandler(AppDbContext db, ILogger<CreateMemberCom
             member.PhotoUrl, member.Address, member.Profession,
             member.DateOfBirth?.ToString("yyyy-MM-dd"),
             member.Gender, member.EmergencyContactName, member.EmergencyContactPhone,
-            member.IsActive, member.CreatedAt.ToString("O"), null, user.EmailVerifiedAt?.ToString("O"), user.Role
+            member.IsActive, member.IsDirectoryVisible, member.CreatedAt.ToString("O"), null, user.EmailVerifiedAt?.ToString("O"), user.Role
         ));
     }
 }
