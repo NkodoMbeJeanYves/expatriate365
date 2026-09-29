@@ -8,7 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
-import { PermissionDomain, RoleDto } from '@models/admin.model';
+import { PermissionDomain, TenantRoleDto } from '@models/admin.model';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { RolesApiService } from '@service/roles-api.service';
 import { ToastService } from '@service/toast.service';
@@ -181,10 +181,10 @@ export class AdminRolesPage implements OnInit {
   readonly loading   = signal(true);
   readonly saving    = signal(false);
   readonly resetting = signal(false);
-  readonly roles   = signal<RoleDto[]>([]);
+  readonly roles   = signal<TenantRoleDto[]>([]);
   readonly domains = signal<PermissionDomain[]>([]);
 
-  readonly selectedRole   = signal<RoleDto | null>(null);
+  readonly selectedRole   = signal<TenantRoleDto | null>(null);
   readonly selectedDomain = signal<PermissionDomain | null>(null);
 
   private readonly _checked = signal<Set<string>>(new Set());
@@ -196,7 +196,7 @@ export class AdminRolesPage implements OnInit {
 
   ngOnInit(): void {
     forkJoin({
-      roles:   this.api.list(),
+      roles:   this.api.listTenant(),
       domains: this.api.listPermissions(),
     }).subscribe({
       next: ({ roles, domains }) => {
@@ -212,7 +212,7 @@ export class AdminRolesPage implements OnInit {
     });
   }
 
-  selectRole(role: RoleDto): void {
+  selectRole(role: TenantRoleDto): void {
     this.selectedRole.set(role);
     this._checked.set(new Set(
       Array.isArray(role.permissions)
@@ -231,7 +231,7 @@ export class AdminRolesPage implements OnInit {
     try { return JSON.parse(raw) as string[]; } catch { return []; }
   }
 
-  permCount(role: RoleDto): number {
+  permCount(role: TenantRoleDto): number {
     if (Array.isArray(role.permissions)) return role.permissions.length;
     return this.parsePermissions(role.permissions as unknown as string).length;
   }
@@ -270,9 +270,9 @@ export class AdminRolesPage implements OnInit {
     const role = this.selectedRole();
     if (!role) return;
     this.resetting.set(true);
-    this.api.resetPermissions(role.id).subscribe({
+    this.api.resetTenantPermissions(role.id).subscribe({
       next: () => {
-        this.api.list().subscribe(roles => {
+        this.api.listTenant().subscribe(roles => {
           this.roles.set(roles);
           const refreshed = roles.find(r => r.id === role.id);
           if (refreshed) this.selectRole(refreshed);
@@ -294,7 +294,7 @@ export class AdminRolesPage implements OnInit {
     this.saving.set(true);
     const permissions = [...this._checked()];
 
-    this.api.updatePermissions(role.id, { permissions }).subscribe({
+    this.api.updateTenantPermissions(role.id, { permissions }).subscribe({
       next: () => {
         this.roles.update(list =>
           list.map(r => r.id === role.id ? { ...r, permissions, is_customized: true } : r)

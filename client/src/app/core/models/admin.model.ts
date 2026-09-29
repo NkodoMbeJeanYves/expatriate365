@@ -39,6 +39,18 @@ export interface RoleDto {
   is_customized: boolean;
 }
 
+// Per-tenant role override — id is tenant_roles.id, not global role id
+export interface TenantRoleDto {
+  id: string;         // tenant_roles.id — used for update/reset calls
+  role_id: string;    // global roles.id
+  name: string;
+  label: string;
+  description?: string;
+  permissions: string | string[];   // API returns JSON string; page normalises it
+  is_customized: boolean;
+  is_active: boolean;
+}
+
 export interface PermissionDomain {
   domain: string;
   permissions: string[];

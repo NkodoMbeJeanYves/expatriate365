@@ -2,13 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { PermissionDomain, RoleDto, UpdateRolePermissionsRequest } from '@models/admin.model';
+import { PermissionDomain, RoleDto, TenantRoleDto, UpdateRolePermissionsRequest } from '@models/admin.model';
 
 @Injectable({ providedIn: 'root' })
 export class RolesApiService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/api/v1/roles`;
 
+  // Global role templates (super_admin only)
   list(): Observable<RoleDto[]> {
     return this.http.get<RoleDto[]>(this.base);
   }
@@ -23,5 +24,18 @@ export class RolesApiService {
 
   resetPermissions(roleId: string): Observable<void> {
     return this.http.post<void>(`${this.base}/${roleId}/reset`, {});
+  }
+
+  // Tenant-scoped role overrides (any admin within their tenant)
+  listTenant(): Observable<TenantRoleDto[]> {
+    return this.http.get<TenantRoleDto[]>(`${this.base}/tenant`);
+  }
+
+  updateTenantPermissions(tenantRoleId: string, dto: UpdateRolePermissionsRequest): Observable<void> {
+    return this.http.put<void>(`${this.base}/tenant/${tenantRoleId}/permissions`, dto);
+  }
+
+  resetTenantPermissions(tenantRoleId: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/tenant/${tenantRoleId}/reset`, {});
   }
 }
