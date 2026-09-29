@@ -24,18 +24,9 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
     }
 }
 
-public class RegisterCommandHandler(AppDbContext db, JwtService jwt, ILogger<RegisterCommandHandler> log)
+public class RegisterCommandHandler(AppDbContext db, JwtService jwt, ILogger<RegisterCommandHandler> log, PermissionResolverService permissionResolver)
     : IRequestHandler<RegisterCommand, ServiceResult<LoginResponse>>
 {
-    private async Task<string[]> LoadPermissionsAsync(string roleName, CancellationToken ct)
-    {
-        var role = await db.Roles.AsNoTracking()
-            .FirstOrDefaultAsync(r => r.Name == roleName && r.IsActive, ct);
-        if (role is null) return [];
-        try { return System.Text.Json.JsonSerializer.Deserialize<string[]>(role.Permissions) ?? []; }
-        catch { return []; }
-    }
-
     public async Task<ServiceResult<LoginResponse>> Handle(RegisterCommand request, CancellationToken ct)
     {
         var dto = request.Dto;
@@ -76,7 +67,10 @@ public class RegisterCommandHandler(AppDbContext db, JwtService jwt, ILogger<Reg
         db.Users.Add(user);
         await db.SaveChangesAsync(ct);
 
-        var permissions = await LoadPermissionsAsync(user.Role, ct);
+        // Seed tenant-specific role copies from global templates
+        await permissionResolver.SeedForTenantAsync(tenant.Id, ct);
+
+        var permissions = await permissionResolver.ResolveAsync(user.Role, tenant.Id, ct);
         log.LogInformation("Registered tenant {TenantId} and user {UserId}", tenant.Id, user.Id);
         return ServiceResult<LoginResponse>.Success(new LoginResponse(
             jwt.GenerateAccessToken(user, permissions),

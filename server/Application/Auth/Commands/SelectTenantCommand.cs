@@ -9,7 +9,7 @@ namespace server.Application.Auth.Commands;
 
 public record SelectTenantCommand(Guid UserId, Guid TenantId) : IRequest<ServiceResult<LoginResponse>>;
 
-public class SelectTenantCommandHandler(AppDbContext db, JwtService jwt, ILogger<SelectTenantCommandHandler> log)
+public class SelectTenantCommandHandler(AppDbContext db, JwtService jwt, ILogger<SelectTenantCommandHandler> log, PermissionResolverService permissionResolver)
     : IRequestHandler<SelectTenantCommand, ServiceResult<LoginResponse>>
 {
     public async Task<ServiceResult<LoginResponse>> Handle(SelectTenantCommand request, CancellationToken ct)
@@ -27,10 +27,7 @@ public class SelectTenantCommandHandler(AppDbContext db, JwtService jwt, ILogger
         user.RefreshTokenExpiresAt = jwt.RefreshTokenExpiry();
         await db.SaveChangesAsync(ct);
 
-        var role = await db.Roles.AsNoTracking()
-            .FirstOrDefaultAsync(r => r.Name == user.Role && r.IsActive, ct);
-        var permissions = role is null ? [] :
-            (System.Text.Json.JsonSerializer.Deserialize<string[]>(role.Permissions) ?? []);
+        var permissions = await permissionResolver.ResolveAsync(user.Role, request.TenantId, ct);
 
         log.LogInformation("SuperAdmin {UserId} selected tenant {TenantId}", user.Id, request.TenantId);
         return ServiceResult<LoginResponse>.Success(new LoginResponse(

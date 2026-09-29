@@ -83,6 +83,7 @@ try
     builder.Services.AddHostedService<ChargeGenerationBackgroundService>();
     builder.Services.AddSingleton<JwtService>();
     builder.Services.AddScoped<server.Infrastructure.Services.AuditService>();
+    builder.Services.AddScoped<server.Infrastructure.Services.PermissionResolverService>();
 
     var jwtSecret = builder.Configuration["Jwt:SecretKey"]
         ?? throw new InvalidOperationException("Jwt:SecretKey not configured");

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using MediatR;
 using server.Application.Common;
 using server.Application.Roles.Commands;
@@ -11,11 +12,11 @@ public static class RoleEndpoints
     {
         var group = app.MapGroup("/api/v1/roles").WithTags("Roles").RequireAuthorization();
 
-        // GET /api/v1/roles — list all active roles with their permissions
+        // GET /api/v1/roles — global role templates (super_admin only)
         group.MapGet("/", async (IMediator mediator) =>
             Results.Ok(await mediator.Send(new ListRolesQuery())))
-            .WithName("ListRoles")
-;
+            .RequireAuthorization(Permissions.RolesUpdate)
+            .WithName("ListRoles");
 
         // GET /api/v1/roles/permissions — full permission catalogue grouped by domain
         group.MapGet("/permissions", () =>
@@ -29,7 +30,45 @@ public static class RoleEndpoints
         })
         .WithName("ListPermissions");
 
-        // PUT /api/v1/roles/{id}/permissions — update role permissions (super_admin only)
+        // GET /api/v1/roles/tenant — tenant-specific role list (any admin)
+        group.MapGet("/tenant", async (ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            return Results.Ok(await mediator.Send(new ListTenantRolesQuery(tenantId.Value)));
+        })
+        .RequireAuthorization(Permissions.RolesRead)
+        .WithName("ListTenantRoles");
+
+        // PUT /api/v1/roles/tenant/{id}/permissions — update tenant-specific permissions
+        group.MapPut("/tenant/{id:guid}/permissions",
+            async (Guid id, UpdateRolePermissionsRequest dto, ClaimsPrincipal principal, IMediator mediator) =>
+            {
+                var tenantId = GetTenantId(principal);
+                if (tenantId is null) return Results.Unauthorized();
+                var result = await mediator.Send(new UpdateTenantRolePermissionsCommand(tenantId.Value, id, dto));
+                return result.IsSuccess
+                    ? Results.NoContent()
+                    : Results.BadRequest(new { error = result.ErrorMessage });
+            })
+            .RequireAuthorization(Permissions.RolesUpdate)
+            .WithName("UpdateTenantRolePermissions");
+
+        // POST /api/v1/roles/tenant/{id}/reset — restore global template permissions
+        group.MapPost("/tenant/{id:guid}/reset",
+            async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
+            {
+                var tenantId = GetTenantId(principal);
+                if (tenantId is null) return Results.Unauthorized();
+                var result = await mediator.Send(new ResetTenantRolePermissionsCommand(tenantId.Value, id));
+                return result.IsSuccess
+                    ? Results.NoContent()
+                    : Results.BadRequest(new { error = result.ErrorMessage });
+            })
+            .RequireAuthorization(Permissions.RolesUpdate)
+            .WithName("ResetTenantRolePermissions");
+
+        // PUT /api/v1/roles/{id}/permissions — update global template (super_admin only)
         group.MapPut("/{id:guid}/permissions",
             async (Guid id, UpdateRolePermissionsRequest dto, IMediator mediator) =>
             {
@@ -39,10 +78,9 @@ public static class RoleEndpoints
                     : Results.BadRequest(new { error = result.ErrorMessage });
             })
             .RequireAuthorization(Permissions.RolesUpdate)
-            .WithName("UpdateRolePermissions")
-;
+            .WithName("UpdateRolePermissions");
 
-        // POST /api/v1/roles/{id}/reset — restore seeder default permissions
+        // POST /api/v1/roles/{id}/reset — restore seeder default permissions (super_admin only)
         group.MapPost("/{id:guid}/reset",
             async (Guid id, IMediator mediator) =>
             {
@@ -52,7 +90,12 @@ public static class RoleEndpoints
                     : Results.BadRequest(new { error = result.ErrorMessage });
             })
             .RequireAuthorization(Permissions.RolesUpdate)
-            .WithName("ResetRolePermissions")
-;
+            .WithName("ResetRolePermissions");
+    }
+
+    private static Guid? GetTenantId(ClaimsPrincipal principal)
+    {
+        var claim = principal.FindFirst("tenant_id")?.Value;
+        return Guid.TryParse(claim, out var id) ? id : null;
     }
 }

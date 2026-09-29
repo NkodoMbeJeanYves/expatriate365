@@ -19,17 +19,9 @@ public class LoginCommandValidator : AbstractValidator<LoginCommand>
     }
 }
 
-public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginCommandHandler> log, AuditService audit)
+public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginCommandHandler> log, AuditService audit, PermissionResolverService permissionResolver)
     : IRequestHandler<LoginCommand, ServiceResult<LoginResponse>>
 {
-    private async Task<string[]> LoadPermissionsAsync(string roleName, CancellationToken ct)
-    {
-        var role = await db.Roles.AsNoTracking()
-            .FirstOrDefaultAsync(r => r.Name == roleName && r.IsActive, ct);
-        if (role is null) return [];
-        try { return System.Text.Json.JsonSerializer.Deserialize<string[]>(role.Permissions) ?? []; }
-        catch { return []; }
-    }
 
     private async Task<(string? entityType, string? entityId)> ResolveEntityAsync(Guid userId, Guid? tenantId, string role, CancellationToken ct)
     {
@@ -65,7 +57,7 @@ public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginC
         audit.Log("login", user.Id, user.TenantId);
         await db.SaveChangesAsync(ct);
 
-        var permissions = await LoadPermissionsAsync(user.Role, ct);
+        var permissions = await permissionResolver.ResolveAsync(user.Role, user.TenantId, ct);
         var (entityType, entityId) = await ResolveEntityAsync(user.Id, user.TenantId, user.Role, ct);
         log.LogInformation("Login success: {UserId} role={Role} entityType={EntityType}", user.Id, user.Role, entityType);
         return ServiceResult<LoginResponse>.Success(new LoginResponse(

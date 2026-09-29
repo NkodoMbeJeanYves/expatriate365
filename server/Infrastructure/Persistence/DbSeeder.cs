@@ -26,6 +26,37 @@ public static class DbSeeder
     {
         await RoleSeeder.SeedRolesAsync(db);
         await SeedSuperAdminAsync(db, config);
+        await SeedTenantRolesAsync(db);
+    }
+
+    // Seed tenant_roles for every existing tenant that doesn't have them yet (idempotent)
+    private static async Task SeedTenantRolesAsync(AppDbContext db)
+    {
+        var tenantIds = await db.Tenants.Select(t => t.Id).ToListAsync();
+        var roles = await db.Roles.AsNoTracking().Where(r => r.IsActive).ToListAsync();
+
+        foreach (var tenantId in tenantIds)
+        {
+            var existingRoleIds = await db.TenantRoles
+                .Where(tr => tr.TenantId == tenantId)
+                .Select(tr => tr.RoleId)
+                .ToListAsync();
+
+            var toAdd = roles
+                .Where(r => !existingRoleIds.Contains(r.Id))
+                .Select(r => new server.Domain.Entities.TenantRole
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    RoleId = r.Id,
+                    Permissions = r.Permissions,
+                    IsCustomized = false,
+                });
+
+            db.TenantRoles.AddRange(toAdd);
+        }
+
+        await db.SaveChangesAsync();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
