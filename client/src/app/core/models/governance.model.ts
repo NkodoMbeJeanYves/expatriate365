@@ -1,10 +1,22 @@
+export interface BoardRoleDto {
+  id: string;
+  tenant_id: string;
+  name: string;
+  label: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface BoardMemberDto {
   id: string;
   tenant_id: string;
   member_id: string;
   member_name: string;
   membership_number: string;
-  role: string;
+  role_id?: string;
+  role_name?: string;
+  role_label?: string;
   start_date: string;
   end_date?: string;
   notes?: string;
@@ -33,9 +45,20 @@ export interface GovernanceStatsDto {
   adopted_resolutions: number;
 }
 
+export interface CreateBoardRoleRequest {
+  name: string;
+  label: string;
+}
+
+export interface UpdateBoardRoleRequest {
+  name: string;
+  label: string;
+  is_active: boolean;
+}
+
 export interface CreateBoardMemberRequest {
   member_id: string;
-  role: string;
+  role_id?: string;
   start_date: string;
   end_date?: string;
   notes?: string;
@@ -53,9 +76,3 @@ export interface AdoptResolutionRequest {
   votes_against: number;
   abstentions: number;
 }
-
-export const BOARD_ROLES = [
-  'Président(e)', 'Vice-Président(e)', 'Secrétaire', 'Trésorier(ère)',
-  'Secrétaire adjoint(e)', 'Trésorier(ère) adjoint(e)', 'Commissaire aux comptes',
-  'Membre du bureau',
-] as const;

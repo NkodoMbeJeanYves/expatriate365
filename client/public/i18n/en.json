@@ -169,7 +169,7 @@
     "suspended": "Suspended",
     "title": "Title",
     "create": "Create",
-    "uploading": "Uploading…"
+    "uploading": "Uploadingâ€¦"
   },
   "community": {
     "title": "Community",
@@ -178,13 +178,13 @@
     "edit_post": "Edit post",
     "submit_draft": "Submit",
     "post_title": "Title",
-    "post_title_placeholder": "Summarize your experience in a few words…",
+    "post_title_placeholder": "Summarize your experience in a few wordsâ€¦",
     "post_content": "Your story",
-    "post_content_placeholder": "Share your experience, tips, or advice with the community…",
+    "post_content_placeholder": "Share your experience, tips, or advice with the communityâ€¦",
     "attachments": "Attachments",
     "add_photo": "Add photo",
     "add_document": "Add document",
-    "uploading": "Uploading…",
+    "uploading": "Uploadingâ€¦",
     "read_more": "Read more",
     "back_to_feed": "Back to community",
     "no_posts": "No publications yet. Be the first to share your experience!",
@@ -228,7 +228,7 @@
     "load_error": "Error while loading data"
   },
   "dashboard": {
-    "greeting": "Hello, {{name}} 👋",
+    "greeting": "Hello, {{name}} ðŸ‘‹",
     "auto_refresh": "Auto-refresh every 60 s",
     "active_members": "Active members",
     "new_this_month": "+{{count}} this month",
@@ -601,7 +601,21 @@
     "edit_board_member": "Edit",
     "edit_resolution": "Edit resolution",
     "confirm_delete_board": "Remove this board member?",
-    "confirm_delete_resolution": "Delete this resolution?"
+    "confirm_delete_resolution": "Delete this resolution?",
+    "manage_roles": "Manage board roles",
+    "new_role": "New role",
+    "edit_role": "Edit role",
+    "no_roles": "No roles defined",
+    "board_role_name": "Identifier (key)",
+    "board_role_name_hint": "e.g. president, treasurer (lowercase, no spaces)",
+    "board_role_label": "Display label",
+    "board_role_label_hint": "e.g. President",
+    "role_placeholder": "Select a role",
+    "role_president": "President",
+    "role_vice_president": "Vice-President",
+    "role_secretary": "Secretary",
+    "role_treasurer": "Treasurer",
+    "role_auditor": "Auditor"
   },
   "analytics": {
     "title": "Analytics",
@@ -684,7 +698,7 @@
     "tab_activity": "Activity",
     "tab_tenants": "Communities",
     "tab_anomalies": "Anomalies",
-    "filter_action": "Filter by action…",
+    "filter_action": "Filter by actionâ€¦",
     "col_date": "Date",
     "col_user": "User",
     "col_action": "Action",
@@ -692,7 +706,7 @@
     "col_tenant": "Community",
     "no_logs": "No activity logged yet",
     "no_tenants": "No communities found",
-    "no_anomalies": "No anomalies detected — all clear!",
+    "no_anomalies": "No anomalies detected â€” all clear!",
     "stat_members": "Members",
     "stat_published": "Published",
     "stat_draft": "Drafts",
@@ -715,7 +729,7 @@
     "saved": "Settings saved successfully",
     "logo": "Association logo",
     "upload_logo": "Change logo",
-    "logo_hint": "Accepted formats: JPG, PNG, WebP, SVG — max 5 MB"
+    "logo_hint": "Accepted formats: JPG, PNG, WebP, SVG â€” max 5 MB"
   },
   "landing": {
     "nav_explore": "Explore",

@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { PagedResult } from '@shared/models/pagination.model';
 import {
-  BoardMemberDto, ResolutionDto, GovernanceStatsDto,
+  BoardRoleDto, BoardMemberDto, ResolutionDto, GovernanceStatsDto,
+  CreateBoardRoleRequest, UpdateBoardRoleRequest,
   CreateBoardMemberRequest, CreateResolutionRequest, AdoptResolutionRequest,
 } from '@models/governance.model';
 
@@ -17,6 +18,24 @@ export class GovernanceApiService {
     return this.http.get<GovernanceStatsDto>(`${this.base}/stats`);
   }
 
+  // Board roles
+  listBoardRoles(): Observable<BoardRoleDto[]> {
+    return this.http.get<BoardRoleDto[]>(`${this.base}/board-roles`);
+  }
+
+  createBoardRole(dto: CreateBoardRoleRequest): Observable<BoardRoleDto> {
+    return this.http.post<BoardRoleDto>(`${this.base}/board-roles`, dto);
+  }
+
+  updateBoardRole(id: string, dto: UpdateBoardRoleRequest): Observable<BoardRoleDto> {
+    return this.http.put<BoardRoleDto>(`${this.base}/board-roles/${id}`, dto);
+  }
+
+  deleteBoardRole(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/board-roles/${id}`);
+  }
+
+  // Board members
   listBoard(): Observable<BoardMemberDto[]> {
     return this.http.get<BoardMemberDto[]>(`${this.base}/board`);
   }
@@ -29,6 +48,7 @@ export class GovernanceApiService {
     return this.http.delete<void>(`${this.base}/board/${id}`);
   }
 
+  // Resolutions
   listResolutions(page = 1, limit = 20, status?: string): Observable<PagedResult<ResolutionDto>> {
     const params: Record<string, string | number> = { page, limit };
     if (status) params['status'] = status;
