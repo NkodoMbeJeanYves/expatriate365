@@ -36,7 +36,7 @@ public class ListTenantsQueryHandler(AppDbContext db, ILogger<ListTenantsQueryHa
             t.BaseCurrency,
             t.IsActive,
             t.CreatedAt.ToString("O"),
-            t.UpdatedAt?.ToString("O"),
+            t.UpdatedAt == default ? null : t.UpdatedAt.ToString("O"),
             t.Admin?.Email ?? "-",
             t.Admin is null ? "-" : $"{t.Admin.FirstName} {t.Admin.LastName}",
             t.UserCount
