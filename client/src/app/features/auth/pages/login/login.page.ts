@@ -101,7 +101,7 @@ export class LoginPageComponent {
         const isSuperAdmin = res.user.roles?.includes('super_admin');
         const hasTenant   = !!res.user.tenant_id;
         if (hasTenant) await this.tenantService.bootstrap();
-        this.router.navigateByUrl(isSuperAdmin && !hasTenant ? '/select-tenant' : '/dashboard');
+        this.router.navigateByUrl(isSuperAdmin && !hasTenant ? '/admin/tenants' : '/dashboard');
       },
       error: (err) => {
         this.errorMessage.set(err?.error?.error ?? 'Identifiants incorrects');
