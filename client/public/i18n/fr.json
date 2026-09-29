@@ -95,7 +95,8 @@
     "perm_impersonate": "Usurper identitÃ©",
     "perm_write": "Ã‰crire",
     "perm_moderate": "ModÃ©rer",
-    "domain_community": "CommunautÃ©"
+    "domain_community": "CommunautÃ©",
+    "label_org_admin": "Administrateur de l'association"
   },
   "auth": {
     "login": "Connexion",

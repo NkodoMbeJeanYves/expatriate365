@@ -95,7 +95,8 @@
     "perm_impersonate": "Impersonate",
     "perm_write": "Write",
     "perm_moderate": "Moderate",
-    "domain_community": "Community"
+    "domain_community": "Community",
+    "label_org_admin": "Association Administrator"
   },
   "auth": {
     "login": "Login",
