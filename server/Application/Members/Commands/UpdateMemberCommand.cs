@@ -38,6 +38,7 @@ public class UpdateMemberCommandHandler(AppDbContext db, IWebHostEnvironment env
         member.User.FirstName = dto.FirstName;
         member.User.LastName = dto.LastName;
         member.User.Email = dto.Email.ToLowerInvariant();
+        member.User.ContactEmail = dto.ContactEmail?.ToLowerInvariant();
         member.User.Phone = dto.Phone;
         member.CategoryId = !string.IsNullOrWhiteSpace(dto.CategoryId) && Guid.TryParse(dto.CategoryId, out var catId) ? catId : null;
         member.ExpiryDate = dto.ExpiryDate is not null ? DateOnly.Parse(dto.ExpiryDate) : null;
@@ -68,7 +69,7 @@ public class UpdateMemberCommandHandler(AppDbContext db, IWebHostEnvironment env
         return ServiceResult<MemberDto>.Success(new MemberDto(
             member.Id.ToString(), member.TenantId.ToString(), member.UserId.ToString(),
             member.MembershipNumber, member.User.FirstName, member.User.LastName,
-            member.User.Email, member.User.Phone, member.Status,
+            member.User.Email, member.User.ContactEmail, member.User.Phone, member.Status,
             member.CategoryId?.ToString(), category?.Name,
             member.JoinedDate.ToString("yyyy-MM-dd"), member.ExpiryDate?.ToString("yyyy-MM-dd"),
             member.PhotoUrl, member.Address, member.Profession,

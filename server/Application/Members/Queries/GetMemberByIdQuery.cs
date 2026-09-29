@@ -22,7 +22,7 @@ public class GetMemberByIdQueryHandler(AppDbContext db)
 
         return ServiceResult<MemberDto>.Success(new MemberDto(
             m.Id.ToString(), m.TenantId.ToString(), m.UserId.ToString(),
-            m.MembershipNumber, m.User.FirstName, m.User.LastName, m.User.Email, m.User.Phone,
+            m.MembershipNumber, m.User.FirstName, m.User.LastName, m.User.Email, m.User.ContactEmail, m.User.Phone,
             m.Status,
             m.CategoryId?.ToString(), m.Category?.Name,
             m.JoinedDate.ToString("yyyy-MM-dd"),

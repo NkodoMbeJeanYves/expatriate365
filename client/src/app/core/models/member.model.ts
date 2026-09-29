@@ -25,6 +25,7 @@ export interface Member {
   updated_at?: string;
   email_verified_at?: string;
   role: string;
+  contact_email?: string;
 }
 
 export interface MemberListItem {
@@ -66,6 +67,7 @@ export interface CreateMemberRequest {
   first_name: string;
   last_name: string;
   email?: string;
+  contact_email?: string;
   phone?: string;
   category_id?: string;
   joined_date: string;

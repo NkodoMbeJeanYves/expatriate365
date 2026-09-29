@@ -227,6 +227,13 @@ import { MembersStore } from '../../store/members.store';
         <p class="text-sm font-medium text-gray-500 uppercase tracking-wide mt-2">Contact</p>
 
         <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium">{{ 'members.contact_email' | translate }}</label>
+          <input pInputText formControlName="contact_email" type="email" class="w-full"
+            placeholder="e.g. jean.nkodo@gmail.com" />
+          <p class="text-xs text-gray-400">{{ 'members.contact_email_hint' | translate }}</p>
+        </div>
+
+        <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">{{ 'members.address' | translate }}</label>
           <input pInputText formControlName="address" class="w-full" />
         </div>
@@ -361,6 +368,7 @@ export class MemberFormDrawerComponent implements OnInit {
     joined_date: new FormControl<Date | null>(null, [Validators.required]),
     expiry_date: new FormControl<Date | null>(null),
     category_id: new FormControl(''),
+    contact_email: new FormControl('', Validators.email),
     address: new FormControl(''),
     emergency_contact_name: new FormControl(''),
     emergency_contact_phone: new FormControl(''),
@@ -456,6 +464,7 @@ export class MemberFormDrawerComponent implements OnInit {
           last_name: m.last_name,
           role: m.role ?? 'member',
           phone: m.phone ?? '',
+          contact_email: m.contact_email ?? '',
           gender: m.gender ?? '',
           date_of_birth: m.date_of_birth ? new Date(m.date_of_birth) : null,
           profession: m.profession ?? '',
@@ -495,6 +504,7 @@ export class MemberFormDrawerComponent implements OnInit {
           first_name: v.first_name!,
           last_name: v.last_name!,
           email: v.email!,
+          contact_email: v.contact_email || undefined,
           phone: v.phone || undefined,
           gender: v.gender || undefined,
           date_of_birth: toDateStr(v.date_of_birth),
@@ -512,6 +522,7 @@ export class MemberFormDrawerComponent implements OnInit {
       : this.api.create({
           first_name: v.first_name!,
           last_name: v.last_name!,
+          contact_email: v.contact_email || undefined,
           phone: v.phone || undefined,
           gender: v.gender || undefined,
           date_of_birth: toDateStr(v.date_of_birth),

@@ -51,6 +51,7 @@ public class CreateMemberCommandHandler(AppDbContext db, ILogger<CreateMemberCom
                 Id = Guid.NewGuid(),
                 TenantId = tenantId,
                 Email = email,
+                ContactEmail = dto.ContactEmail?.ToLowerInvariant(),
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
@@ -97,7 +98,7 @@ public class CreateMemberCommandHandler(AppDbContext db, ILogger<CreateMemberCom
 
         return ServiceResult<MemberDto>.Success(new MemberDto(
             member.Id.ToString(), tenantId.ToString(), user.Id.ToString(),
-            membershipNumber, user.FirstName, user.LastName, user.Email, user.Phone,
+            membershipNumber, user.FirstName, user.LastName, user.Email, user.ContactEmail, user.Phone,
             member.Status, categoryId?.ToString(), category?.Name,
             member.JoinedDate.ToString("yyyy-MM-dd"), member.ExpiryDate?.ToString("yyyy-MM-dd"),
             member.PhotoUrl, member.Address, member.Profession,

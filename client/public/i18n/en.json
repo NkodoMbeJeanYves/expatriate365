@@ -312,6 +312,8 @@
     "first_name": "First name",
     "last_name": "Last name",
     "email": "Email",
+    "contact_email": "Notification email",
+    "contact_email_hint": "Personal accessible address where notifications will be sent (optional)",
     "phone": "Phone",
     "address": "Address",
     "profession": "Profession",
