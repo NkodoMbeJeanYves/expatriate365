@@ -25,6 +25,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ElectionBallot> ElectionBallots => Set<ElectionBallot>();
     public DbSet<ElectionVoteChoice> ElectionVoteChoices => Set<ElectionVoteChoice>();
     public DbSet<Document> Documents => Set<Document>();
+    public DbSet<BoardRole> BoardRoles => Set<BoardRole>();
     public DbSet<BoardMember> BoardMembers => Set<BoardMember>();
     public DbSet<Resolution> Resolutions => Set<Resolution>();
     public DbSet<Meeting> Meetings => Set<Meeting>();

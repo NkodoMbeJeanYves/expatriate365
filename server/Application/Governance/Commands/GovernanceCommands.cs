@@ -8,7 +8,94 @@ using server.Infrastructure.Persistence;
 
 namespace server.Application.Governance.Commands;
 
-// Board Members
+// ── Board Roles ──────────────────────────────────────────────────────────────
+
+public record CreateBoardRoleCommand(Guid TenantId, CreateBoardRoleRequest Request)
+    : IRequest<ServiceResult<BoardRoleDto>>;
+
+public class CreateBoardRoleCommandHandler(AppDbContext db, ILogger<CreateBoardRoleCommandHandler> log)
+    : IRequestHandler<CreateBoardRoleCommand, ServiceResult<BoardRoleDto>>
+{
+    public async Task<ServiceResult<BoardRoleDto>> Handle(CreateBoardRoleCommand request, CancellationToken ct)
+    {
+        var req = request.Request;
+        var name = req.Name.ToLowerInvariant().Trim();
+
+        if (await db.BoardRoles.AnyAsync(r => r.TenantId == request.TenantId && r.Name == name, ct))
+            return ServiceResult<BoardRoleDto>.Failure("Un rôle avec ce nom existe déjà.");
+
+        var role = new BoardRole
+        {
+            Id = Guid.NewGuid(),
+            TenantId = request.TenantId,
+            Name = name,
+            Label = req.Label.Trim(),
+        };
+        db.BoardRoles.Add(role);
+        await db.SaveChangesAsync(ct);
+
+        log.LogInformation("BoardRole '{Name}' created for tenant {TenantId}", name, request.TenantId);
+        return ServiceResult<BoardRoleDto>.Success(ToDto(role));
+    }
+
+    internal static BoardRoleDto ToDto(BoardRole r) => new(
+        r.Id.ToString(), r.TenantId.ToString(), r.Name, r.Label, r.IsActive,
+        r.CreatedAt.ToString("O"), r.UpdatedAt?.ToString("O"));
+}
+
+public record UpdateBoardRoleCommand(Guid TenantId, Guid RoleId, UpdateBoardRoleRequest Request)
+    : IRequest<ServiceResult<BoardRoleDto>>;
+
+public class UpdateBoardRoleCommandHandler(AppDbContext db, ILogger<UpdateBoardRoleCommandHandler> log)
+    : IRequestHandler<UpdateBoardRoleCommand, ServiceResult<BoardRoleDto>>
+{
+    public async Task<ServiceResult<BoardRoleDto>> Handle(UpdateBoardRoleCommand request, CancellationToken ct)
+    {
+        var role = await db.BoardRoles
+            .FirstOrDefaultAsync(r => r.Id == request.RoleId && r.TenantId == request.TenantId, ct);
+        if (role is null) return ServiceResult<BoardRoleDto>.Failure("Rôle introuvable.");
+
+        var name = request.Request.Name.ToLowerInvariant().Trim();
+        if (name != role.Name && await db.BoardRoles.AnyAsync(
+                r => r.TenantId == request.TenantId && r.Name == name && r.Id != request.RoleId, ct))
+            return ServiceResult<BoardRoleDto>.Failure("Un rôle avec ce nom existe déjà.");
+
+        role.Name = name;
+        role.Label = request.Request.Label.Trim();
+        role.IsActive = request.Request.IsActive;
+        await db.SaveChangesAsync(ct);
+
+        log.LogInformation("BoardRole {RoleId} updated for tenant {TenantId}", request.RoleId, request.TenantId);
+        return ServiceResult<BoardRoleDto>.Success(CreateBoardRoleCommandHandler.ToDto(role));
+    }
+}
+
+public record DeleteBoardRoleCommand(Guid TenantId, Guid RoleId) : IRequest<ServiceResult<bool>>;
+
+public class DeleteBoardRoleCommandHandler(AppDbContext db, ILogger<DeleteBoardRoleCommandHandler> log)
+    : IRequestHandler<DeleteBoardRoleCommand, ServiceResult<bool>>
+{
+    public async Task<ServiceResult<bool>> Handle(DeleteBoardRoleCommand request, CancellationToken ct)
+    {
+        var role = await db.BoardRoles
+            .FirstOrDefaultAsync(r => r.Id == request.RoleId && r.TenantId == request.TenantId, ct);
+        if (role is null) return ServiceResult<bool>.Failure("Rôle introuvable.");
+
+        var inUse = await db.BoardMembers
+            .AnyAsync(b => b.RoleId == request.RoleId && b.IsActive, ct);
+        if (inUse)
+            return ServiceResult<bool>.Failure("Ce rôle est utilisé par des membres actifs du bureau.");
+
+        role.IsActive = false;
+        await db.SaveChangesAsync(ct);
+
+        log.LogInformation("BoardRole {RoleId} deactivated for tenant {TenantId}", request.RoleId, request.TenantId);
+        return ServiceResult<bool>.Success(true);
+    }
+}
+
+// ── Board Members ────────────────────────────────────────────────────────────
+
 public record CreateBoardMemberCommand(Guid TenantId, CreateBoardMemberRequest Request)
     : IRequest<ServiceResult<BoardMemberDto>>;
 
@@ -18,12 +105,24 @@ public class CreateBoardMemberCommandHandler(AppDbContext db)
     public async Task<ServiceResult<BoardMemberDto>> Handle(CreateBoardMemberCommand request, CancellationToken ct)
     {
         var req = request.Request;
+
+        Guid? roleId = null;
+        BoardRole? boardRole = null;
+        if (!string.IsNullOrWhiteSpace(req.RoleId) && Guid.TryParse(req.RoleId, out var parsedRoleId))
+        {
+            boardRole = await db.BoardRoles
+                .FirstOrDefaultAsync(r => r.Id == parsedRoleId && r.TenantId == request.TenantId && r.IsActive, ct);
+            if (boardRole is null)
+                return ServiceResult<BoardMemberDto>.Failure("Rôle de bureau introuvable.");
+            roleId = parsedRoleId;
+        }
+
         var bm = new BoardMember
         {
             Id = Guid.NewGuid(),
             TenantId = request.TenantId,
             MemberId = Guid.Parse(req.MemberId),
-            Role = req.Role,
+            RoleId = roleId,
             StartDate = DateOnly.Parse(req.StartDate),
             EndDate = req.EndDate is not null ? DateOnly.Parse(req.EndDate) : null,
             Notes = req.Notes,
@@ -35,9 +134,10 @@ public class CreateBoardMemberCommandHandler(AppDbContext db)
         return ServiceResult<BoardMemberDto>.Success(new BoardMemberDto(
             bm.Id.ToString(), bm.TenantId.ToString(), bm.MemberId.ToString(),
             $"{bm.Member.User.FirstName} {bm.Member.User.LastName}",
-            bm.Member.MembershipNumber, bm.Role,
-            bm.StartDate.ToString("O"), bm.EndDate?.ToString("O"), bm.Notes,
-            bm.CreatedAt.ToString("O"), null));
+            bm.Member.MembershipNumber,
+            roleId?.ToString(), boardRole?.Name, boardRole?.Label,
+            bm.StartDate.ToString("yyyy-MM-dd"), bm.EndDate?.ToString("yyyy-MM-dd"),
+            bm.Notes, bm.CreatedAt.ToString("O"), null));
     }
 }
 
@@ -48,7 +148,8 @@ public class DeleteBoardMemberCommandHandler(AppDbContext db)
 {
     public async Task<ServiceResult<bool>> Handle(DeleteBoardMemberCommand request, CancellationToken ct)
     {
-        var bm = await db.BoardMembers.FirstOrDefaultAsync(b => b.Id == request.Id && b.TenantId == request.TenantId, ct);
+        var bm = await db.BoardMembers
+            .FirstOrDefaultAsync(b => b.Id == request.Id && b.TenantId == request.TenantId, ct);
         if (bm is null) return ServiceResult<bool>.Failure("Membre introuvable.");
         bm.IsActive = false;
         await db.SaveChangesAsync(ct);
@@ -56,7 +157,8 @@ public class DeleteBoardMemberCommandHandler(AppDbContext db)
     }
 }
 
-// Resolutions
+// ── Resolutions ──────────────────────────────────────────────────────────────
+
 public record CreateResolutionCommand(Guid TenantId, CreateResolutionRequest Request)
     : IRequest<ServiceResult<ResolutionDto>>;
 
@@ -89,7 +191,8 @@ public class AdoptResolutionCommandHandler(AppDbContext db)
 {
     public async Task<ServiceResult<ResolutionDto>> Handle(AdoptResolutionCommand request, CancellationToken ct)
     {
-        var res = await db.Resolutions.FirstOrDefaultAsync(r => r.Id == request.Id && r.TenantId == request.TenantId, ct);
+        var res = await db.Resolutions
+            .FirstOrDefaultAsync(r => r.Id == request.Id && r.TenantId == request.TenantId, ct);
         if (res is null) return ServiceResult<ResolutionDto>.Failure("Résolution introuvable.");
 
         var req = request.Request;
@@ -110,7 +213,8 @@ public class DeleteResolutionCommandHandler(AppDbContext db)
 {
     public async Task<ServiceResult<bool>> Handle(DeleteResolutionCommand request, CancellationToken ct)
     {
-        var res = await db.Resolutions.FirstOrDefaultAsync(r => r.Id == request.Id && r.TenantId == request.TenantId, ct);
+        var res = await db.Resolutions
+            .FirstOrDefaultAsync(r => r.Id == request.Id && r.TenantId == request.TenantId, ct);
         if (res is null) return ServiceResult<bool>.Failure("Résolution introuvable.");
         res.IsActive = false;
         await db.SaveChangesAsync(ct);

@@ -6,6 +6,29 @@ using server.Infrastructure.Persistence;
 
 namespace server.Application.Governance.Queries;
 
+// ── Board Roles ──────────────────────────────────────────────────────────────
+
+public record ListBoardRolesQuery(Guid TenantId) : IRequest<List<BoardRoleDto>>;
+
+public class ListBoardRolesQueryHandler(AppDbContext db)
+    : IRequestHandler<ListBoardRolesQuery, List<BoardRoleDto>>
+{
+    public async Task<List<BoardRoleDto>> Handle(ListBoardRolesQuery request, CancellationToken ct)
+    {
+        return await db.BoardRoles
+            .AsNoTracking()
+            .Where(r => r.TenantId == request.TenantId && r.IsActive)
+            .OrderBy(r => r.Label)
+            .Select(r => new BoardRoleDto(
+                r.Id.ToString(), r.TenantId.ToString(),
+                r.Name, r.Label, r.IsActive,
+                r.CreatedAt.ToString("O"), r.UpdatedAt != null ? r.UpdatedAt.Value.ToString("O") : null))
+            .ToListAsync(ct);
+    }
+}
+
+// ── Board Members ────────────────────────────────────────────────────────────
+
 public record ListBoardMembersQuery(Guid TenantId) : IRequest<List<BoardMemberDto>>;
 
 public class ListBoardMembersQueryHandler(AppDbContext db)
@@ -14,6 +37,9 @@ public class ListBoardMembersQueryHandler(AppDbContext db)
     public async Task<List<BoardMemberDto>> Handle(ListBoardMembersQuery request, CancellationToken ct)
     {
         return await db.BoardMembers
+            .AsNoTracking()
+            .Include(b => b.Member).ThenInclude(m => m.User)
+            .Include(b => b.BoardRole)
             .Where(b => b.TenantId == request.TenantId && b.IsActive)
             .OrderBy(b => b.StartDate)
             .Select(b => new BoardMemberDto(
@@ -21,11 +47,19 @@ public class ListBoardMembersQueryHandler(AppDbContext db)
                 b.MemberId.ToString(),
                 b.Member.User.FirstName + " " + b.Member.User.LastName,
                 b.Member.MembershipNumber,
-                b.Role, b.StartDate.ToString(), b.EndDate != null ? b.EndDate.Value.ToString() : null,
-                b.Notes, b.CreatedAt.ToString(), b.UpdatedAt != null ? b.UpdatedAt.Value.ToString() : null))
+                b.RoleId != null ? b.RoleId.Value.ToString() : null,
+                b.BoardRole != null ? b.BoardRole.Name : null,
+                b.BoardRole != null ? b.BoardRole.Label : null,
+                b.StartDate.ToString("yyyy-MM-dd"),
+                b.EndDate != null ? b.EndDate.Value.ToString("yyyy-MM-dd") : null,
+                b.Notes,
+                b.CreatedAt.ToString("O"),
+                b.UpdatedAt != null ? b.UpdatedAt.Value.ToString("O") : null))
             .ToListAsync(ct);
     }
 }
+
+// ── Resolutions ──────────────────────────────────────────────────────────────
 
 public record ListResolutionsQuery(Guid TenantId, int Page, int Limit, string? Status)
     : IRequest<PagedResult<ResolutionDto>>;
@@ -58,6 +92,8 @@ public class ListResolutionsQueryHandler(AppDbContext db)
         r.VotesFor, r.VotesAgainst, r.Abstentions,
         r.CreatedAt.ToString("O"), r.UpdatedAt?.ToString("O"));
 }
+
+// ── Stats ────────────────────────────────────────────────────────────────────
 
 public record GetGovernanceStatsQuery(Guid TenantId) : IRequest<GovernanceStatsDto>;
 

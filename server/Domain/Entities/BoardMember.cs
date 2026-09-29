@@ -5,7 +5,7 @@ public class BoardMember
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }
     public Guid MemberId { get; set; }
-    public string Role { get; set; } = string.Empty;
+    public Guid? RoleId { get; set; }       // nullable: historical records may predate board_roles
     public DateOnly StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
     public string? Notes { get; set; }
@@ -14,4 +14,5 @@ public class BoardMember
     public DateTime? UpdatedAt { get; set; }
 
     public Member Member { get; set; } = null!;
+    public BoardRole? BoardRole { get; set; }
 }

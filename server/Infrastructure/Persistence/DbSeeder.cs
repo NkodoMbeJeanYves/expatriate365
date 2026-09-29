@@ -405,11 +405,19 @@ public static class DbSeeder
             new Document { Id = Guid.NewGuid(), TenantId = tenantId, Title = "Formulaire demande solidarité",        Description = "Formulaire aide sociale",                Type = "form",   Category = "administrative", FileName = "formulaire-solidarite.pdf",    FileUrl = "/docs/formulaire-solidarite.pdf",   FileSizeBytes = 98_304,  MimeType = "application/pdf", IsPublic = true, UploadedBy = uTresorier.Id,  IsActive = true }
         );
 
+        // ── Board roles ───────────────────────────────────────────────────────
+        var brPresident  = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "president",  Label = "Président(e)" };
+        var brTresorier  = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "treasurer",  Label = "Trésorier(ère)" };
+        var brSecretaire = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "secretary",  Label = "Secrétaire Général(e)" };
+        var brVp         = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "vice_president", Label = "Vice-Président(e)" };
+        var brAuditor    = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "auditor",    Label = "Commissaire aux comptes" };
+        db.BoardRoles.AddRange(brPresident, brTresorier, brSecretaire, brVp, brAuditor);
+
         // ── Board members ─────────────────────────────────────────────────────
         db.BoardMembers.AddRange(
-            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mPresident.Id,  Role = "Président",          StartDate = new DateOnly(2024, 3, 15), IsActive = true },
-            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mTresorier.Id,  Role = "Trésorière",         StartDate = new DateOnly(2024, 3, 15), IsActive = true },
-            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mSecretaire.Id, Role = "Secrétaire Général", StartDate = new DateOnly(2024, 3, 15), IsActive = true }
+            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mPresident.Id,  RoleId = brPresident.Id,  StartDate = new DateOnly(2024, 3, 15), IsActive = true },
+            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mTresorier.Id,  RoleId = brTresorier.Id,  StartDate = new DateOnly(2024, 3, 15), IsActive = true },
+            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mSecretaire.Id, RoleId = brSecretaire.Id, StartDate = new DateOnly(2024, 3, 15), IsActive = true }
         );
 
         // ── Resolutions ───────────────────────────────────────────────────────
