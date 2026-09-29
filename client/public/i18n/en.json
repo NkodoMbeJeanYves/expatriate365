@@ -170,7 +170,7 @@
     "suspended": "Suspended",
     "title": "Title",
     "create": "Create",
-    "uploading": "Uploadingâ€¦"
+    "uploading": "Uploading…"
   },
   "community": {
     "title": "Community",
@@ -179,13 +179,13 @@
     "edit_post": "Edit post",
     "submit_draft": "Submit",
     "post_title": "Title",
-    "post_title_placeholder": "Summarize your experience in a few wordsâ€¦",
+    "post_title_placeholder": "Summarize your experience in a few words…",
     "post_content": "Your story",
-    "post_content_placeholder": "Share your experience, tips, or advice with the communityâ€¦",
+    "post_content_placeholder": "Share your experience, tips, or advice with the community…",
     "attachments": "Attachments",
     "add_photo": "Add photo",
     "add_document": "Add document",
-    "uploading": "Uploadingâ€¦",
+    "uploading": "Uploading…",
     "read_more": "Read more",
     "back_to_feed": "Back to community",
     "no_posts": "No publications yet. Be the first to share your experience!",
@@ -229,7 +229,7 @@
     "load_error": "Error while loading data"
   },
   "dashboard": {
-    "greeting": "Hello, {{name}} ðŸ‘‹",
+    "greeting": "Hello, {{name}} 👋",
     "auto_refresh": "Auto-refresh every 60 s",
     "active_members": "Active members",
     "new_this_month": "+{{count}} this month",
@@ -699,7 +699,7 @@
     "tab_activity": "Activity",
     "tab_tenants": "Communities",
     "tab_anomalies": "Anomalies",
-    "filter_action": "Filter by actionâ€¦",
+    "filter_action": "Filter by action…",
     "col_date": "Date",
     "col_user": "User",
     "col_action": "Action",
@@ -707,7 +707,7 @@
     "col_tenant": "Community",
     "no_logs": "No activity logged yet",
     "no_tenants": "No communities found",
-    "no_anomalies": "No anomalies detected â€” all clear!",
+    "no_anomalies": "No anomalies detected — all clear!",
     "stat_members": "Members",
     "stat_published": "Published",
     "stat_draft": "Drafts",
@@ -730,7 +730,7 @@
     "saved": "Settings saved successfully",
     "logo": "Association logo",
     "upload_logo": "Change logo",
-    "logo_hint": "Accepted formats: JPG, PNG, WebP, SVG â€” max 5 MB"
+    "logo_hint": "Accepted formats: JPG, PNG, WebP, SVG — max 5 MB"
   },
   "landing": {
     "nav_explore": "Explore",
