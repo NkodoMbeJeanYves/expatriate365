@@ -57,7 +57,7 @@ public class RegisterCommandHandler(AppDbContext db, JwtService jwt, ILogger<Reg
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             Phone = dto.Phone,
-            Role = "president",
+            Role = "org_admin",
             EmailVerifiedAt = DateTime.UtcNow,
             RefreshTokenHash = hash,
             RefreshTokenExpiresAt = jwt.RefreshTokenExpiry(),

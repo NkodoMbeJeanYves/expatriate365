@@ -131,7 +131,7 @@ public static class DbSeeder
         // ── Users ─────────────────────────────────────────────────────────────
         var pwdHash = BCrypt.Net.BCrypt.HashPassword("Password123!");
 
-        var uPresident  = MakeUser("jean.nkodo@acm.mu",    "Jean",    "Nkodo",   "president",  tenantId, pwdHash);
+        var uPresident  = MakeUser("jean.nkodo@acm.mu",    "Jean",    "Nkodo",   "org_admin",  tenantId, pwdHash);
         var uTresorier  = MakeUser("marie.fotso@acm.mu",   "Marie",   "Fotso",   "treasurer",  tenantId, pwdHash);
         var uSecretaire = MakeUser("paul.mvondo@acm.mu",   "Paul",    "Mvondo",  "secretary",  tenantId, pwdHash);
         var uMember1    = MakeUser("alice.biya@acm.mu",    "Alice",   "Biya",    "member",     tenantId, pwdHash);
