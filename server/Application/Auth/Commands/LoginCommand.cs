@@ -50,6 +50,16 @@ public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginC
         if (user.Status != "active")
             return ServiceResult<LoginResponse>.Failure("Ce compte est suspendu.");
 
+        if (user.TenantId.HasValue)
+        {
+            var tenant = await db.Tenants.FindAsync([user.TenantId.Value], ct);
+            if (tenant is null || !tenant.IsActive)
+            {
+                log.LogWarning("Login blocked: tenant {TenantId} is inactive for user {UserId}", user.TenantId, user.Id);
+                return ServiceResult<LoginResponse>.Failure("Cette association est désactivée. Contactez votre administrateur.");
+            }
+        }
+
         var (plain, hash) = jwt.GenerateRefreshToken();
         user.RefreshTokenHash = hash;
         user.RefreshTokenExpiresAt = jwt.RefreshTokenExpiry();
