@@ -13,7 +13,7 @@ public class TenantRoleConfiguration : IEntityTypeConfiguration<TenantRole>
         builder.Property(tr => tr.Id).HasColumnName("id");
         builder.Property(tr => tr.TenantId).HasColumnName("tenant_id");
         builder.Property(tr => tr.RoleId).HasColumnName("role_id");
-        builder.Property(tr => tr.Permissions).HasColumnName("permissions").HasColumnType("TEXT").HasDefaultValue("[]");
+        builder.Property(tr => tr.Permissions).HasColumnName("permissions").HasColumnType("TEXT");
         builder.Property(tr => tr.IsCustomized).HasColumnName("is_customized").HasDefaultValue(false);
         builder.Property(tr => tr.CreatedAt).HasColumnName("created_at");
         builder.Property(tr => tr.UpdatedAt).HasColumnName("updated_at");

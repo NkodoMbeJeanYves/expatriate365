@@ -18,7 +18,7 @@ namespace server.Migrations
                     id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     tenant_id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     role_id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    permissions = table.Column<string>(type: "TEXT", nullable: false, defaultValue: "[]")
+                    permissions = table.Column<string>(type: "TEXT", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     is_customized = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
                     created_at = table.Column<DateTime>(type: "datetime(6)", nullable: false),
