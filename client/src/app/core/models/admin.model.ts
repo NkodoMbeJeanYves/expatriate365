@@ -82,6 +82,7 @@ export interface CreateTenantRequest {
   admin_first_name: string;
   admin_last_name: string;
   admin_email: string;
+  admin_contact_email?: string;
   admin_password: string;
   phone?: string;
   country_code?: string;

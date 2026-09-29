@@ -47,7 +47,15 @@
     "col_created": "Créée le",
     "manage": "Gérer",
     "email_auto": "généré automatiquement",
-    "email_hint": "Format : prenom.nom@slug.pays — modifiable manuellement"
+    "login_email": "Email de connexion",
+    "login_email_ph": "ex. jean.nkodo@gmail.com",
+    "login_email_hint": "Identifiant de connexion — doit être une vraie adresse accessible",
+    "contact_email": "Email de notification",
+    "contact_email_ph": "ex. jean.nkodo@mauriciens-paris.mu",
+    "contact_email_hint": "Les identifiants et notifications seront envoyés à cette adresse",
+    "deactivate": "Désactiver cette association",
+    "activate": "Réactiver cette association",
+    "disabled_hint": "Association désactivée — réactivez-la pour y accéder"
   },
   "roles": {
     "title": "Rôles & Permissions",

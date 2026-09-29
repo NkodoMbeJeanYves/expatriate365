@@ -3,9 +3,9 @@ import {
   inject, signal, viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subject, takeUntil, combineLatest, debounceTime } from 'rxjs';
 import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
+import { Subject, takeUntil, combineLatest, debounceTime } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -25,8 +25,7 @@ import { TenantSummaryDto } from '@models/admin.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, ReactiveFormsModule, ButtonModule, InputTextModule, PasswordModule,
-    DrawerModule, TagModule, ProgressSpinnerModule, TooltipModule,
-    TranslatePipe,
+    DrawerModule, TagModule, ProgressSpinnerModule, TooltipModule, TranslatePipe,
   ],
   template: `
     <div class="p-6 max-w-7xl mx-auto">
@@ -39,10 +38,7 @@ import { TenantSummaryDto } from '@models/admin.model';
           </h1>
           <p class="text-sm text-gray-500 mt-0.5">{{ 'tenants.subtitle' | translate }}</p>
         </div>
-        <p-button
-          [label]="'tenants.new' | translate"
-          icon="pi pi-plus"
-          (onClick)="openForm()" />
+        <p-button [label]="'tenants.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
       </div>
 
       @if (loading()) {
@@ -51,9 +47,7 @@ import { TenantSummaryDto } from '@models/admin.model';
         </div>
       } @else {
         <div class="flex items-center gap-4 mb-4">
-          <span class="text-sm text-gray-500">
-            {{ tenants().length }} {{ 'tenants.count' | translate }}
-          </span>
+          <span class="text-sm text-gray-500">{{ tenants().length }} {{ 'tenants.count' | translate }}</span>
         </div>
 
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -71,7 +65,8 @@ import { TenantSummaryDto } from '@models/admin.model';
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
               @for (t of tenants(); track t.id) {
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  [class.opacity-50]="!t.is_active">
                   <td class="px-4 py-3">
                     <div class="font-medium text-gray-900 dark:text-white">{{ t.name }}</div>
                     <div class="text-xs text-gray-400">{{ t.country_code }} · {{ t.base_currency }}</div>
@@ -91,15 +86,27 @@ import { TenantSummaryDto } from '@models/admin.model';
                   </td>
                   <td class="px-4 py-3 text-xs text-gray-400">{{ t.created_at | date:'dd/MM/yyyy' }}</td>
                   <td class="px-4 py-3">
-                    <p-button
-                      [label]="'tenants.manage' | translate"
-                      icon="pi pi-arrow-right"
-                      iconPos="right"
-                      severity="secondary"
-                      size="small"
-                      [loading]="enteringId() === t.id"
-                      [disabled]="!!enteringId()"
-                      (onClick)="enterTenant(t)" />
+                    <div class="flex items-center gap-2">
+                      <p-button
+                        [label]="'tenants.manage' | translate"
+                        icon="pi pi-arrow-right"
+                        iconPos="right"
+                        severity="secondary"
+                        size="small"
+                        [loading]="enteringId() === t.id"
+                        [disabled]="!!enteringId() || !!togglingId() || !t.is_active"
+                        [pTooltip]="!t.is_active ? ('tenants.disabled_hint' | translate) : ''"
+                        (onClick)="enterTenant(t)" />
+                      <p-button
+                        [icon]="t.is_active ? 'pi pi-ban' : 'pi pi-check-circle'"
+                        [severity]="t.is_active ? 'danger' : 'success'"
+                        [text]="true"
+                        size="small"
+                        [loading]="togglingId() === t.id"
+                        [disabled]="!!enteringId() || !!togglingId()"
+                        [pTooltip]="(t.is_active ? 'tenants.deactivate' : 'tenants.activate') | translate"
+                        (onClick)="toggleActive(t)" />
+                    </div>
                   </td>
                 </tr>
               } @empty {
@@ -119,10 +126,11 @@ import { TenantSummaryDto } from '@models/admin.model';
 
     <!-- Drawer: create association -->
     <p-drawer #drawerEl [visible]="showForm()" [header]="'tenants.new' | translate"
-      position="right" styleClass="!w-full md:!w-[520px]"
+      position="right" styleClass="!w-full md:!w-[540px]"
       (visibleChange)="showForm.set($event)">
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4 p-2">
 
+        <!-- Section association -->
         <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">
           {{ 'tenants.section_association' | translate }}
         </div>
@@ -150,6 +158,7 @@ import { TenantSummaryDto } from '@models/admin.model';
           </div>
         </div>
 
+        <!-- Section administrateur -->
         <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">
           {{ 'tenants.section_admin' | translate }}
         </div>
@@ -165,18 +174,28 @@ import { TenantSummaryDto } from '@models/admin.model';
           </div>
         </div>
 
+        <!-- Email de connexion (manuel) -->
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium">{{ 'tenants.login_email' | translate }} *</label>
+          <input pInputText formControlName="admin_email" type="email"
+            [placeholder]="'tenants.login_email_ph' | translate" />
+          <p class="text-xs text-gray-400">{{ 'tenants.login_email_hint' | translate }}</p>
+        </div>
+
+        <!-- Email de contact / notification (auto-généré) -->
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">
-            {{ 'common.email' | translate }} *
-            @if (emailAutoGenerated()) {
+            {{ 'tenants.contact_email' | translate }}
+            @if (contactEmailAutoGenerated()) {
               <span class="ml-2 text-xs font-normal text-emerald-600">
                 <i class="pi pi-sparkles text-[10px]"></i> {{ 'tenants.email_auto' | translate }}
               </span>
             }
           </label>
-          <input pInputText formControlName="admin_email" type="email"
-            (input)="onEmailManualEdit()" />
-          <p class="text-xs text-gray-400">{{ 'tenants.email_hint' | translate }}</p>
+          <input pInputText formControlName="admin_contact_email" type="email"
+            [placeholder]="'tenants.contact_email_ph' | translate"
+            (input)="onContactEmailManualEdit()" />
+          <p class="text-xs text-gray-400">{{ 'tenants.contact_email_hint' | translate }}</p>
         </div>
 
         <div class="flex flex-col gap-1">
@@ -208,30 +227,32 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
 
   protected readonly drawerRef = viewChild<Drawer>('drawerEl');
 
-  readonly loading        = signal(true);
-  readonly saving         = signal(false);
-  readonly showForm       = signal(false);
-  readonly tenants        = signal<TenantSummaryDto[]>([]);
-  readonly error          = signal<string | null>(null);
-  readonly enteringId     = signal<string | null>(null);
-  readonly emailAutoGenerated = signal(true);
+  readonly loading               = signal(true);
+  readonly saving                = signal(false);
+  readonly showForm              = signal(false);
+  readonly tenants               = signal<TenantSummaryDto[]>([]);
+  readonly error                 = signal<string | null>(null);
+  readonly enteringId            = signal<string | null>(null);
+  readonly togglingId            = signal<string | null>(null);
+  readonly contactEmailAutoGenerated = signal(true);
 
   private readonly destroy$ = new Subject<void>();
 
   readonly form = this.fb.group({
-    association_name: ['', Validators.required],
-    slug:             ['', [Validators.required, Validators.pattern(/^[a-z0-9-]+$/)]],
-    country_code:     ['MU'],
-    base_currency:    ['MUR'],
-    admin_first_name: ['', Validators.required],
-    admin_last_name:  ['', Validators.required],
-    admin_email:      ['', [Validators.required, Validators.email]],
-    admin_password:   ['', [Validators.required, Validators.minLength(8)]],
+    association_name:    ['', Validators.required],
+    slug:                ['', [Validators.required, Validators.pattern(/^[a-z0-9-]+$/)]],
+    country_code:        ['MU'],
+    base_currency:       ['MUR'],
+    admin_first_name:    ['', Validators.required],
+    admin_last_name:     ['', Validators.required],
+    admin_email:         ['', [Validators.required, Validators.email]],
+    admin_contact_email: ['', Validators.email],
+    admin_password:      ['', [Validators.required, Validators.minLength(8)]],
   });
 
   ngOnInit(): void {
     this.load();
-    this.wireEmailGeneration();
+    this.wireContactEmailGeneration();
   }
 
   ngOnDestroy(): void {
@@ -239,7 +260,7 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private wireEmailGeneration(): void {
+  private wireContactEmailGeneration(): void {
     combineLatest([
       this.form.get('admin_first_name')!.valueChanges,
       this.form.get('admin_last_name')!.valueChanges,
@@ -249,9 +270,9 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
       debounceTime(150),
       takeUntil(this.destroy$),
     ).subscribe(([first, last, slug, country]) => {
-      if (!this.emailAutoGenerated()) return;
+      if (!this.contactEmailAutoGenerated()) return;
       const email = this.buildEmail(first, last, slug, country);
-      if (email) this.form.get('admin_email')!.setValue(email, { emitEvent: false });
+      if (email) this.form.get('admin_contact_email')!.setValue(email, { emitEvent: false });
     });
   }
 
@@ -275,8 +296,8 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
       .replace(/[^a-z0-9]/g, '');
   }
 
-  onEmailManualEdit(): void {
-    this.emailAutoGenerated.set(false);
+  onContactEmailManualEdit(): void {
+    this.contactEmailAutoGenerated.set(false);
   }
 
   load(): void {
@@ -290,7 +311,7 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
   openForm(): void {
     this.form.reset({ country_code: 'MU', base_currency: 'MUR' });
     this.error.set(null);
-    this.emailAutoGenerated.set(true);
+    this.contactEmailAutoGenerated.set(true);
     this.showForm.set(true);
   }
 
@@ -301,14 +322,15 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
     const v = this.form.value;
 
     this.api.createTenant({
-      association_name: v.association_name!,
-      slug:             v.slug!,
-      country_code:     v.country_code || 'MU',
-      base_currency:    v.base_currency || 'MUR',
-      admin_first_name: v.admin_first_name!,
-      admin_last_name:  v.admin_last_name!,
-      admin_email:      v.admin_email!,
-      admin_password:   v.admin_password!,
+      association_name:    v.association_name!,
+      slug:                v.slug!,
+      country_code:        v.country_code || 'MU',
+      base_currency:       v.base_currency || 'MUR',
+      admin_first_name:    v.admin_first_name!,
+      admin_last_name:     v.admin_last_name!,
+      admin_email:         v.admin_email!,
+      admin_contact_email: v.admin_contact_email || undefined,
+      admin_password:      v.admin_password!,
     }).subscribe({
       next: tenant => {
         this.tenants.update(list => [tenant, ...list]);
@@ -328,8 +350,27 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
     this.auth.selectTenant(t.id).subscribe({
       next: () => this.router.navigateByUrl('/dashboard'),
       error: (err: any) => {
-        this.toast.error(err?.error?.error ?? 'Impossible d\'entrer dans cette association.');
+        this.toast.error(err?.error?.error ?? "Impossible d'entrer dans cette association.");
         this.enteringId.set(null);
+      },
+    });
+  }
+
+  toggleActive(t: TenantSummaryDto): void {
+    this.togglingId.set(t.id);
+    this.api.toggleTenantActive(t.id).subscribe({
+      next: updated => {
+        this.tenants.update(list => list.map(x => x.id === updated.id ? updated : x));
+        this.togglingId.set(null);
+        this.toast.success(
+          updated.is_active
+            ? `Association "${updated.name}" réactivée.`
+            : `Association "${updated.name}" désactivée.`
+        );
+      },
+      error: (err: any) => {
+        this.toast.error(err?.error?.error ?? 'Erreur lors du changement de statut.');
+        this.togglingId.set(null);
       },
     });
   }

@@ -103,3 +103,45 @@ public class CreateTenantCommandHandler(
         ));
     }
 }
+
+// ── Toggle tenant active ───────────────────────────────────────────────────────
+
+public record ToggleTenantActiveCommand(Guid TenantId) : IRequest<ServiceResult<TenantSummaryDto>>;
+
+public class ToggleTenantActiveCommandHandler(AppDbContext db, ILogger<ToggleTenantActiveCommandHandler> log)
+    : IRequestHandler<ToggleTenantActiveCommand, ServiceResult<TenantSummaryDto>>
+{
+    public async Task<ServiceResult<TenantSummaryDto>> Handle(ToggleTenantActiveCommand request, CancellationToken ct)
+    {
+        var tenant = await db.Tenants.FindAsync([request.TenantId], ct);
+        if (tenant is null)
+            return ServiceResult<TenantSummaryDto>.Failure("Association introuvable.");
+
+        tenant.IsActive  = !tenant.IsActive;
+        tenant.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        log.LogInformation("Tenant {TenantId} IsActive toggled to {IsActive}", tenant.Id, tenant.IsActive);
+
+        var admin = await db.Users
+            .Where(u => u.TenantId == tenant.Id && u.Role == "org_admin")
+            .Select(u => new { u.Email, u.FirstName, u.LastName })
+            .FirstOrDefaultAsync(ct);
+
+        var userCount = await db.Users.CountAsync(u => u.TenantId == tenant.Id && u.IsActive, ct);
+
+        return ServiceResult<TenantSummaryDto>.Success(new TenantSummaryDto(
+            tenant.Id.ToString(),
+            tenant.Name,
+            tenant.Slug,
+            tenant.CountryCode,
+            tenant.BaseCurrency,
+            tenant.IsActive,
+            tenant.CreatedAt.ToString("O"),
+            tenant.UpdatedAt == default ? null : tenant.UpdatedAt.ToString("O"),
+            admin?.Email ?? "-",
+            admin is null ? "-" : $"{admin.FirstName} {admin.LastName}",
+            userCount
+        ));
+    }
+}

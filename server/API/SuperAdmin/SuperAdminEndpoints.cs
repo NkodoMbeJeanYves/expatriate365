@@ -29,6 +29,15 @@ public static class SuperAdminEndpoints
         })
         .WithName("CreateTenant")
         .WithSummary("Create a new association with its org_admin (super_admin only)");
+
+        group.MapPatch("/tenants/{id}/toggle-active", async (HttpContext ctx, Guid id, IMediator mediator) =>
+        {
+            if (!IsSuperAdmin(ctx)) return Results.Forbid();
+            var result = await mediator.Send(new ToggleTenantActiveCommand(id));
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+        })
+        .WithName("ToggleTenantActive")
+        .WithSummary("Activate or deactivate an association (super_admin only)");
     }
 
     private static bool IsSuperAdmin(HttpContext ctx)

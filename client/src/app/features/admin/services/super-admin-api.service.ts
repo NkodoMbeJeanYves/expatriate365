@@ -16,4 +16,8 @@ export class SuperAdminApiService {
   createTenant(dto: CreateTenantRequest): Observable<TenantSummaryDto> {
     return this.http.post<TenantSummaryDto>(`${this.base}/tenants`, dto);
   }
+
+  toggleTenantActive(id: string): Observable<TenantSummaryDto> {
+    return this.http.patch<TenantSummaryDto>(`${this.base}/tenants/${id}/toggle-active`, {});
+  }
 }
