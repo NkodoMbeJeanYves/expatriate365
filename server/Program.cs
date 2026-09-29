@@ -26,6 +26,7 @@ using server.API.Tenant;
 using server.API.Audit;
 using server.API.Roles;
 using server.API.DirectoryFeature;
+using server.API.SuperAdmin;
 using Microsoft.AspNetCore.Authorization;
 using server.Infrastructure.Auth;
 using server.Infrastructure.BackgroundServices;
@@ -208,6 +209,7 @@ try
     app.MapExploreEndpoints();
     app.MapGovernanceEndpoints();
     app.MapAdminEndpoints();
+    app.MapSuperAdminEndpoints();
     app.MapAnalyticsEndpoints();
     app.MapFinanceEndpoints();
     app.MapTenantEndpoints();

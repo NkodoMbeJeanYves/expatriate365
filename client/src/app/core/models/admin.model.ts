@@ -59,3 +59,31 @@ export interface PermissionDomain {
 export interface UpdateRolePermissionsRequest {
   permissions: string[];
 }
+
+// ── Super-admin tenant management ─────────────────────────────────────────────
+
+export interface TenantSummaryDto {
+  id: string;
+  name: string;
+  slug: string;
+  country_code: string;
+  base_currency: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+  admin_email: string;
+  admin_full_name: string;
+  user_count: number;
+}
+
+export interface CreateTenantRequest {
+  association_name: string;
+  slug: string;
+  admin_first_name: string;
+  admin_last_name: string;
+  admin_email: string;
+  admin_password: string;
+  phone?: string;
+  country_code?: string;
+  base_currency?: string;
+}

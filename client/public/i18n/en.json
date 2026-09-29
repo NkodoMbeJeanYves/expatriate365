@@ -20,7 +20,31 @@
     "member_categories": "Member categories",
     "community": "Community",
     "community_moderation": "Moderation",
-    "audit": "Audit"
+    "audit": "Audit",
+    "tenants": "Associations"
+  },
+  "tenants": {
+    "title": "Association management",
+    "subtitle": "Create and manage platform associations",
+    "new": "New association",
+    "count": "association(s)",
+    "empty": "No associations yet",
+    "create": "Create association",
+    "section_association": "Association information",
+    "section_admin": "Administrator account (org_admin)",
+    "association_name": "Association name",
+    "association_name_ph": "e.g. Mauritian Association of Paris",
+    "slug": "Unique identifier (slug)",
+    "slug_ph": "e.g. mauritians-paris",
+    "slug_hint": "Lowercase letters, numbers and hyphens only",
+    "country_code": "Country (ISO code)",
+    "currency": "Currency (ISO code)",
+    "col_name": "Association",
+    "col_slug": "Slug",
+    "col_admin": "Administrator",
+    "col_users": "Members",
+    "col_status": "Status",
+    "col_created": "Created"
   },
   "roles": {
     "title": "Roles & Permissions",

@@ -20,7 +20,31 @@
     "member_categories": "Categories membres",
     "community": "Communauté",
     "community_moderation": "Modération",
-    "audit": "Audit"
+    "audit": "Audit",
+    "tenants": "Associations"
+  },
+  "tenants": {
+    "title": "Gestion des associations",
+    "subtitle": "Créez et gérez les associations de la plateforme",
+    "new": "Nouvelle association",
+    "count": "association(s)",
+    "empty": "Aucune association pour l'instant",
+    "create": "Créer l'association",
+    "section_association": "Informations de l'association",
+    "section_admin": "Compte administrateur (org_admin)",
+    "association_name": "Nom de l'association",
+    "association_name_ph": "ex. Association des Mauriciens de Paris",
+    "slug": "Identifiant unique (slug)",
+    "slug_ph": "ex. mauriciens-paris",
+    "slug_hint": "Lettres minuscules, chiffres et tirets uniquement",
+    "country_code": "Pays (code ISO)",
+    "currency": "Devise (code ISO)",
+    "col_name": "Association",
+    "col_slug": "Slug",
+    "col_admin": "Administrateur",
+    "col_users": "Membres",
+    "col_status": "Statut",
+    "col_created": "Créée le"
   },
   "roles": {
     "title": "Rôles & Permissions",
