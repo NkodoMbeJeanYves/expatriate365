@@ -44,7 +44,8 @@
     "col_admin": "Administrator",
     "col_users": "Members",
     "col_status": "Status",
-    "col_created": "Created"
+    "col_created": "Created",
+    "manage": "Manage"
   },
   "roles": {
     "title": "Roles & Permissions",

@@ -3,6 +3,7 @@ import {
   inject, signal, viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -12,9 +13,9 @@ import { Drawer, DrawerModule } from 'primeng/drawer';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
-import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { SuperAdminApiService } from '../../services/super-admin-api.service';
 import { ToastService } from '@service/toast.service';
+import { AuthService } from '@core/auth/auth.service';
 import { TenantSummaryDto } from '@models/admin.model';
 
 @Component({
@@ -24,33 +25,36 @@ import { TenantSummaryDto } from '@models/admin.model';
   imports: [
     DatePipe, ReactiveFormsModule, ButtonModule, InputTextModule, PasswordModule,
     DrawerModule, TagModule, ProgressSpinnerModule, TooltipModule,
-    TranslatePipe, PageHeaderComponent,
+    TranslatePipe,
   ],
   template: `
     <div class="p-6 max-w-7xl mx-auto">
 
-      <app-page-header
-        [title]="'tenants.title' | translate"
-        [subtitle]="'tenants.subtitle' | translate">
+      <!-- Header -->
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            {{ 'tenants.title' | translate }}
+          </h1>
+          <p class="text-sm text-gray-500 mt-0.5">{{ 'tenants.subtitle' | translate }}</p>
+        </div>
         <p-button
           [label]="'tenants.new' | translate"
           icon="pi pi-plus"
           (onClick)="openForm()" />
-      </app-page-header>
+      </div>
 
       @if (loading()) {
         <div class="flex justify-center py-20">
           <p-progressspinner strokeWidth="4" styleClass="w-12 h-12" />
         </div>
       } @else {
-        <!-- Stats bar -->
-        <div class="flex items-center gap-4 mb-6">
+        <div class="flex items-center gap-4 mb-4">
           <span class="text-sm text-gray-500">
             {{ tenants().length }} {{ 'tenants.count' | translate }}
           </span>
         </div>
 
-        <!-- Table -->
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table class="w-full text-sm">
             <thead class="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -61,6 +65,7 @@ import { TenantSummaryDto } from '@models/admin.model';
                 <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ 'tenants.col_users' | translate }}</th>
                 <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ 'tenants.col_status' | translate }}</th>
                 <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ 'common.created_at' | translate }}</th>
+                <th class="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -84,12 +89,24 @@ import { TenantSummaryDto } from '@models/admin.model';
                       [severity]="t.is_active ? 'success' : 'danger'" />
                   </td>
                   <td class="px-4 py-3 text-xs text-gray-400">{{ t.created_at | date:'dd/MM/yyyy' }}</td>
+                  <td class="px-4 py-3">
+                    <p-button
+                      [label]="'tenants.manage' | translate"
+                      icon="pi pi-arrow-right"
+                      iconPos="right"
+                      severity="secondary"
+                      size="small"
+                      [loading]="enteringId() === t.id"
+                      [disabled]="!!enteringId()"
+                      (onClick)="enterTenant(t)" />
+                  </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="6" class="text-center py-16 text-gray-400">
+                  <td colspan="7" class="text-center py-16 text-gray-400">
                     <i class="pi pi-building text-4xl mb-3 block"></i>
-                    <p>{{ 'tenants.empty' | translate }}</p>
+                    <p class="mb-4">{{ 'tenants.empty' | translate }}</p>
+                    <p-button [label]="'tenants.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
                   </td>
                 </tr>
               }
@@ -105,17 +122,22 @@ import { TenantSummaryDto } from '@models/admin.model';
       (visibleChange)="showForm.set($event)">
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4 p-2">
 
-        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">{{ 'tenants.section_association' | translate }}</div>
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">
+          {{ 'tenants.section_association' | translate }}
+        </div>
 
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">{{ 'tenants.association_name' | translate }} *</label>
-          <input pInputText formControlName="association_name" [placeholder]="'tenants.association_name_ph' | translate" />
+          <input pInputText formControlName="association_name"
+            [placeholder]="'tenants.association_name_ph' | translate" />
         </div>
+
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">{{ 'tenants.slug' | translate }} *</label>
           <input pInputText formControlName="slug" [placeholder]="'tenants.slug_ph' | translate" />
           <p class="text-xs text-gray-400">{{ 'tenants.slug_hint' | translate }}</p>
         </div>
+
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium">{{ 'tenants.country_code' | translate }}</label>
@@ -127,7 +149,9 @@ import { TenantSummaryDto } from '@models/admin.model';
           </div>
         </div>
 
-        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">{{ 'tenants.section_admin' | translate }}</div>
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">
+          {{ 'tenants.section_admin' | translate }}
+        </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1">
@@ -139,13 +163,16 @@ import { TenantSummaryDto } from '@models/admin.model';
             <input pInputText formControlName="admin_last_name" />
           </div>
         </div>
+
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">{{ 'common.email' | translate }} *</label>
           <input pInputText formControlName="admin_email" type="email" />
         </div>
+
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">{{ 'common.password' | translate }} *</label>
-          <p-password formControlName="admin_password" [feedback]="false" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" />
+          <p-password formControlName="admin_password" [feedback]="false" [toggleMask]="true"
+            styleClass="w-full" inputStyleClass="w-full" />
         </div>
 
         @if (error()) {
@@ -163,17 +190,20 @@ import { TenantSummaryDto } from '@models/admin.model';
   `,
 })
 export class AdminTenantsPage implements OnInit {
-  private readonly api   = inject(SuperAdminApiService);
-  private readonly toast = inject(ToastService);
-  private readonly fb    = inject(FormBuilder);
+  private readonly api    = inject(SuperAdminApiService);
+  private readonly auth   = inject(AuthService);
+  private readonly toast  = inject(ToastService);
+  private readonly router = inject(Router);
+  private readonly fb     = inject(FormBuilder);
 
   protected readonly drawerRef = viewChild<Drawer>('drawerEl');
 
-  readonly loading  = signal(true);
-  readonly saving   = signal(false);
-  readonly showForm = signal(false);
-  readonly tenants  = signal<TenantSummaryDto[]>([]);
-  readonly error    = signal<string | null>(null);
+  readonly loading   = signal(true);
+  readonly saving    = signal(false);
+  readonly showForm  = signal(false);
+  readonly tenants   = signal<TenantSummaryDto[]>([]);
+  readonly error     = signal<string | null>(null);
+  readonly enteringId = signal<string | null>(null);
 
   readonly form = this.fb.group({
     association_name: ['', Validators.required],
@@ -193,7 +223,7 @@ export class AdminTenantsPage implements OnInit {
   load(): void {
     this.loading.set(true);
     this.api.listTenants().subscribe({
-      next: t => { this.tenants.set(t); this.loading.set(false); },
+      next: t  => { this.tenants.set(t); this.loading.set(false); },
       error: () => { this.toast.error('Erreur de chargement.'); this.loading.set(false); },
     });
   }
@@ -229,6 +259,17 @@ export class AdminTenantsPage implements OnInit {
       error: (err: any) => {
         this.error.set(err?.error?.error ?? 'Erreur lors de la création.');
         this.saving.set(false);
+      },
+    });
+  }
+
+  enterTenant(t: TenantSummaryDto): void {
+    this.enteringId.set(t.id);
+    this.auth.selectTenant(t.id).subscribe({
+      next: () => this.router.navigateByUrl('/dashboard'),
+      error: (err: any) => {
+        this.toast.error(err?.error?.error ?? 'Impossible d\'entrer dans cette association.');
+        this.enteringId.set(null);
       },
     });
   }
