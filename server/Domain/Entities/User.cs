@@ -9,6 +9,7 @@ public class User
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string? Phone { get; set; }
+    public string? ContactEmail { get; set; }
     public string Role { get; set; } = "member";
     public DateTime? EmailVerifiedAt { get; set; }
     public bool MfaEnabled { get; set; }

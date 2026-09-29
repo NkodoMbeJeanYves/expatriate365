@@ -1,15 +1,16 @@
 using System.Net;
 using System.Net.Mail;
+using Microsoft.Extensions.Options;
 
 namespace server.Infrastructure.Services;
 
-public class SmtpEmailService(IConfiguration config, ILogger<SmtpEmailService> log) : IEmailService
+public class SmtpEmailService(IOptions<EmailSettings> opts, ILogger<SmtpEmailService> log) : IEmailService
 {
+    private readonly EmailSettings _cfg = opts.Value;
+
     public async Task SendAsync(string toEmail, string toName, string subject, string htmlBody, CancellationToken ct = default)
     {
-        var smtp = config.GetSection("Smtp");
-        var host = smtp["Host"];
-        if (string.IsNullOrWhiteSpace(host))
+        if (string.IsNullOrWhiteSpace(_cfg.Smtp.Host))
         {
             log.LogWarning("SMTP not configured — email to {Email} skipped", toEmail);
             return;
@@ -17,20 +18,20 @@ public class SmtpEmailService(IConfiguration config, ILogger<SmtpEmailService> l
 
         try
         {
-            using var client = new SmtpClient(host, int.Parse(smtp["Port"] ?? "587"))
+            using var client = new SmtpClient(_cfg.Smtp.Host, _cfg.Smtp.Port)
             {
-                EnableSsl = bool.Parse(smtp["EnableSsl"] ?? "true"),
-                Credentials = new NetworkCredential(smtp["Username"], smtp["Password"]),
-                Timeout = 10_000,
+                EnableSsl  = _cfg.Smtp.EnableSsl,
+                Credentials = new NetworkCredential(_cfg.Smtp.Username, _cfg.Smtp.Password),
+                Timeout    = 10_000,
             };
 
-            var from = new MailAddress(smtp["FromAddress"] ?? smtp["Username"]!, smtp["FromName"] ?? "Expatriate365");
-            var to = new MailAddress(toEmail, toName);
+            var from = new MailAddress(_cfg.From, _cfg.FromName);
+            var to   = new MailAddress(toEmail, toName);
 
             using var message = new MailMessage(from, to)
             {
-                Subject = subject,
-                Body = htmlBody,
+                Subject    = subject,
+                Body       = htmlBody,
                 IsBodyHtml = true,
             };
 

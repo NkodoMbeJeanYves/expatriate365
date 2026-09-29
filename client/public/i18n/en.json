@@ -194,7 +194,20 @@
     "suspended": "Suspended",
     "title": "Title",
     "create": "Create",
-    "uploading": "Uploading…"
+    "uploading": "Uploading…",
+    "first_name": "First name",
+    "last_name": "Last name",
+    "phone": "Phone",
+    "email": "Login email",
+    "password": "Password"
+  },
+  "profile": {
+    "title": "My profile",
+    "subtitle": "Manage your personal information and notification preferences",
+    "email_readonly": "Login email cannot be changed here",
+    "contact_email": "Notification email",
+    "contact_email_ph": "e.g. my-email@gmail.com",
+    "contact_email_hint": "Notifications (events, meetings, contributions) will be sent to this address. If empty, your login email is used."
   },
   "community": {
     "title": "Community",

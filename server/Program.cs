@@ -81,6 +81,11 @@ try
 
     builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
+    builder.Services.Configure<server.Infrastructure.Services.EmailSettings>(
+        builder.Configuration.GetSection("Email"));
+    builder.Services.AddScoped<server.Infrastructure.Services.IEmailService,
+        server.Infrastructure.Services.SmtpEmailService>();
+
     builder.Services.AddHostedService<ChargeGenerationBackgroundService>();
     builder.Services.AddSingleton<JwtService>();
     builder.Services.AddScoped<server.Infrastructure.Services.AuditService>();

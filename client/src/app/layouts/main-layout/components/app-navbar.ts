@@ -194,11 +194,12 @@ export class AppNavbarComponent {
 
   get userMenuItems(): MenuItem[] {
     const user = this.store.currentUser();
-    const profileRoute = user?.entity_type === 'member' && user?.entity_id
+    const memberRoute = user?.entity_type === 'member' && user?.entity_id
       ? `/members/${user.entity_id}`
       : null;
     return [
-      ...(profileRoute ? [{ label: 'Mon profil', icon: 'pi pi-user', routerLink: profileRoute }] : []),
+      { label: 'Mon compte', icon: 'pi pi-user', routerLink: '/profile' },
+      ...(memberRoute ? [{ label: 'Mon profil membre', icon: 'pi pi-id-card', routerLink: memberRoute }] : []),
       { separator: true },
       { label: 'Déconnexion', icon: 'pi pi-sign-out', command: () => this.authService.logout() },
     ];

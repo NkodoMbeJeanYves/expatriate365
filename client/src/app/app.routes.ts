@@ -40,6 +40,7 @@ export const routes: Routes = [
       { path: 'analytics', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@analytics/analytics.routes').then((m) => m.ANALYTICS_ROUTES) },
       { path: 'governance', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@governance/governance.routes').then((m) => m.GOVERNANCE_ROUTES) },
       { path: 'admin', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@admin/admin.routes').then((m) => m.ADMIN_ROUTES) },
+      { path: 'profile', loadComponent: () => import('./features/profile/profile.page').then((m) => m.ProfilePage) },
     ],
   },
   { path: 'select-tenant', loadComponent: () => import('@auth/pages/select-tenant/select-tenant.page').then((m) => m.SelectTenantPage) },

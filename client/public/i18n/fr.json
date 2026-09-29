@@ -194,7 +194,20 @@
     "suspended": "Suspendu",
     "title": "Titre",
     "create": "Créer",
-    "uploading": "Envoi en cours…"
+    "uploading": "Envoi en cours…",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "phone": "Téléphone",
+    "email": "Email de connexion",
+    "password": "Mot de passe"
+  },
+  "profile": {
+    "title": "Mon profil",
+    "subtitle": "Gérez vos informations personnelles et vos préférences de notification",
+    "email_readonly": "L'email de connexion ne peut pas être modifié ici",
+    "contact_email": "Email de notification",
+    "contact_email_ph": "ex. mon-email@gmail.com",
+    "contact_email_hint": "Les notifications (événements, réunions, cotisations) seront envoyées à cet email. Si vide, votre email de connexion est utilisé."
   },
   "community": {
     "title": "Communauté",

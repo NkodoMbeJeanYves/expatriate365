@@ -8,6 +8,7 @@ public record CreateTenantRequest(
     string AdminEmail,
     string AdminPassword,
     string? Phone = null,
+    string? AdminContactEmail = null,
     string CountryCode = "MU",
     string BaseCurrency = "MUR"
 );

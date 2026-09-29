@@ -9,6 +9,7 @@ export interface AuthUser {
   entity_type?: string;
   entity_id?: string;
   email_verified_at?: string;
+  contact_email?: string;
 }
 
 export interface MeResponse extends AuthUser {

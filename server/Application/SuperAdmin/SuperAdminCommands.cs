@@ -21,6 +21,7 @@ public class CreateTenantCommandValidator : AbstractValidator<CreateTenantComman
         RuleFor(x => x.Dto.AdminFirstName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Dto.AdminLastName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Dto.AdminEmail).NotEmpty().EmailAddress();
+        RuleFor(x => x.Dto.AdminContactEmail).EmailAddress().When(x => !string.IsNullOrEmpty(x.Dto.AdminContactEmail));
         RuleFor(x => x.Dto.AdminPassword).NotEmpty().MinimumLength(8);
     }
 }
@@ -28,7 +29,9 @@ public class CreateTenantCommandValidator : AbstractValidator<CreateTenantComman
 public class CreateTenantCommandHandler(
     AppDbContext db,
     ILogger<CreateTenantCommandHandler> log,
-    PermissionResolverService permissionResolver)
+    PermissionResolverService permissionResolver,
+    IEmailService emailService,
+    IConfiguration config)
     : IRequestHandler<CreateTenantCommand, ServiceResult<TenantSummaryDto>>
 {
     public async Task<ServiceResult<TenantSummaryDto>> Handle(CreateTenantCommand request, CancellationToken ct)
@@ -60,6 +63,7 @@ public class CreateTenantCommandHandler(
             FirstName       = dto.AdminFirstName,
             LastName        = dto.AdminLastName,
             Phone           = dto.Phone,
+            ContactEmail    = dto.AdminContactEmail?.ToLowerInvariant(),
             Role            = "org_admin",
             EmailVerifiedAt = DateTime.UtcNow,
             Status          = "active",
@@ -73,6 +77,16 @@ public class CreateTenantCommandHandler(
         await permissionResolver.SeedForTenantAsync(tenant.Id, ct);
 
         log.LogInformation("Tenant {TenantId} created by super_admin with admin {UserId}", tenant.Id, admin.Id);
+
+        // Envoyer les identifiants à l'org_admin
+        var loginUrl = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
+        var notifEmail = admin.ContactEmail ?? admin.Email;
+        _ = emailService.SendAsync(
+            notifEmail,
+            admin.FullName,
+            $"Vos identifiants Expatriate365 — {tenant.Name}",
+            EmailTemplates.WelcomeOrgAdmin(admin.FullName, tenant.Name, admin.Email, dto.AdminPassword, loginUrl),
+            ct);
 
         return ServiceResult<TenantSummaryDto>.Success(new TenantSummaryDto(
             tenant.Id.ToString(),

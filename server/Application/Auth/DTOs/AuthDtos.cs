@@ -8,6 +8,7 @@ public record RegisterRequest(
     string Email,
     string Password,
     string? Phone,
+    string? ContactEmail = null,
     string CountryCode = "FR",
     string BaseCurrency = "EUR"
 );
