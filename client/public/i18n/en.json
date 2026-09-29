@@ -45,7 +45,9 @@
     "col_users": "Members",
     "col_status": "Status",
     "col_created": "Created",
-    "manage": "Manage"
+    "manage": "Manage",
+    "email_auto": "auto-generated",
+    "email_hint": "Format: firstname.lastname@slug.country — editable manually"
   },
   "roles": {
     "title": "Roles & Permissions",

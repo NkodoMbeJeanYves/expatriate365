@@ -45,7 +45,9 @@
     "col_users": "Membres",
     "col_status": "Statut",
     "col_created": "Créée le",
-    "manage": "Gérer"
+    "manage": "Gérer",
+    "email_auto": "généré automatiquement",
+    "email_hint": "Format : prenom.nom@slug.pays — modifiable manuellement"
   },
   "roles": {
     "title": "Rôles & Permissions",
