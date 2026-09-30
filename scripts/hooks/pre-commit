@@ -1,0 +1,12 @@
+#!/bin/sh
+# Validate i18n JSON files if any are staged
+if git diff --cached --name-only | grep -q "client/public/i18n/"; then
+  echo "🌐 i18n files staged — running validation..."
+  node scripts/validate-i18n.js
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Commit blocked: fix i18n errors above."
+    exit 1
+  fi
+fi
+exit 0

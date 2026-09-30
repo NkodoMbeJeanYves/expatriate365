@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint:i18n": "node ../scripts/validate-i18n.js"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
