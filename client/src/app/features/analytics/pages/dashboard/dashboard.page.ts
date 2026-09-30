@@ -10,6 +10,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthStore } from '@core/auth/auth.store';
+import { WelcomeBannerComponent } from '@shared/components/welcome-banner/welcome-banner.component';
 import { AnalyticsApiService } from '../../services/analytics-api.service';
 import { AnalyticsOverviewDto } from '@models/analytics.model';
 import { environment } from '../../../../../environments/environment';
@@ -23,9 +24,12 @@ interface PendingWelfare { id: string; member_name: string; type: string; amount
   selector: 'app-dashboard-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, AppCurrencyPipe, SkeletonModule, TagModule, TranslatePipe],
+  imports: [RouterLink, AppCurrencyPipe, SkeletonModule, TagModule, TranslatePipe, WelcomeBannerComponent],
   template: `
     <div class="flex flex-col gap-6 p-2">
+
+      <!-- Onboarding banner -->
+      <app-welcome-banner />
 
       <!-- Header -->
       <div class="flex items-start justify-between">

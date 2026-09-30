@@ -10,14 +10,18 @@ import { PaymentStats } from '@models/payment.model';
 import { ContributionsApiService } from '../contributions/services/contributions-api.service';
 import { PaymentsApiService } from '../payments/services/payments-api.service';
 import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
+import { WelcomeBannerComponent } from '@shared/components/welcome-banner/welcome-banner.component';
 
 @Component({
   selector: 'app-member-dashboard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslatePipe, RouterLink, ProgressSpinner, AppCurrencyPipe],
+  imports: [TranslatePipe, RouterLink, ProgressSpinner, AppCurrencyPipe, WelcomeBannerComponent],
   template: `
     <div class="p-6 max-w-4xl mx-auto">
+
+      <!-- Onboarding banner -->
+      <app-welcome-banner />
 
       <!-- Header -->
       <div class="mb-8">
