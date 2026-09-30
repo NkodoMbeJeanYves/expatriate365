@@ -106,6 +106,48 @@ Tests backend :
 dotnet test server/server.Tests/server.Tests.csproj
 ```
 
+## Internationalisation (i18n)
+
+Les fichiers de traduction se trouvent dans `client/public/i18n/` (`en.json`, `fr.json`).
+
+### Validation manuelle
+
+Depuis la racine du dépôt :
+
+```bash
+node scripts/validate-i18n.js
+```
+
+Ou depuis le dossier `client/` :
+
+```bash
+npm run lint:i18n
+```
+
+Ce script vérifie deux choses :
+
+1. **Syntaxe JSON valide** — une erreur de syntaxe bloque le commit.
+2. **Parité des clés** entre `en.json` et `fr.json` — les clés manquantes sont signalées en avertissement.
+
+### Hook pre-commit automatique
+
+Le hook Git `pre-commit` est inclus dans `scripts/hooks/pre-commit`. Il se déclenche automatiquement à chaque `git commit` **uniquement si des fichiers i18n sont stagés**, et bloque le commit en cas de JSON invalide.
+
+**Installation du hook** (à faire une fois après le premier clone) :
+
+```bash
+node scripts/install-hooks.js
+```
+
+> Le dossier `.git/hooks/` n'est pas versionné. Sur cette machine, le hook est déjà installé. Chaque nouveau contributeur doit exécuter la commande ci-dessus après avoir cloné le dépôt.
+
+### Ajouter une traduction
+
+1. Ajouter la clé dans `client/public/i18n/en.json`.
+2. Ajouter la traduction correspondante dans `client/public/i18n/fr.json`.
+3. Vérifier : `node scripts/validate-i18n.js`.
+4. Stager les deux fichiers ensemble.
+
 ## Configuration et sécurité
 
 - `.env.example` est un modèle destiné à Docker Compose. Copiez-le vers `.env` et remplacez ses valeurs fictives avant tout démarrage.
