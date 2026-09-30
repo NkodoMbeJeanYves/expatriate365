@@ -824,5 +824,58 @@
     "all_professions": "Tous les métiers",
     "empty": "Aucun professionnel inscrit dans cet annuaire pour le moment.",
     "results": "professionnel(s) trouvé(s)"
+  },
+  "onboarding": {
+    "welcome": "Bienvenue, {{name}} 👋",
+    "step": "Étape",
+    "start": "Commencer",
+    "skip": "Passer pour l'instant",
+    "banner_tag": "Prise en main",
+    "banner_cta": "Voir le guide",
+    "super_admin": {
+      "subtitle": "Voici les premières étapes pour mettre la plateforme en marche.",
+      "step1_title": "Créer une association",
+      "step1_desc": "Configurez le premier tenant : nom, slug, pays, compte administrateur.",
+      "step2_title": "Entrer dans une association",
+      "step2_desc": "Utilisez le bouton Gérer pour vous impersonifier et configurer une association.",
+      "step3_title": "Surveiller l'activité",
+      "step3_desc": "Consultez la liste des associations pour suivre les dates de création et le nombre d'utilisateurs.",
+      "banner_title": "Bienvenue, super administrateur",
+      "banner_desc": "Commencez par créer ou entrer dans une association pour la configurer."
+    },
+    "org_admin": {
+      "subtitle": "Configurez votre association en 3 étapes pour démarrer avec vos membres.",
+      "step1_title": "Configurer votre association",
+      "step1_desc": "Renseignez le nom, le pays, la devise et les autres paramètres de votre association.",
+      "step2_title": "Inviter les membres du CA",
+      "step2_desc": "Ajoutez votre président, trésorier et secrétaire pour qu'ils accèdent à la plateforme.",
+      "step3_title": "Ajouter vos premiers membres",
+      "step3_desc": "Importez ou créez manuellement les fiches membres pour commencer à gérer votre communauté.",
+      "banner_title": "Votre association est prête à être configurée",
+      "banner_desc": "Configurez les paramètres, invitez votre bureau, puis ajoutez vos premiers membres."
+    },
+    "staff": {
+      "subtitle": "Découvrez les modules disponibles selon votre rôle.",
+      "step1_title": "Explorer le tableau de bord",
+      "step1_desc": "Obtenez une vue d'ensemble des membres, cotisations et événements à venir.",
+      "step2_title": "Gérer les événements",
+      "step2_desc": "Créez des événements, gérez les inscriptions et envoyez des invitations.",
+      "step3_title": "Consulter les membres",
+      "step3_desc": "Parcourez la liste des membres, mettez à jour les fiches et gérez les catégories.",
+      "banner_title": "Découvrez votre espace de travail",
+      "banner_desc": "Vos modules sont prêts — explorez le tableau de bord pour commencer."
+    },
+    "member": {
+      "subtitle": "Suivez ces étapes pour profiter pleinement de votre adhésion.",
+      "step1_title": "Compléter votre profil",
+      "step1_desc": "Ajoutez votre photo, vos coordonnées et votre métier pour être visible dans l'annuaire.",
+      "step2_title": "Suivre vos cotisations",
+      "step2_desc": "Consultez votre historique de paiements et restez à jour dans vos cotisations.",
+      "step3_title": "Découvrir les événements",
+      "step3_desc": "Parcourez les événements à venir et inscrivez-vous à ceux qui vous intéressent.",
+      "banner_title": "Bienvenue dans l'association !",
+      "banner_desc": "Commencez par compléter votre profil pour que les autres membres puissent vous trouver."
+    }
   }
+}
 }

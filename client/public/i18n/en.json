@@ -824,5 +824,58 @@
     "all_professions": "All professions",
     "empty": "No professionals listed in this directory yet.",
     "results": "professional(s) found"
+  },
+  "onboarding": {
+    "welcome": "Welcome, {{name}} 👋",
+    "step": "Step",
+    "start": "Get started",
+    "skip": "Skip for now",
+    "banner_tag": "Getting started",
+    "banner_cta": "View guide",
+    "super_admin": {
+      "subtitle": "Here are the first steps to get the platform up and running.",
+      "step1_title": "Create an association",
+      "step1_desc": "Set up the first tenant: name, slug, country, admin account.",
+      "step2_title": "Enter an association",
+      "step2_desc": "Use the Manage button to impersonate and configure an association.",
+      "step3_title": "Monitor activity",
+      "step3_desc": "Check the associations list to track creation dates and user counts.",
+      "banner_title": "Welcome, super administrator",
+      "banner_desc": "Start by creating or entering an association to configure it."
+    },
+    "org_admin": {
+      "subtitle": "Set up your association in 3 steps to get your members started.",
+      "step1_title": "Configure your association",
+      "step1_desc": "Fill in your association's name, country, currency and other settings.",
+      "step2_title": "Invite board members",
+      "step2_desc": "Add your president, treasurer and secretary so they can access the platform.",
+      "step3_title": "Add your first members",
+      "step3_desc": "Import or manually create member records to start managing your community.",
+      "banner_title": "Your association is ready to be set up",
+      "banner_desc": "Configure the settings, invite your board, then add your first members."
+    },
+    "staff": {
+      "subtitle": "Discover the modules available for your role.",
+      "step1_title": "Explore the dashboard",
+      "step1_desc": "Get an overview of members, contributions and upcoming events.",
+      "step2_title": "Manage events",
+      "step2_desc": "Create events, manage registrations and send invitations.",
+      "step3_title": "Consult members",
+      "step3_desc": "Browse the member list, update files and manage categories.",
+      "banner_title": "Discover your workspace",
+      "banner_desc": "Your modules are ready — explore the dashboard to get started."
+    },
+    "member": {
+      "subtitle": "Follow these steps to make the most of your membership.",
+      "step1_title": "Complete your profile",
+      "step1_desc": "Add your photo, contact details and profession to be visible in the directory.",
+      "step2_title": "Track your contributions",
+      "step2_desc": "Consult your payment history and stay up to date with your dues.",
+      "step3_title": "Discover events",
+      "step3_desc": "Browse upcoming events and register for those that interest you.",
+      "banner_title": "Welcome to the association!",
+      "banner_desc": "Start by completing your profile so other members can find you."
+    }
   }
+}
 }
