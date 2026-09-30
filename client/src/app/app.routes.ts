@@ -41,6 +41,7 @@ export const routes: Routes = [
       { path: 'governance', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@governance/governance.routes').then((m) => m.GOVERNANCE_ROUTES) },
       { path: 'admin', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@admin/admin.routes').then((m) => m.ADMIN_ROUTES) },
       { path: 'profile', loadComponent: () => import('./features/profile/profile.page').then((m) => m.ProfilePage) },
+      { path: 'getting-started', loadComponent: () => import('./features/onboarding/getting-started.page').then((m) => m.GettingStartedPage) },
     ],
   },
   { path: 'select-tenant', loadComponent: () => import('@auth/pages/select-tenant/select-tenant.page').then((m) => m.SelectTenantPage) },

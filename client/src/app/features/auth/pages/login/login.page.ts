@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
 import { TenantService } from '@core/tenant/tenant.service';
+import { OnboardingService } from '@core/services/onboarding.service';
 import { environment } from '@env/environment';
 
 @Component({
@@ -80,6 +81,7 @@ import { environment } from '@env/environment';
 export class LoginPageComponent {
   private readonly auth          = inject(AuthService);
   private readonly tenantService = inject(TenantService);
+  private readonly onboarding    = inject(OnboardingService);
   private readonly router        = inject(Router);
 
   readonly loading = signal(false);
@@ -101,7 +103,13 @@ export class LoginPageComponent {
         const isSuperAdmin = res.user.roles?.includes('super_admin');
         const hasTenant   = !!res.user.tenant_id;
         if (hasTenant) await this.tenantService.bootstrap();
-        this.router.navigateByUrl(isSuperAdmin && !hasTenant ? '/admin/tenants' : '/dashboard');
+        if (isSuperAdmin && !hasTenant) {
+          this.router.navigateByUrl('/admin/tenants');
+        } else if (!this.onboarding.isSeen()) {
+          this.router.navigateByUrl('/getting-started');
+        } else {
+          this.router.navigateByUrl(res.user.roles?.includes('member') && res.user.roles.length === 1 ? '/member-dashboard' : '/dashboard');
+        }
       },
       error: (err) => {
         this.errorMessage.set(err?.error?.error ?? 'Identifiants incorrects');
