@@ -1,19 +1,17 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { Member } from '@core/models/member.model';
 import { MembersApiService } from '@members/services/members-api.service';
-import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
-import { DatePipe } from '@angular/common';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 
 @Component({
   selector: 'app-my-membership',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslatePipe, ProgressSpinnerModule, TagModule, ButtonModule, DatePipe],
+  imports: [RouterLink, ProgressSpinnerModule, TagModule, ButtonModule, DatePipe, TitleCasePipe],
   template: `
     <div class="p-6 max-w-2xl mx-auto flex flex-col gap-6">
 
