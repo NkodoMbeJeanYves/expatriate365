@@ -5,6 +5,7 @@ using server.Application.Common;
 using server.Application.Contributions.DTOs;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Contributions.Commands;
 
@@ -21,7 +22,10 @@ public class CreateContributionChargeValidator : AbstractValidator<CreateContrib
     }
 }
 
-public class CreateContributionChargeCommandHandler(AppDbContext db, ILogger<CreateContributionChargeCommandHandler> log)
+public class CreateContributionChargeCommandHandler(
+    AppDbContext db,
+    ILogger<CreateContributionChargeCommandHandler> log,
+    IEmailService emailService)
     : IRequestHandler<CreateContributionChargeCommand, ServiceResult<ContributionChargeDto>>
 {
     public async Task<ServiceResult<ContributionChargeDto>> Handle(CreateContributionChargeCommand request, CancellationToken ct)
@@ -63,6 +67,14 @@ public class CreateContributionChargeCommandHandler(AppDbContext db, ILogger<Cre
         await db.SaveChangesAsync(ct);
 
         log.LogInformation("ContributionCharge {Id} created for member {MemberId}", charge.Id, memberId);
+
+        var memberName = $"{member.User.FirstName} {member.User.LastName}";
+        var email = member.User.ContactEmail ?? member.User.Email;
+        _ = emailService.SendAsync(
+            email, memberName,
+            "Nouvelle échéance de cotisation",
+            EmailTemplates.ChargeGenerated(memberName, type.Name, amount, dueDate.ToString("dd/MM/yyyy")),
+            ct);
 
         return ServiceResult<ContributionChargeDto>.Success(new ContributionChargeDto(
             charge.Id.ToString(), charge.TenantId.ToString(), charge.MemberId.ToString(),

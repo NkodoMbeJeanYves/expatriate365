@@ -4,13 +4,17 @@ using server.Application.Common;
 using server.Application.Payments.DTOs;
 using server.Application.Payments.Queries;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Payments.Commands;
 
 public record ConfirmPaymentCommand(Guid TenantId, Guid PaymentId, Guid ConfirmedBy)
     : IRequest<ServiceResult<PaymentDto>>;
 
-public class ConfirmPaymentCommandHandler(AppDbContext db, ILogger<ConfirmPaymentCommandHandler> log)
+public class ConfirmPaymentCommandHandler(
+    AppDbContext db,
+    ILogger<ConfirmPaymentCommandHandler> log,
+    IEmailService emailService)
     : IRequestHandler<ConfirmPaymentCommand, ServiceResult<PaymentDto>>
 {
     public async Task<ServiceResult<PaymentDto>> Handle(ConfirmPaymentCommand request, CancellationToken ct)
@@ -41,6 +45,14 @@ public class ConfirmPaymentCommandHandler(AppDbContext db, ILogger<ConfirmPaymen
 
         await db.SaveChangesAsync(ct);
         log.LogInformation("Payment {Id} confirmed by {UserId}", payment.Id, request.ConfirmedBy);
+
+        var memberName = $"{payment.Member.User.FirstName} {payment.Member.User.LastName}";
+        var email = payment.Member.User.ContactEmail ?? payment.Member.User.Email;
+        _ = emailService.SendAsync(
+            email, memberName,
+            "Paiement confirmé",
+            EmailTemplates.PaymentConfirmed(memberName, payment.Charge.ContributionType.Name, payment.Amount, payment.ReceiptNumber),
+            ct);
 
         return ServiceResult<PaymentDto>.Success(ListPaymentsQueryHandler.ToDto(payment));
     }

@@ -5,6 +5,7 @@ using server.Application.Common;
 using server.Application.Contributions.DTOs;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Contributions.Commands;
 
@@ -20,7 +21,10 @@ public class BulkGenerateChargesValidator : AbstractValidator<BulkGenerateCharge
     }
 }
 
-public class BulkGenerateChargesCommandHandler(AppDbContext db, ILogger<BulkGenerateChargesCommandHandler> log)
+public class BulkGenerateChargesCommandHandler(
+    AppDbContext db,
+    ILogger<BulkGenerateChargesCommandHandler> log,
+    IEmailService emailService)
     : IRequestHandler<BulkGenerateChargesCommand, ServiceResult<int>>
 {
     public async Task<ServiceResult<int>> Handle(BulkGenerateChargesCommand request, CancellationToken ct)
@@ -37,8 +41,8 @@ public class BulkGenerateChargesCommandHandler(AppDbContext db, ILogger<BulkGene
         var dueDate = DateOnly.Parse(dto.DueDate);
 
         var activeMembers = await db.Members
+            .Include(m => m.User)
             .Where(m => m.TenantId == request.TenantId && m.Status == "active" && m.IsActive)
-            .Select(m => m.Id)
             .ToListAsync(ct);
 
         var existingMemberIds = await db.ContributionCharges
@@ -49,13 +53,15 @@ public class BulkGenerateChargesCommandHandler(AppDbContext db, ILogger<BulkGene
             .Select(c => c.MemberId)
             .ToListAsync(ct);
 
-        var toGenerate = activeMembers.Except(existingMemberIds).ToList();
+        var toGenerate = activeMembers
+            .Where(m => !existingMemberIds.Contains(m.Id))
+            .ToList();
 
-        var charges = toGenerate.Select(memberId => new ContributionCharge
+        var charges = toGenerate.Select(m => new ContributionCharge
         {
             Id = Guid.NewGuid(),
             TenantId = request.TenantId,
-            MemberId = memberId,
+            MemberId = m.Id,
             ContributionTypeId = typeId,
             DueDate = dueDate,
             BaseAmount = type.BaseAmount,
@@ -71,6 +77,32 @@ public class BulkGenerateChargesCommandHandler(AppDbContext db, ILogger<BulkGene
         log.LogInformation("Bulk generated {Count} charges for type {TypeId}, due {DueDate}",
             charges.Count, typeId, dueDate);
 
+        _ = NotifyMembersAsync(toGenerate, type.Name, type.BaseAmount, dueDate, ct);
+
         return ServiceResult<int>.Success(charges.Count);
+    }
+
+    private async Task NotifyMembersAsync(
+        List<server.Domain.Entities.Member> members,
+        string typeName, decimal amount, DateOnly dueDate, CancellationToken ct)
+    {
+        try
+        {
+            var tasks = members.Select(m =>
+            {
+                var name = $"{m.User.FirstName} {m.User.LastName}";
+                var email = m.User.ContactEmail ?? m.User.Email;
+                return emailService.SendAsync(
+                    email, name,
+                    "Nouvelle échéance de cotisation",
+                    EmailTemplates.ChargeGenerated(name, typeName, amount, dueDate.ToString("dd/MM/yyyy")),
+                    ct);
+            });
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Error sending bulk charge notifications for type {TypeName}", typeName);
+        }
     }
 }
