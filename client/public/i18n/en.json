@@ -21,7 +21,8 @@
     "community": "Community",
     "community_moderation": "Moderation",
     "audit": "Audit",
-    "tenants": "Associations"
+    "tenants": "Associations",
+    "profile": "My profile"
   },
   "tenants": {
     "title": "Association management",
