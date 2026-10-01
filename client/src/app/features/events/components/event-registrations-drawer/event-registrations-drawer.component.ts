@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -97,6 +97,8 @@ export class EventRegistrationsDrawerComponent {
   private readonly membersApi = inject(MembersApiService);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  readonly changed = output<void>();
+
   protected visible = false;
   protected readonly event = signal<EventDto | null>(null);
   protected readonly registrations = signal<EventRegistrationDto[]>([]);
@@ -146,6 +148,7 @@ export class EventRegistrationsDrawerComponent {
         this.registrations.update(list => [...list, reg]);
         this.selectedMemberId = '';
         this.registering.set(false);
+        this.changed.emit();
       },
       error: (err) => { this.registering.set(false); this.error.set(err?.error?.error ?? 'Erreur lors de l\'inscription.'); },
     });
@@ -153,7 +156,7 @@ export class EventRegistrationsDrawerComponent {
 
   protected cancelReg(reg: EventRegistrationDto): void {
     this.api.cancelRegistration(this.event()!.id, reg.id).subscribe({
-      next: (updated) => this.registrations.update(list => list.map(r => r.id === updated.id ? updated : r)),
+      next: (updated) => { this.registrations.update(list => list.map(r => r.id === updated.id ? updated : r)); this.changed.emit(); },
       error: () => this.error.set('Erreur lors de l\'annulation.'),
     });
   }
