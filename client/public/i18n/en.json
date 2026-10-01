@@ -154,7 +154,18 @@
     "explore_link": "Browse communities",
     "select_tenant_title": "Select a community",
     "select_tenant_subtitle": "Choose the community you want to manage",
-    "no_tenants": "No community found"
+    "no_tenants": "No community found",
+    "forgot_password_link": "Forgot your password?",
+    "forgot_password_hint": "Enter your notification email address. If an account is associated with it, you will receive a reset link.",
+    "forgot_password_sent": "If this address is associated with an account, a reset link has been sent. Check your inbox.",
+    "contact_email_label": "Notification email",
+    "contact_email_ph": "e.g. my-email@gmail.com",
+    "send_reset_link": "Send reset link",
+    "back_to_login": "Back to login",
+    "reset_password": "Reset your password",
+    "reset_password_hint": "Enter and confirm your new password.",
+    "reset_password_done": "Password successfully reset. You can now log in.",
+    "reset_password_submit": "Reset password"
   },
   "common": {
     "save": "Save",

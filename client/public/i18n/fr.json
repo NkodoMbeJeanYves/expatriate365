@@ -154,7 +154,18 @@
     "explore_link": "Découvrir les communautés",
     "select_tenant_title": "Sélectionner une communauté",
     "select_tenant_subtitle": "Choisissez la communauté que vous souhaitez gérer",
-    "no_tenants": "Aucune communauté trouvée"
+    "no_tenants": "Aucune communauté trouvée",
+    "forgot_password_link": "Mot de passe oublié ?",
+    "forgot_password_hint": "Saisissez votre adresse email de notification. Si un compte y est associé, vous recevrez un lien de réinitialisation.",
+    "forgot_password_sent": "Si cette adresse est associée à un compte, un lien de réinitialisation a été envoyé. Vérifiez votre boîte mail.",
+    "contact_email_label": "Email de notification",
+    "contact_email_ph": "ex. mon-email@gmail.com",
+    "send_reset_link": "Envoyer le lien",
+    "back_to_login": "Retour à la connexion",
+    "reset_password": "Réinitialiser votre mot de passe",
+    "reset_password_hint": "Saisissez et confirmez votre nouveau mot de passe.",
+    "reset_password_done": "Mot de passe réinitialisé avec succès. Vous pouvez maintenant vous connecter.",
+    "reset_password_submit": "Réinitialiser le mot de passe"
   },
   "common": {
     "save": "Enregistrer",
