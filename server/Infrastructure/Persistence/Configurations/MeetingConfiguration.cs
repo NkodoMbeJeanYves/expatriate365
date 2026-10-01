@@ -53,6 +53,30 @@ public class MeetingAttendanceConfiguration : IEntityTypeConfiguration<MeetingAt
     }
 }
 
+public class MeetingActionItemConfiguration : IEntityTypeConfiguration<MeetingActionItem>
+{
+    public void Configure(EntityTypeBuilder<MeetingActionItem> b)
+    {
+        b.ToTable("meeting_action_items");
+        b.HasKey(e => e.Id);
+        b.Property(e => e.Id).HasColumnName("id");
+        b.Property(e => e.TenantId).HasColumnName("tenant_id").IsRequired();
+        b.Property(e => e.MeetingId).HasColumnName("meeting_id").IsRequired();
+        b.Property(e => e.Title).HasColumnName("title").HasMaxLength(500).IsRequired();
+        b.Property(e => e.Description).HasColumnName("description");
+        b.Property(e => e.AssignedToMemberId).HasColumnName("assigned_to_member_id");
+        b.Property(e => e.DueDate).HasColumnName("due_date");
+        b.Property(e => e.Status).HasColumnName("status").HasMaxLength(50).IsRequired();
+        b.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+        b.Property(e => e.CreatedAt).HasColumnName("created_at");
+        b.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+
+        b.HasIndex(e => e.MeetingId);
+        b.HasOne(e => e.Meeting).WithMany().HasForeignKey(e => e.MeetingId);
+        b.HasOne(e => e.AssignedTo).WithMany().HasForeignKey(e => e.AssignedToMemberId);
+    }
+}
+
 public class MeetingMinuteConfiguration : IEntityTypeConfiguration<MeetingMinute>
 {
     public void Configure(EntityTypeBuilder<MeetingMinute> b)
