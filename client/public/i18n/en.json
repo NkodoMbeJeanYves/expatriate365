@@ -222,7 +222,13 @@
     "email_readonly": "Login email cannot be changed here",
     "contact_email": "Notification email",
     "contact_email_ph": "e.g. my-email@gmail.com",
-    "contact_email_hint": "Notifications (events, meetings, contributions) will be sent to this address. If empty, your login email is used."
+    "contact_email_hint": "Notifications (events, meetings, contributions) will be sent to this address. If empty, your login email is used.",
+    "change_password": "Change password",
+    "current_password": "Current password",
+    "new_password": "New password",
+    "confirm_password": "Confirm new password",
+    "password_mismatch": "Passwords do not match.",
+    "password_wrong_current": "Current password is incorrect."
   },
   "community": {
     "title": "Community",

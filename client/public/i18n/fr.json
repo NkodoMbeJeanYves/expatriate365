@@ -222,7 +222,13 @@
     "email_readonly": "L'email de connexion ne peut pas être modifié ici",
     "contact_email": "Email de notification",
     "contact_email_ph": "ex. mon-email@gmail.com",
-    "contact_email_hint": "Les notifications (événements, réunions, cotisations) seront envoyées à cet email. Si vide, votre email de connexion est utilisé."
+    "contact_email_hint": "Les notifications (événements, réunions, cotisations) seront envoyées à cet email. Si vide, votre email de connexion est utilisé.",
+    "change_password": "Changer le mot de passe",
+    "current_password": "Mot de passe actuel",
+    "new_password": "Nouveau mot de passe",
+    "confirm_password": "Confirmer le nouveau mot de passe",
+    "password_mismatch": "Les mots de passe ne correspondent pas.",
+    "password_wrong_current": "Mot de passe actuel incorrect."
   },
   "community": {
     "title": "Communauté",
