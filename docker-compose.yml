@@ -61,6 +61,7 @@ services:
       Smtp__Password:               ${SMTP_PASSWORD:-}
       Smtp__FromEmail:              ${SMTP_FROM_EMAIL:-}
       Smtp__FromName:               ${SMTP_FROM_NAME:-Expatriate365}
+      FrontendBaseUrl:              ${FrontendBaseUrl:-https://app.expatriate365.mu}
     volumes:
       - downloads:/app/downloads
     expose:

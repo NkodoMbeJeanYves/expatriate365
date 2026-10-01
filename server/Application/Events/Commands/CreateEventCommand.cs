@@ -58,7 +58,7 @@ public class CreateEventCommandHandler(
         log.LogInformation("Event {Id} created: {Title}", ev.Id, ev.Title);
 
         // Notifier les membres actifs de l'association en background
-        _ = NotifyMembersAsync(ev, request.TenantId, config["App:BaseUrl"] ?? "https://app.expatriate365.mu", ct);
+        _ = NotifyMembersAsync(ev, request.TenantId, config["FrontendBaseUrl"] ?? config["App:BaseUrl"] ?? "https://app.expatriate365.mu", ct);
 
         return ServiceResult<EventDto>.Success(ListEventsQueryHandler.ToDto(ev));
     }

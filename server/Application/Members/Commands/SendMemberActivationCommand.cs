@@ -39,7 +39,7 @@ public class SendMemberActivationHandler(
         member.User.UpdatedAt                = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
-        var baseUrl = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
+        var baseUrl = config["FrontendBaseUrl"] ?? config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
         var setPasswordUrl = $"{baseUrl}/set-password?token={plainToken}";
         log.LogInformation("Activation token generated for member {MembershipNumber}", member.MembershipNumber);
 

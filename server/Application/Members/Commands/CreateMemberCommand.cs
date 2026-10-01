@@ -100,7 +100,7 @@ public class CreateMemberCommandHandler(
         if (!string.IsNullOrWhiteSpace(user.ContactEmail))
         {
             var tenant = await db.Tenants.FindAsync([tenantId], ct);
-            var baseUrl = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
+            var baseUrl = config["FrontendBaseUrl"] ?? config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
             var (plainToken, tokenHash) = server.Application.Common.TokenGenerator.Generate();
             user.ActivationTokenHash      = tokenHash;
             user.ActivationTokenExpiresAt = DateTime.UtcNow.AddHours(72);
