@@ -165,7 +165,12 @@
     "reset_password": "Réinitialiser votre mot de passe",
     "reset_password_hint": "Saisissez et confirmez votre nouveau mot de passe.",
     "reset_password_done": "Mot de passe réinitialisé avec succès. Vous pouvez maintenant vous connecter.",
-    "reset_password_submit": "Réinitialiser le mot de passe"
+    "reset_password_submit": "Réinitialiser le mot de passe",
+    "set_password_title": "Activez votre compte",
+    "set_password_hint": "Choisissez un mot de passe pour activer votre compte et accéder à votre espace.",
+    "set_password_submit": "Activer mon compte",
+    "set_password_done": "Compte activé ! Vous pouvez maintenant vous connecter.",
+    "set_password_invalid": "Ce lien d'activation est invalide ou a expiré. Veuillez en demander un nouveau."
   },
   "common": {
     "save": "Enregistrer",

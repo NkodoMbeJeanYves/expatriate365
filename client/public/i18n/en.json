@@ -165,7 +165,12 @@
     "reset_password": "Reset your password",
     "reset_password_hint": "Enter and confirm your new password.",
     "reset_password_done": "Password successfully reset. You can now log in.",
-    "reset_password_submit": "Reset password"
+    "reset_password_submit": "Reset password",
+    "set_password_title": "Activate your account",
+    "set_password_hint": "Choose a password to activate your account and access your space.",
+    "set_password_submit": "Activate my account",
+    "set_password_done": "Account activated! You can now log in.",
+    "set_password_invalid": "This activation link is invalid or has expired. Please request a new one."
   },
   "common": {
     "save": "Save",
