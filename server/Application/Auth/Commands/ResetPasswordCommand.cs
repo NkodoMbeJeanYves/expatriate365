@@ -1,0 +1,56 @@
+using FluentValidation;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using server.Application.Common;
+using server.Infrastructure.Persistence;
+
+namespace server.Application.Auth.Commands;
+
+public record ResetPasswordRequest(string Token, string NewPassword);
+
+public record ResetPasswordCommand(ResetPasswordRequest Dto) : IRequest<ServiceResult<bool>>;
+
+public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordCommand>
+{
+    public ResetPasswordCommandValidator()
+    {
+        RuleFor(x => x.Dto.Token).NotEmpty();
+        RuleFor(x => x.Dto.NewPassword).NotEmpty().MinimumLength(8);
+    }
+}
+
+public class ResetPasswordCommandHandler(AppDbContext db, ILogger<ResetPasswordCommandHandler> log)
+    : IRequestHandler<ResetPasswordCommand, ServiceResult<bool>>
+{
+    public async Task<ServiceResult<bool>> Handle(ResetPasswordCommand request, CancellationToken ct)
+    {
+        // Recompute SHA-256 hash of the plain token received from the URL
+        byte[] tokenBytes;
+        try { tokenBytes = Convert.FromHexString(request.Dto.Token); }
+        catch { return ServiceResult<bool>.Failure("Lien de réinitialisation invalide."); }
+
+        var tokenHash = Convert.ToHexString(
+            System.Security.Cryptography.SHA256.HashData(tokenBytes)
+        ).ToLowerInvariant();
+
+        var user = await db.Users
+            .FirstOrDefaultAsync(u => u.PasswordResetTokenHash == tokenHash && u.IsActive, ct);
+
+        if (user is null)
+            return ServiceResult<bool>.Failure("Lien de réinitialisation invalide ou déjà utilisé.");
+
+        if (user.PasswordResetTokenExpiresAt is null || user.PasswordResetTokenExpiresAt < DateTime.UtcNow)
+            return ServiceResult<bool>.Failure("Ce lien a expiré. Veuillez faire une nouvelle demande.");
+
+        user.PasswordHash                = BCrypt.Net.BCrypt.HashPassword(request.Dto.NewPassword);
+        user.PasswordResetTokenHash      = null;
+        user.PasswordResetTokenExpiresAt = null;
+        user.RefreshTokenHash            = null;
+        user.RefreshTokenExpiresAt       = null;
+        user.UpdatedAt                   = DateTime.UtcNow;
+
+        await db.SaveChangesAsync(ct);
+        log.LogInformation("Password reset completed for user {UserId}", user.Id);
+        return ServiceResult<bool>.Success(true);
+    }
+}
