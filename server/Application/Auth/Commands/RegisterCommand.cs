@@ -79,13 +79,13 @@ public class RegisterCommandHandler(
 
         // Envoyer confirmation de création de compte
         var loginUrl = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
-        var notifEmail = user.ContactEmail ?? user.Email;
-        _ = emailService.SendAsync(
-            notifEmail,
-            user.FullName,
-            $"Bienvenue sur Expatriate365 — {tenant.Name}",
-            EmailTemplates.WelcomeOrgAdmin(user.FullName, tenant.Name, user.Email, dto.Password, loginUrl),
-            ct);
+        if (!string.IsNullOrWhiteSpace(user.ContactEmail))
+            _ = emailService.SendAsync(
+                user.ContactEmail,
+                user.FullName,
+                $"Bienvenue sur Expatriate365 — {tenant.Name}",
+                EmailTemplates.WelcomeOrgAdmin(user.FullName, tenant.Name, user.Email, dto.Password, loginUrl),
+                ct);
 
         var permissions = await permissionResolver.ResolveAsync(user.Role, tenant.Id, ct);
         log.LogInformation("Registered tenant {TenantId} and user {UserId}", tenant.Id, user.Id);

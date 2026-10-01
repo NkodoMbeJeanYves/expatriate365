@@ -80,13 +80,13 @@ public class CreateTenantCommandHandler(
 
         // Envoyer les identifiants à l'org_admin
         var loginUrl = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
-        var notifEmail = admin.ContactEmail ?? admin.Email;
-        _ = emailService.SendAsync(
-            notifEmail,
-            admin.FullName,
-            $"Vos identifiants Expatriate365 — {tenant.Name}",
-            EmailTemplates.WelcomeOrgAdmin(admin.FullName, tenant.Name, admin.Email, dto.AdminPassword, loginUrl),
-            ct);
+        if (!string.IsNullOrWhiteSpace(admin.ContactEmail))
+            _ = emailService.SendAsync(
+                admin.ContactEmail,
+                admin.FullName,
+                $"Vos identifiants Expatriate365 — {tenant.Name}",
+                EmailTemplates.WelcomeOrgAdmin(admin.FullName, tenant.Name, admin.Email, dto.AdminPassword, loginUrl),
+                ct);
 
         return ServiceResult<TenantSummaryDto>.Success(new TenantSummaryDto(
             tenant.Id.ToString(),
