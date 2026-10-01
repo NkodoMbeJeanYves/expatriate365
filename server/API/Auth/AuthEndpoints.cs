@@ -79,6 +79,22 @@ public static class AuthEndpoints
                 : Results.BadRequest(new { error = result.ErrorMessage });
         }).RequireAuthorization();
 
+        group.MapPost("/change-password", async (
+            ClaimsPrincipal principal,
+            server.Application.Auth.Commands.ChangePasswordRequest dto,
+            IMediator mediator) =>
+        {
+            var sub = principal.FindFirstValue("sub")
+                   ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(sub, out var userId))
+                return Results.Unauthorized();
+
+            var result = await mediator.Send(new server.Application.Auth.Commands.ChangePasswordCommand(userId, dto));
+            return result.IsSuccess
+                ? Results.NoContent()
+                : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization();
+
         group.MapPost("/select-tenant", async (
             ClaimsPrincipal principal,
             SelectTenantRequest dto,
