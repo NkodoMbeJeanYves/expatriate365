@@ -40,6 +40,14 @@ public static class ContributionEndpoints
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsUpdate);
 
+        plans.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var result = await mediator.Send(new DeleteContributionTypeCommand(tenantId.Value, id));
+            return result.IsSuccess ? Results.Ok(new { deleted = true }) : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.ContributionsDelete);
+
         // --- Charges (ContributionCharge) ---
 
         charges.MapGet("/", async (

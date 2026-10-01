@@ -34,6 +34,10 @@ export class ContributionsApiService {
     return this.http.put<ContributionType>(`${this.base}/contribution-types/${id}`, dto);
   }
 
+  deleteType(id: string): Observable<{ deleted: boolean }> {
+    return this.http.delete<{ deleted: boolean }>(`${this.base}/contribution-types/${id}`);
+  }
+
   getCharges(page = 1, limit = 20, memberId?: string, typeId?: string, status?: string): Observable<PagedChargesResult> {
     let params = new HttpParams().set('page', page).set('limit', limit);
     if (memberId) params = params.set('member_id', memberId);

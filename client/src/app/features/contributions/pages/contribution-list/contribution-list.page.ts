@@ -226,7 +226,10 @@ import { PageChangeEvent } from '@shared/components/paginator/app-paginator.comp
                   </div>
                   <div class="flex items-center justify-between text-xs text-gray-400">
                     <span>Depuis le {{ plan.effective_from }}</span>
-                    <button (click)="openPlan(plan)" class="text-emerald-600 hover:text-emerald-700 font-medium">{{ 'common.edit' | translate }}</button>
+                    <div class="flex gap-3">
+                      <button (click)="openPlan(plan)" class="text-emerald-600 hover:text-emerald-700 font-medium">{{ 'common.edit' | translate }}</button>
+                      <button (click)="deletePlan(plan)" class="text-red-500 hover:text-red-700 font-medium">{{ 'common.delete' | translate }}</button>
+                    </div>
                   </div>
                 </div>
               } @empty {
@@ -578,6 +581,14 @@ ${stats ? `
 
   onPlanSaved() {
     this.store.loadTypes();
+  }
+
+  deletePlan(plan: ContributionType) {
+    if (!confirm(`Désactiver le plan "${plan.name}" ?`)) return;
+    this.api.deleteType(plan.id).subscribe({
+      next: () => this.store.loadTypes(),
+      error: (err) => alert(err?.error?.error ?? 'Erreur lors de la suppression.'),
+    });
   }
 
   onTabChange(event: unknown) {
