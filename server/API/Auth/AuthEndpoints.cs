@@ -79,6 +79,50 @@ public static class AuthEndpoints
                 : Results.BadRequest(new { error = result.ErrorMessage });
         }).RequireAuthorization();
 
+        group.MapPost("/set-password", async (
+            server.Application.Auth.Commands.SetPasswordRequest dto,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new server.Application.Auth.Commands.SetPasswordCommand(dto));
+            return result.IsSuccess
+                ? Results.NoContent()
+                : Results.BadRequest(new { error = result.ErrorMessage });
+        });
+
+        group.MapPost("/forgot-password", async (
+            ForgotPasswordRequest dto,
+            IMediator mediator) =>
+        {
+            await mediator.Send(new server.Application.Auth.Commands.ForgotPasswordCommand(dto.ContactEmail));
+            return Results.NoContent(); // always 204 to prevent enumeration
+        });
+
+        group.MapPost("/reset-password", async (
+            server.Application.Auth.Commands.ResetPasswordRequest dto,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new server.Application.Auth.Commands.ResetPasswordCommand(dto));
+            return result.IsSuccess
+                ? Results.NoContent()
+                : Results.BadRequest(new { error = result.ErrorMessage });
+        });
+
+        group.MapPost("/change-password", async (
+            ClaimsPrincipal principal,
+            server.Application.Auth.Commands.ChangePasswordRequest dto,
+            IMediator mediator) =>
+        {
+            var sub = principal.FindFirstValue("sub")
+                   ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(sub, out var userId))
+                return Results.Unauthorized();
+
+            var result = await mediator.Send(new server.Application.Auth.Commands.ChangePasswordCommand(userId, dto));
+            return result.IsSuccess
+                ? Results.NoContent()
+                : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization();
+
         group.MapPost("/select-tenant", async (
             ClaimsPrincipal principal,
             SelectTenantRequest dto,
@@ -108,3 +152,4 @@ public static class AuthEndpoints
 }
 
 public record SelectTenantRequest(string TenantId);
+public record ForgotPasswordRequest(string ContactEmail);

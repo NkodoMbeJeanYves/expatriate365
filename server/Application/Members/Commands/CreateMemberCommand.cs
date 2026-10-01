@@ -6,6 +6,7 @@ using server.Application.Members.DTOs;
 using server.Application.Members.Services;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Members.Commands;
 
@@ -22,7 +23,11 @@ public class CreateMemberCommandValidator : AbstractValidator<CreateMemberComman
     }
 }
 
-public class CreateMemberCommandHandler(AppDbContext db, ILogger<CreateMemberCommandHandler> log)
+public class CreateMemberCommandHandler(
+    AppDbContext db,
+    ILogger<CreateMemberCommandHandler> log,
+    IEmailService emailService,
+    IConfiguration config)
     : IRequestHandler<CreateMemberCommand, ServiceResult<MemberDto>>
 {
     public async Task<ServiceResult<MemberDto>> Handle(CreateMemberCommand request, CancellationToken ct)
@@ -91,6 +96,24 @@ public class CreateMemberCommandHandler(AppDbContext db, ILogger<CreateMemberCom
         await db.SaveChangesAsync(ct);
 
         log.LogInformation("Member {MembershipNumber} created for tenant {TenantId}", membershipNumber, tenantId);
+
+        if (!string.IsNullOrWhiteSpace(user.ContactEmail))
+        {
+            var tenant = await db.Tenants.FindAsync([tenantId], ct);
+            var baseUrl = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
+            var (plainToken, tokenHash) = server.Application.Common.TokenGenerator.Generate();
+            user.ActivationTokenHash      = tokenHash;
+            user.ActivationTokenExpiresAt = DateTime.UtcNow.AddHours(72);
+            await db.SaveChangesAsync(ct);
+
+            var setPasswordUrl = $"{baseUrl}/set-password?token={plainToken}";
+            _ = emailService.SendAsync(
+                user.ContactEmail,
+                user.FullName,
+                $"Activez votre compte — {tenant?.Name ?? "l'association"}",
+                EmailTemplates.MemberInvitation(user.FullName, tenant?.Name ?? "", setPasswordUrl),
+                ct);
+        }
 
         var category = categoryId.HasValue
             ? await db.MembershipCategories.FindAsync([categoryId.Value], ct)

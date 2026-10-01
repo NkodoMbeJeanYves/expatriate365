@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { PasswordModule } from 'primeng/password';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { AuthStore } from '@core/auth/auth.store';
 import { AuthService } from '@core/auth/auth.service';
@@ -14,7 +15,7 @@ import { APP_CONFIG } from '@core/config/app-config.token';
   selector: 'app-profile',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, ButtonModule, InputTextModule, TranslatePipe, PageHeaderComponent],
+  imports: [ReactiveFormsModule, ButtonModule, InputTextModule, PasswordModule, TranslatePipe, PageHeaderComponent],
   template: `
     <div class="p-6 max-w-2xl mx-auto">
       <app-page-header
@@ -64,6 +65,47 @@ import { APP_CONFIG } from '@core/config/app-config.token';
           </div>
         </form>
       </div>
+
+      <!-- Security section -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mt-6">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-5">
+          {{ 'profile.change_password' | translate }}
+        </h2>
+
+        <form [formGroup]="pwForm" (ngSubmit)="changePassword()" class="flex flex-col gap-4">
+
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">{{ 'profile.current_password' | translate }} *</label>
+            <p-password formControlName="current_password" [feedback]="false" [toggleMask]="true"
+              styleClass="w-full" inputStyleClass="w-full" />
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">{{ 'profile.new_password' | translate }} *</label>
+            <p-password formControlName="new_password" [feedback]="true" [toggleMask]="true"
+              styleClass="w-full" inputStyleClass="w-full" />
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">{{ 'profile.confirm_password' | translate }} *</label>
+            <p-password formControlName="confirm_password" [feedback]="false" [toggleMask]="true"
+              styleClass="w-full" inputStyleClass="w-full" />
+            @if (pwForm.errors?.['mismatch'] && pwForm.get('confirm_password')?.dirty) {
+              <p class="text-red-500 text-xs">{{ 'profile.password_mismatch' | translate }}</p>
+            }
+          </div>
+
+          @if (pwError()) {
+            <p class="text-red-500 text-sm">{{ pwError() }}</p>
+          }
+
+          <div class="flex justify-end">
+            <p-button type="submit" [label]="'profile.change_password' | translate"
+              severity="secondary"
+              [loading]="pwSaving()" [disabled]="pwForm.invalid" />
+          </div>
+        </form>
+      </div>
     </div>
   `,
 })
@@ -75,9 +117,11 @@ export class ProfilePage implements OnInit {
   private readonly config = inject(APP_CONFIG);
   private readonly fb     = inject(FormBuilder);
 
-  readonly user   = this.store.user;
-  readonly saving = signal(false);
-  readonly error  = signal<string | null>(null);
+  readonly user     = this.store.user;
+  readonly saving   = signal(false);
+  readonly error    = signal<string | null>(null);
+  readonly pwSaving = signal(false);
+  readonly pwError  = signal<string | null>(null);
 
   readonly form = this.fb.group({
     first_name:    ['', Validators.required],
@@ -85,6 +129,12 @@ export class ProfilePage implements OnInit {
     phone:         [''],
     contact_email: ['', Validators.email],
   });
+
+  readonly pwForm = this.fb.group({
+    current_password: ['', Validators.required],
+    new_password:     ['', [Validators.required, Validators.minLength(8)]],
+    confirm_password: ['', Validators.required],
+  }, { validators: this.passwordsMatch });
 
   ngOnInit(): void {
     const u = this.user();
@@ -96,6 +146,32 @@ export class ProfilePage implements OnInit {
         contact_email: u.contact_email ?? '',
       });
     }
+  }
+
+  private passwordsMatch(group: AbstractControl): ValidationErrors | null {
+    const nw = group.get('new_password')?.value;
+    const confirm = group.get('confirm_password')?.value;
+    return nw && confirm && nw !== confirm ? { mismatch: true } : null;
+  }
+
+  changePassword(): void {
+    if (this.pwForm.invalid) return;
+    this.pwSaving.set(true);
+    this.pwError.set(null);
+    const v = this.pwForm.value;
+
+    this.auth.changePassword(v.current_password!, v.new_password!).subscribe({
+      next: () => {
+        this.pwSaving.set(false);
+        this.pwForm.reset();
+        this.toast.success('Mot de passe mis à jour. Reconnectez-vous.');
+        this.auth.logout();
+      },
+      error: (err: any) => {
+        this.pwError.set(err?.error?.error ?? 'Erreur lors du changement de mot de passe.');
+        this.pwSaving.set(false);
+      },
+    });
   }
 
   save(): void {

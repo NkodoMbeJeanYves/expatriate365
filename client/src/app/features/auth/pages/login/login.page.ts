@@ -48,6 +48,13 @@ import { environment } from '@env/environment';
           icon="pi pi-sign-in"
           styleClass="w-full justify-center mt-1"
           [loading]="loading()" />
+
+        <div class="text-right">
+          <a routerLink="/auth/forgot-password"
+             class="text-sm text-emerald-600 hover:underline">
+            {{ 'auth.forgot_password_link' | translate }}
+          </a>
+        </div>
       </form>
 
       <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-gray-500 dark:text-gray-400">

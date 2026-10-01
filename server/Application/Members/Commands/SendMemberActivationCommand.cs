@@ -1,21 +1,25 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 using server.Application.Common;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Members.Commands;
 
 public record SendMemberActivationCommand(Guid TenantId, Guid MemberId)
     : IRequest<ServiceResult<bool>>;
 
-public class SendMemberActivationHandler(AppDbContext db)
+public class SendMemberActivationHandler(
+    AppDbContext db,
+    ILogger<SendMemberActivationHandler> log,
+    IEmailService emailService)
     : IRequestHandler<SendMemberActivationCommand, ServiceResult<bool>>
 {
     public async Task<ServiceResult<bool>> Handle(SendMemberActivationCommand request, CancellationToken ct)
     {
         var member = await db.Members
             .Include(m => m.User)
+            .Include(m => m.Tenant)
             .FirstOrDefaultAsync(m => m.Id == request.MemberId && m.TenantId == request.TenantId, ct);
 
         if (member is null)
@@ -24,13 +28,25 @@ public class SendMemberActivationHandler(AppDbContext db)
             return ServiceResult<bool>.Failure("Aucun compte utilisateur associé à ce membre.");
         if (member.User.EmailVerifiedAt.HasValue)
             return ServiceResult<bool>.Failure("Ce compte est déjà activé.");
+        if (string.IsNullOrWhiteSpace(member.User.ContactEmail))
+            return ServiceResult<bool>.Failure("Ce membre n'a pas d'adresse email de contact renseignée.");
 
-        // Generate a simulated activation token
-        var token = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        var memberName = $"{member.User.FirstName} {member.User.LastName}";
+        var (plainToken, tokenHash) = server.Application.Common.TokenGenerator.Generate();
+        member.User.ActivationTokenHash      = tokenHash;
+        member.User.ActivationTokenExpiresAt = DateTime.UtcNow.AddHours(72);
+        member.User.UpdatedAt                = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
 
-        // In production: send email. For MVP: log the activation link.
-        Log.Information("[ACTIVATION] Member {MembershipNumber} | Email: {Email} | Token: {Token} | Link: /activate?token={Token}",
-            member.MembershipNumber, member.User.Email, token, token);
+        var baseUrl = "https://app.expatriate365.mu";
+        var setPasswordUrl = $"{baseUrl}/set-password?token={plainToken}";
+        log.LogInformation("Activation token generated for member {MembershipNumber}", member.MembershipNumber);
+
+        _ = emailService.SendAsync(
+            member.User.ContactEmail, memberName,
+            "Activez votre compte",
+            EmailTemplates.MemberInvitation(memberName, member.Tenant.Name, setPasswordUrl),
+            ct);
 
         return ServiceResult<bool>.Success(true);
     }
