@@ -21,6 +21,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(e => e.MfaSecret).HasMaxLength(64);
         b.Property(e => e.RefreshTokenHash).HasMaxLength(128);
         b.Property(e => e.PasswordResetTokenHash).HasMaxLength(128);
+        b.Property(e => e.ActivationTokenHash).HasMaxLength(128);
         b.Ignore(e => e.FullName);
     }
 }
