@@ -93,6 +93,40 @@ public class ListResolutionsQueryHandler(AppDbContext db)
         r.CreatedAt.ToString("O"), r.UpdatedAt?.ToString("O"));
 }
 
+// ── Mandate Alerts ───────────────────────────────────────────────────────────
+
+public record GetMandateAlertsQuery(Guid TenantId, int DaysAhead = 30) : IRequest<List<MandateAlertDto>>;
+
+public class GetMandateAlertsQueryHandler(AppDbContext db)
+    : IRequestHandler<GetMandateAlertsQuery, List<MandateAlertDto>>
+{
+    public async Task<List<MandateAlertDto>> Handle(GetMandateAlertsQuery request, CancellationToken ct)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var horizon = today.AddDays(request.DaysAhead);
+
+        var rows = await db.BoardMembers
+            .AsNoTracking()
+            .Include(b => b.Member).ThenInclude(m => m.User)
+            .Include(b => b.BoardRole)
+            .Where(b => b.TenantId == request.TenantId && b.IsActive
+                     && b.EndDate != null
+                     && b.EndDate.Value >= today
+                     && b.EndDate.Value <= horizon)
+            .OrderBy(b => b.EndDate)
+            .ToListAsync(ct);
+
+        return rows.Select(b => new MandateAlertDto(
+            b.Id.ToString(), b.MemberId.ToString(),
+            b.Member.User.FirstName + " " + b.Member.User.LastName,
+            b.Member.MembershipNumber,
+            b.BoardRole?.Name, b.BoardRole?.Label,
+            b.EndDate!.Value.ToString("yyyy-MM-dd"),
+            b.EndDate.Value.DayNumber - today.DayNumber
+        )).ToList();
+    }
+}
+
 // ── Stats ────────────────────────────────────────────────────────────────────
 
 public record GetGovernanceStatsQuery(Guid TenantId) : IRequest<GovernanceStatsDto>;

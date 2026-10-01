@@ -76,3 +76,14 @@ export interface AdoptResolutionRequest {
   votes_against: number;
   abstentions: number;
 }
+
+export interface MandateAlertDto {
+  id: string;
+  member_id: string;
+  member_name: string;
+  membership_number: string;
+  role_name?: string;
+  role_label?: string;
+  end_date: string;
+  days_remaining: number;
+}

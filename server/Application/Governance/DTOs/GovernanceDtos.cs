@@ -43,3 +43,8 @@ public record CreateResolutionRequest(
 
 public record AdoptResolutionRequest(
     string AdoptedAt, int VotesFor, int VotesAgainst, int Abstentions);
+
+public record MandateAlertDto(
+    string Id, string MemberId, string MemberName, string MembershipNumber,
+    string? RoleName, string? RoleLabel,
+    string EndDate, int DaysRemaining);

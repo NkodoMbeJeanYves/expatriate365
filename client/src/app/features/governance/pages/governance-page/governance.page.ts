@@ -16,7 +16,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import {
-  BoardRoleDto, BoardMemberDto, ResolutionDto,
+  BoardRoleDto, BoardMemberDto, ResolutionDto, MandateAlertDto,
 } from '@models/governance.model';
 import { GovernanceApiService } from '../../services/governance-api.service';
 import { MembersApiService } from '@members/services/members-api.service';
@@ -58,6 +58,30 @@ import { PagedResult } from '@shared/models/pagination.model';
           <div class="bg-green-50 rounded-xl p-4 border border-green-100 shadow-sm text-center">
             <div class="text-2xl font-bold text-green-700">{{ stats()!.adopted_resolutions }}</div>
             <div class="text-xs text-green-600 mt-1">{{ 'governance.status_adopted' | translate }}</div>
+          </div>
+        </div>
+      }
+
+      <!-- Mandate Alerts Banner -->
+      @if (mandateAlerts().length > 0) {
+        <div class="rounded-xl border border-orange-200 bg-orange-50 p-4 flex flex-col gap-2">
+          <div class="flex items-center gap-2 text-orange-700 font-semibold text-sm">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>{{ mandateAlerts().length }} mandat{{ mandateAlerts().length > 1 ? 's' : '' }} expirant dans les 30 jours</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            @for (alert of mandateAlerts(); track alert.id) {
+              <div class="flex items-center gap-3 text-sm text-orange-800">
+                <span [class]="alert.days_remaining <= 7 ? 'font-bold text-red-700' : 'font-medium'">
+                  {{ alert.member_name }}
+                </span>
+                <span class="text-orange-600">— {{ alert.role_label || alert.role_name || 'Rôle inconnu' }}</span>
+                <span class="ml-auto text-xs px-2 py-0.5 rounded-full font-semibold"
+                  [class]="alert.days_remaining <= 7 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'">
+                  J-{{ alert.days_remaining }}
+                </span>
+              </div>
+            }
           </div>
         </div>
       }
@@ -333,6 +357,7 @@ export class GovernancePage implements OnInit {
   protected readonly adoptDrawerRef       = viewChild<Drawer>('adoptDrawerEl');
 
   readonly stats = signal<any>(null);
+  readonly mandateAlerts = signal<MandateAlertDto[]>([]);
   readonly board = signal<BoardMemberDto[]>([]);
   readonly boardLoading = signal(false);
   readonly boardRoles = signal<BoardRoleDto[]>([]);
@@ -412,6 +437,11 @@ export class GovernancePage implements OnInit {
     this.loadResolutions();
     this.loadMembers();
     this.loadBoardRoles();
+    this.loadMandateAlerts();
+  }
+
+  loadMandateAlerts(): void {
+    this.api.mandateAlerts(30).subscribe({ next: a => this.mandateAlerts.set(a) });
   }
 
   loadMembers(): void {

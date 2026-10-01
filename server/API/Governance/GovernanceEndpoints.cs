@@ -56,6 +56,14 @@ public static class GovernanceEndpoints
                 : Results.BadRequest(new { error = result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesAssign);
 
+        // ── Mandate Alerts ───────────────────────────────────────────────────
+
+        grp.MapGet("/mandate-alerts", async (ClaimsPrincipal p, IMediator m, int days_ahead = 30) =>
+        {
+            var tid = GetTenantId(p); if (tid is null) return Results.Unauthorized();
+            return Results.Ok(await m.Send(new GetMandateAlertsQuery(tid.Value, days_ahead)));
+        }).RequireAuthorization(Permissions.RolesRead);
+
         // ── Board Members ────────────────────────────────────────────────────
 
         grp.MapGet("/board", async (ClaimsPrincipal p, IMediator m) =>

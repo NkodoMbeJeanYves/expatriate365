@@ -7,6 +7,7 @@ import {
   BoardRoleDto, BoardMemberDto, ResolutionDto, GovernanceStatsDto,
   CreateBoardRoleRequest, UpdateBoardRoleRequest,
   CreateBoardMemberRequest, CreateResolutionRequest, AdoptResolutionRequest,
+  MandateAlertDto,
 } from '@models/governance.model';
 
 @Injectable({ providedIn: 'root' })
@@ -65,5 +66,9 @@ export class GovernanceApiService {
 
   deleteResolution(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/resolutions/${id}`);
+  }
+
+  mandateAlerts(daysAhead = 30): Observable<MandateAlertDto[]> {
+    return this.http.get<MandateAlertDto[]>(`${this.base}/mandate-alerts`, { params: { days_ahead: daysAhead } });
   }
 }
