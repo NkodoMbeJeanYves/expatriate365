@@ -12,7 +12,8 @@ public record SendMemberActivationCommand(Guid TenantId, Guid MemberId)
 public class SendMemberActivationHandler(
     AppDbContext db,
     ILogger<SendMemberActivationHandler> log,
-    IEmailService emailService)
+    IEmailService emailService,
+    IConfiguration config)
     : IRequestHandler<SendMemberActivationCommand, ServiceResult<bool>>
 {
     public async Task<ServiceResult<bool>> Handle(SendMemberActivationCommand request, CancellationToken ct)
@@ -38,7 +39,7 @@ public class SendMemberActivationHandler(
         member.User.UpdatedAt                = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
-        var baseUrl = "https://app.expatriate365.mu";
+        var baseUrl = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
         var setPasswordUrl = $"{baseUrl}/set-password?token={plainToken}";
         log.LogInformation("Activation token generated for member {MembershipNumber}", member.MembershipNumber);
 
