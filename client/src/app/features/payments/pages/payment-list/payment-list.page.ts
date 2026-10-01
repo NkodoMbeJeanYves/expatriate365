@@ -33,6 +33,11 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
         </div>
         <div class="flex gap-2">
           @if (isBoardMember()) {
+            <button (click)="exportCsv()" [disabled]="exporting()"
+              class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 bg-white shadow-sm disabled:opacity-50">
+              <i [class]="exporting() ? 'pi pi-spin pi-spinner text-sm' : 'pi pi-download text-sm'"></i>
+              <span class="hidden sm:inline">Export CSV</span>
+            </button>
             <button (click)="printReport()" [disabled]="printing()"
               class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 bg-white shadow-sm disabled:opacity-50">
               <i [class]="printing() ? 'pi pi-spin pi-spinner text-sm' : 'pi pi-print text-sm'"></i>
@@ -230,7 +235,8 @@ export class PaymentListPageComponent implements OnInit {
 
   readonly isStaff = computed(() => this.authStore.hasPermission(PERMISSIONS.PAYMENTS_READ));
   readonly isBoardMember = computed(() => this.authStore.user()?.entity_type === 'board_member');
-  readonly printing = signal(false);
+  readonly printing  = signal(false);
+  readonly exporting = signal(false);
 
   formDrawer = viewChild.required<PaymentFormDrawerComponent>('formDrawer');
 
@@ -424,6 +430,31 @@ ${stats ? `
     w.document.close();
     w.focus();
     setTimeout(() => { w.print(); }, 400);
+  }
+
+  exportCsv(): void {
+    this.exporting.set(true);
+    const f = this.currentFilters();
+    const memberId = this.store['_ownMemberId']?.();
+    this.api.getPayments(1, 10000, memberId, f.status, f.from, f.to).subscribe({
+      next: (res) => {
+        const header = ['Receipt #', 'Date', 'Member', 'Membership #', 'Plan', 'Method', 'Amount', 'Status'];
+        const rows = res.data.map(p => [
+          p.receipt_number, p.payment_date, p.member_name, p.membership_number,
+          p.contribution_type_name, p.payment_method, p.amount, p.status,
+        ]);
+        const csv = [header, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `payments_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting.set(false);
+      },
+      error: () => this.exporting.set(false),
+    });
   }
 
   openForm() {
