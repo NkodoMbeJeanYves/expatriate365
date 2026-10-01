@@ -98,3 +98,29 @@ export interface MemberFilters {
   page: number;
   limit: number;
 }
+
+export interface BulkImportMemberRow {
+  first_name: string;
+  last_name: string;
+  email?: string;
+  contact_email?: string;
+  phone?: string;
+  joined_date?: string;
+  address?: string;
+  profession?: string;
+  date_of_birth?: string;
+  gender?: string;
+}
+
+export interface BulkImportRowError {
+  row: number;
+  first_name: string;
+  last_name: string;
+  error: string;
+}
+
+export interface BulkImportResult {
+  created: number;
+  skipped: number;
+  errors: BulkImportRowError[];
+}

@@ -15,7 +15,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { MembersStore } from '../../store/members.store';
 import { MembersApiService } from '../../services/members-api.service';
 import { MemberFormDrawerComponent } from '../../components/member-form-drawer/member-form-drawer.component';
-import { MemberStatus } from '@core/models/member.model';
+import { BulkImportMemberRow, MemberStatus } from '@core/models/member.model';
 import { MemberStatusBadgeComponent } from '../../components/member-status-badge/member-status-badge.component';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthStore } from '@core/auth/auth.store';
@@ -52,6 +52,13 @@ import { ToastService } from '@service/toast.service';
             size="small"
             (click)="exportCsv()"
             class="hidden sm:inline-flex" />
+          @if (isMemberAdmin()) {
+            <label class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 bg-white cursor-pointer" [class.opacity-50]="importing()">
+              <i [class]="importing() ? 'pi pi-spin pi-spinner text-sm' : 'pi pi-upload text-sm'"></i>
+              <span>Import CSV</span>
+              <input type="file" accept=".csv" class="hidden" (change)="onCsvSelected($event)" [disabled]="importing()" />
+            </label>
+          }
           @if (isMemberAdmin()) {
             <p-button
               icon="pi pi-plus"
@@ -218,6 +225,7 @@ export class MemberListPageComponent implements OnInit {
   readonly isSuperAdmin  = computed(() => this.authStore.hasPermission(PERMISSIONS.MEMBERS_SEND_ACTIVATION));
 
   readonly activating = signal<string | null>(null);
+  readonly importing  = signal(false);
 
   drawerVisible = false;
   readonly editingMemberId = signal<string | null>(null);
@@ -278,6 +286,61 @@ export class MemberListPageComponent implements OnInit {
 
   exportCsv(): void {
     this.api.exportCsv(this.selectedStatus() || undefined);
+  }
+
+  onCsvSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    input.value = '';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const rows = this.parseCsv(text);
+      if (!rows.length) { alert('Le fichier CSV est vide ou invalide.'); return; }
+      this.importing.set(true);
+      this.api.bulkImport(rows).subscribe({
+        next: (res) => {
+          this.importing.set(false);
+          const msg = `Import terminé : ${res.created} créé(s), ${res.skipped} ignoré(s).`;
+          if (res.errors.length) {
+            const details = res.errors.slice(0, 5).map(e => `Ligne ${e.row}: ${e.first_name} ${e.last_name} — ${e.error}`).join('\n');
+            alert(`${msg}\n\nErreurs :\n${details}`);
+          } else {
+            alert(msg);
+          }
+          this.store.loadMembers(this.store.filters());
+        },
+        error: (err) => {
+          this.importing.set(false);
+          alert(err?.error?.error ?? 'Erreur lors de l\'import.');
+        },
+      });
+    };
+    reader.readAsText(file);
+  }
+
+  private parseCsv(text: string): BulkImportMemberRow[] {
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+    return lines.slice(1).map(line => {
+      const vals = line.split(',').map(v => v.replace(/^"|"$/g, '').trim());
+      const get = (key: string) => { const i = headers.indexOf(key); return i >= 0 ? vals[i] || undefined : undefined; };
+      return {
+        first_name: get('first_name') ?? '',
+        last_name: get('last_name') ?? '',
+        email: get('email'),
+        contact_email: get('contact_email'),
+        phone: get('phone'),
+        joined_date: get('joined_date'),
+        address: get('address'),
+        profession: get('profession'),
+        date_of_birth: get('date_of_birth'),
+        gender: get('gender'),
+      } as BulkImportMemberRow;
+    }).filter(r => r.first_name || r.last_name);
   }
 
   sendActivation(id: string): void {
