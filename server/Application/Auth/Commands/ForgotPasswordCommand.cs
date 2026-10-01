@@ -29,12 +29,7 @@ public class ForgotPasswordCommandHandler(
             return ServiceResult<bool>.Success(true);
         }
 
-        // Generate token: 32 random bytes, lowercase hex transmitted, SHA-256 hex stored
-        var tokenBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
-        var plainToken = Convert.ToHexString(tokenBytes).ToLowerInvariant();
-        var tokenHash  = Convert.ToHexString(
-            System.Security.Cryptography.SHA256.HashData(tokenBytes)
-        ).ToLowerInvariant();
+        var (plainToken, tokenHash) = server.Application.Common.TokenGenerator.Generate();
 
         user.PasswordResetTokenHash      = tokenHash;
         user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddHours(1);

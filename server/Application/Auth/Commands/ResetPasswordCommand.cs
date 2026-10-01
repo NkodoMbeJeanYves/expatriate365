@@ -24,14 +24,9 @@ public class ResetPasswordCommandHandler(AppDbContext db, ILogger<ResetPasswordC
 {
     public async Task<ServiceResult<bool>> Handle(ResetPasswordCommand request, CancellationToken ct)
     {
-        // Recompute SHA-256 hash of the plain token received from the URL
-        byte[] tokenBytes;
-        try { tokenBytes = Convert.FromHexString(request.Dto.Token); }
-        catch { return ServiceResult<bool>.Failure("Lien de réinitialisation invalide."); }
-
-        var tokenHash = Convert.ToHexString(
-            System.Security.Cryptography.SHA256.HashData(tokenBytes)
-        ).ToLowerInvariant();
+        var tokenHash = server.Application.Common.TokenGenerator.Hash(request.Dto.Token);
+        if (tokenHash is null)
+            return ServiceResult<bool>.Failure("Lien de réinitialisation invalide.");
 
         var user = await db.Users
             .FirstOrDefaultAsync(u => u.PasswordResetTokenHash == tokenHash && u.IsActive, ct);
