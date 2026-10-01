@@ -58,8 +58,8 @@ public class CreateMeetingCommandHandler(
         try
         {
             var users = await db.Users
-                .Where(u => u.TenantId == tenantId && u.IsActive)
-                .Select(u => new { FullName = u.FirstName + " " + u.LastName, NotifEmail = u.ContactEmail ?? u.Email })
+                .Where(u => u.TenantId == tenantId && u.IsActive && u.ContactEmail != null && u.ContactEmail != "")
+                .Select(u => new { FullName = u.FirstName + " " + u.LastName, NotifEmail = u.ContactEmail! })
                 .ToListAsync(ct);
 
             var tenant    = await db.Tenants.FindAsync([tenantId], ct);
