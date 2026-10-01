@@ -69,9 +69,9 @@ public class CreateContributionChargeCommandHandler(
         log.LogInformation("ContributionCharge {Id} created for member {MemberId}", charge.Id, memberId);
 
         var memberName = $"{member.User.FirstName} {member.User.LastName}";
-        var email = member.User.ContactEmail ?? member.User.Email;
+        if (!string.IsNullOrWhiteSpace(member.User.ContactEmail))
         _ = emailService.SendAsync(
-            email, memberName,
+            member.User.ContactEmail, memberName,
             "Nouvelle échéance de cotisation",
             EmailTemplates.ChargeGenerated(memberName, type.Name, amount, dueDate.ToString("dd/MM/yyyy")),
             ct);

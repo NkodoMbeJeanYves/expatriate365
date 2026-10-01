@@ -47,9 +47,9 @@ public class ConfirmPaymentCommandHandler(
         log.LogInformation("Payment {Id} confirmed by {UserId}", payment.Id, request.ConfirmedBy);
 
         var memberName = $"{payment.Member.User.FirstName} {payment.Member.User.LastName}";
-        var email = payment.Member.User.ContactEmail ?? payment.Member.User.Email;
+        if (!string.IsNullOrWhiteSpace(payment.Member.User.ContactEmail))
         _ = emailService.SendAsync(
-            email, memberName,
+            payment.Member.User.ContactEmail, memberName,
             "Paiement confirmé",
             EmailTemplates.PaymentConfirmed(memberName, payment.Charge.ContributionType.Name, payment.Amount, payment.ReceiptNumber),
             ct);

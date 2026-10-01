@@ -88,16 +88,17 @@ public class BulkGenerateChargesCommandHandler(
     {
         try
         {
-            var tasks = members.Select(m =>
-            {
-                var name = $"{m.User.FirstName} {m.User.LastName}";
-                var email = m.User.ContactEmail ?? m.User.Email;
-                return emailService.SendAsync(
-                    email, name,
-                    "Nouvelle échéance de cotisation",
-                    EmailTemplates.ChargeGenerated(name, typeName, amount, dueDate.ToString("dd/MM/yyyy")),
-                    ct);
-            });
+            var tasks = members
+                .Where(m => !string.IsNullOrWhiteSpace(m.User.ContactEmail))
+                .Select(m =>
+                {
+                    var name = $"{m.User.FirstName} {m.User.LastName}";
+                    return emailService.SendAsync(
+                        m.User.ContactEmail!, name,
+                        "Nouvelle échéance de cotisation",
+                        EmailTemplates.ChargeGenerated(name, typeName, amount, dueDate.ToString("dd/MM/yyyy")),
+                        ct);
+                });
             await Task.WhenAll(tasks);
         }
         catch (Exception ex)
