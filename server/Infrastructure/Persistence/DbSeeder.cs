@@ -219,6 +219,26 @@ public static class DbSeeder
             });
         }
 
+        // Cotisation solidarité payée pour président et trésorière
+        foreach (var m in new[] { mPresident, mTresorier })
+        {
+            var solidCharge = charges.First(c => c.MemberId == m.Id && c.ContributionTypeId == ctSolidarite.Id);
+            solidCharge.AmountPaid = solidCharge.BaseAmount;
+            solidCharge.Status = "paid";
+            db.Payments.Add(new Payment
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId, MemberId = m.Id,
+                ChargeId = solidCharge.Id,
+                ReceiptNumber = $"REC-2025-{seq++:D4}",
+                Amount = solidCharge.BaseAmount, Currency = "EUR",
+                Status = "confirmed",
+                ConfirmedAt = DateTime.UtcNow.AddDays(-seq * 5),
+                ConfirmedBy = uTresorier.Id,
+                PaymentDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-seq * 5)),
+                Notes = "Cotisation solidarité — virement", IsActive = true,
+            });
+        }
+
         // ── Welfare requests ──────────────────────────────────────────────────
         db.WelfareRequests.AddRange(
             new WelfareRequest
@@ -330,6 +350,62 @@ public static class DbSeeder
             Status = "absent", IsActive = true,
         });
 
+        // ── Meeting action items ───────────────────────────────────────────────
+        db.MeetingActionItems.AddRange(
+            // Réunion passée — 2 terminés, 1 ouvert
+            new MeetingActionItem
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                MeetingId = meetingPasse.Id, AssignedToMemberId = mTresorier.Id,
+                Title = "Préparer le bilan financier T1 2025",
+                Description = "Inclure les cotisations reçues, les dépenses events et le solde du fonds solidarité",
+                DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-15)),
+                Status = "done", IsActive = true,
+                CreatedAt = meetingPasse.EndedAt!.Value,
+            },
+            new MeetingActionItem
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                MeetingId = meetingPasse.Id, AssignedToMemberId = mSecretaire.Id,
+                Title = "Envoyer les convocations AGO 2025",
+                Description = "Convocations par email et notification app, délai légal de 15 jours",
+                DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-5)),
+                Status = "done", IsActive = true,
+                CreatedAt = meetingPasse.EndedAt!.Value,
+            },
+            new MeetingActionItem
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                MeetingId = meetingPasse.Id, AssignedToMemberId = mPresident.Id,
+                Title = "Contacter la mairie pour la réservation de salle — fête nationale",
+                Description = "Réserver la salle communautaire de Port-Louis pour le 20 mai",
+                DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(5)),
+                Status = "open", IsActive = true,
+                CreatedAt = meetingPasse.EndedAt!.Value,
+            },
+            // Réunion à venir — 2 ouverts (prévus à l'avance)
+            new MeetingActionItem
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                MeetingId = meetingProchain.Id, AssignedToMemberId = mTresorier.Id,
+                Title = "Relancer les membres en retard de cotisation",
+                Description = "Envoyer rappels individualisés aux 2 membres dont la charge est encore pending",
+                DueDate = DateOnly.FromDateTime(meetingProchain.ScheduledAt.AddDays(7)),
+                Status = "open", IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddDays(-1),
+            },
+            new MeetingActionItem
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                MeetingId = meetingProchain.Id, AssignedToMemberId = mSecretaire.Id,
+                Title = "Rédiger le compte-rendu de l'AGO 2025",
+                Description = "Délai : 48h après la tenue de l'AGO — distribuer à tous les membres",
+                DueDate = DateOnly.FromDateTime(meetingProchain.ScheduledAt.AddDays(17)),
+                Status = "open", IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddDays(-1),
+            }
+        );
+
         // ── Elections ─────────────────────────────────────────────────────────
         var electionCloturee = new Election
         {
@@ -366,10 +442,17 @@ public static class DbSeeder
         foreach (var m in activeMembers)
             db.ElectionVotes.Add(new ElectionVote { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionCloturee.Id, VoterId = m.Id, IsActive = true });
 
-        db.ElectionCandidates.AddRange(
-            new ElectionCandidate { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, MemberId = mPresident.Id,  Statement = "Festival gastronomique camerounais",             DisplayOrder = 1, IsActive = true },
-            new ElectionCandidate { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, MemberId = mSecretaire.Id, Statement = "Exposition photos — Histoire du Cameroun",        DisplayOrder = 2, IsActive = true }
+        var candFestival = new ElectionCandidate { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, MemberId = mPresident.Id,  Statement = "Festival gastronomique camerounais",      DisplayOrder = 1, IsActive = true };
+        var candExpo     = new ElectionCandidate { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, MemberId = mSecretaire.Id, Statement = "Exposition photos — Histoire du Cameroun", DisplayOrder = 2, IsActive = true };
+        db.ElectionCandidates.AddRange(candFestival, candExpo);
+
+        // Votes pour l'élection en cours (3 membres ont déjà voté)
+        db.ElectionBallots.AddRange(
+            new ElectionBallot { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, CandidateId = candFestival.Id, VoteCount = 2, Rank = 1, IsActive = true },
+            new ElectionBallot { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, CandidateId = candExpo.Id,     VoteCount = 1, Rank = 2, IsActive = true }
         );
+        foreach (var m in new[] { mTresorier, mMember1, mMember3 })
+            db.ElectionVotes.Add(new ElectionVote { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, VoterId = m.Id, IsActive = true });
 
         // ── Communications ────────────────────────────────────────────────────
         var commSent = new Communication
@@ -406,18 +489,26 @@ public static class DbSeeder
         );
 
         // ── Board roles ───────────────────────────────────────────────────────
-        var brPresident  = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "president",  Label = "Président(e)" };
-        var brTresorier  = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "treasurer",  Label = "Trésorier(ère)" };
-        var brSecretaire = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "secretary",  Label = "Secrétaire Général(e)" };
+        var brPresident  = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "president",      Label = "Président(e)" };
+        var brTresorier  = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "treasurer",      Label = "Trésorier(ère)" };
+        var brSecretaire = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "secretary",      Label = "Secrétaire Général(e)" };
         var brVp         = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "vice_president", Label = "Vice-Président(e)" };
-        var brAuditor    = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "auditor",    Label = "Commissaire aux comptes" };
+        var brAuditor    = new server.Domain.Entities.BoardRole { Id = Guid.NewGuid(), TenantId = tenantId, Name = "auditor",        Label = "Commissaire aux comptes" };
         db.BoardRoles.AddRange(brPresident, brTresorier, brSecretaire, brVp, brAuditor);
 
-        // ── Board members ─────────────────────────────────────────────────────
+        // Mandate end dates: president/treasurer/secretary expire in ~25 days (triggers alert),
+        // VP and auditor expire further out
+        var mandateStart = new DateOnly(2024, 3, 15);
+        var mandateEndSoon   = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(25));  // within alert window
+        var mandateEndFuture = new DateOnly(2026, 3, 14);
+
+        // ── Board members (5 roles fully assigned) ────────────────────────────
         db.BoardMembers.AddRange(
-            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mPresident.Id,  RoleId = brPresident.Id,  StartDate = new DateOnly(2024, 3, 15), IsActive = true },
-            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mTresorier.Id,  RoleId = brTresorier.Id,  StartDate = new DateOnly(2024, 3, 15), IsActive = true },
-            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mSecretaire.Id, RoleId = brSecretaire.Id, StartDate = new DateOnly(2024, 3, 15), IsActive = true }
+            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mPresident.Id,  RoleId = brPresident.Id,  StartDate = mandateStart, EndDate = mandateEndSoon,   IsActive = true },
+            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mTresorier.Id,  RoleId = brTresorier.Id,  StartDate = mandateStart, EndDate = mandateEndSoon,   IsActive = true },
+            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mSecretaire.Id, RoleId = brSecretaire.Id, StartDate = mandateStart, EndDate = mandateEndSoon,   IsActive = true },
+            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mMember1.Id,    RoleId = brVp.Id,         StartDate = mandateStart, EndDate = mandateEndFuture, IsActive = true },
+            new BoardMember { Id = Guid.NewGuid(), TenantId = tenantId, MemberId = mMember2.Id,    RoleId = brAuditor.Id,    StartDate = mandateStart, EndDate = mandateEndFuture, IsActive = true }
         );
 
         // ── Resolutions ───────────────────────────────────────────────────────
@@ -515,6 +606,76 @@ public static class DbSeeder
 
         db.Posts.AddRange(postAlice, postEric, postSolange, postBoris, postPresident);
 
+        // ── Post comments ─────────────────────────────────────────────────────
+        db.PostComments.AddRange(
+            new PostComment
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                PostId = postAlice.Id, AuthorMemberId = mMember2.Id,
+                Content = "Merci Alice pour ce partage honnête ! Le conseil sur le compte bancaire m'aurait évité bien des galères 😅",
+                CreatedAt = postAlice.PublishedAt!.Value.AddDays(1), IsActive = true,
+            },
+            new PostComment
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                PostId = postAlice.Id, AuthorMemberId = mPresident.Id,
+                Content = "Excellent post Alice. C'est exactement ce genre de témoignage qui aide les nouveaux arrivants. On va l'épingler sur le fil !",
+                CreatedAt = postAlice.PublishedAt!.Value.AddDays(2), IsActive = true,
+            },
+            new PostComment
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                PostId = postAlice.Id, AuthorMemberId = mMember3.Id,
+                Content = "Totalement d'accord pour le créole. Les Mauriciens apprécient vraiment l'effort, même juste 'kouma to rele ?' au marché 😄",
+                CreatedAt = postAlice.PublishedAt!.Value.AddDays(3), IsActive = true,
+            },
+            new PostComment
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                PostId = postEric.Id, AuthorMemberId = mMember1.Id,
+                Content = "Super guide Eric ! Tu pourrais détailler comment négocier le logement de fonction ? C'est souvent opaque.",
+                CreatedAt = postEric.PublishedAt!.Value.AddDays(1), IsActive = true,
+            },
+            new PostComment
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                PostId = postEric.Id, AuthorMemberId = mTresorier.Id,
+                Content = "Le secteur FinTech est effectivement en plein essor. On voit de plus en plus de nos membres y travailler. Bon plan !",
+                CreatedAt = postEric.PublishedAt!.Value.AddDays(2), IsActive = true,
+            },
+            new PostComment
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                PostId = postSolange.Id, AuthorMemberId = mMember1.Id,
+                Content = "Merci Solange, j'ai justement un enfant en âge scolaire. Je vais contacter l'École Française dès cette semaine.",
+                CreatedAt = postSolange.PublishedAt!.Value.AddDays(1), IsActive = true,
+            }
+        );
+
+        // ── Post reactions ────────────────────────────────────────────────────
+        var reactionData = new (Guid PostId, Guid MemberId, string Type)[]
+        {
+            (postAlice.Id,  mPresident.Id,  "like"),
+            (postAlice.Id,  mTresorier.Id,  "heart"),
+            (postAlice.Id,  mMember2.Id,    "clap"),
+            (postAlice.Id,  mMember3.Id,    "like"),
+            (postAlice.Id,  mSecretaire.Id, "heart"),
+            (postEric.Id,   mMember1.Id,    "like"),
+            (postEric.Id,   mMember3.Id,    "clap"),
+            (postEric.Id,   mPresident.Id,  "like"),
+            (postEric.Id,   mSecretaire.Id, "like"),
+            (postSolange.Id, mMember1.Id,   "heart"),
+            (postSolange.Id, mMember2.Id,   "like"),
+            (postSolange.Id, mTresorier.Id, "like"),
+        };
+        foreach (var (postId, memberId, type) in reactionData)
+            db.PostReactions.Add(new PostReaction
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId,
+                PostId = postId, MemberId = memberId, ReactionType = type,
+                CreatedAt = DateTime.UtcNow.AddDays(-5),
+            });
+
         // ── Post attachments ──────────────────────────────────────────────────
         db.PostAttachments.AddRange(
             new PostAttachment
@@ -544,6 +705,16 @@ public static class DbSeeder
         );
 
         await db.SaveChangesAsync();
+
+        Console.WriteLine("[Seeder] ACM demo data seeded:");
+        Console.WriteLine("[Seeder]   8 users / 8 members / 3 membership categories");
+        Console.WriteLine("[Seeder]   6 contribution charges → 6 payments (4 annual + 2 solidarity)");
+        Console.WriteLine("[Seeder]   3 welfare requests / 3 events / 5 event registrations batches");
+        Console.WriteLine("[Seeder]   2 meetings / 5 action items (3 passé + 2 prochain)");
+        Console.WriteLine("[Seeder]   2 elections / votes seeded on both");
+        Console.WriteLine("[Seeder]   2 communications / 3 documents / 2 resolutions");
+        Console.WriteLine("[Seeder]   5 board roles / 5 board members (3 expiring soon)");
+        Console.WriteLine("[Seeder]   5 posts / 6 comments / 12 reactions / 3 attachments");
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
