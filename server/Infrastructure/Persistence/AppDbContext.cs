@@ -35,6 +35,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<PostAttachment> PostAttachments => Set<PostAttachment>();
+    public DbSet<PostComment> PostComments => Set<PostComment>();
+    public DbSet<PostReaction> PostReactions => Set<PostReaction>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder mb)

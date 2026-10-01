@@ -22,3 +22,13 @@ public record UpdatePostRequest(string Title, string Content);
 public record AddAttachmentRequest(
     string FileUrl, string FileName, string MimeType,
     long FileSizeBytes, string AttachmentType);
+
+public record PostCommentDto(
+    string Id, string PostId, string AuthorMemberId, string AuthorName,
+    string Content, string CreatedAt, string? UpdatedAt);
+
+public record PostReactionCountDto(string ReactionType, int Count, bool UserReacted);
+
+public record AddCommentRequest(string Content);
+
+public record ToggleReactionRequest(string ReactionType);
