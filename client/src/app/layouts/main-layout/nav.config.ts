@@ -18,6 +18,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { labelKey: 'nav.dashboard', icon: 'pi pi-home', route: '/dashboard', roles: STAFF_ROLES },
       { labelKey: 'nav.member_dashboard', icon: 'pi pi-home', route: '/member-dashboard', roles: [ROLES.MEMBER] },
+      { labelKey: 'nav.profile', icon: 'pi pi-user', route: '/profile' },
     ],
   },
   {

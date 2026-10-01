@@ -6,6 +6,7 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
+import { ROLES } from '@core/auth/models/role.model';
 import { TenantService } from '@core/tenant/tenant.service';
 import { OnboardingService } from '@core/services/onboarding.service';
 import { environment } from '@env/environment';
@@ -115,7 +116,7 @@ export class LoginPageComponent {
         } else if (!this.onboarding.isSeen()) {
           this.router.navigateByUrl('/getting-started');
         } else {
-          this.router.navigateByUrl(res.user.roles?.includes('member') && res.user.roles.length === 1 ? '/member-dashboard' : '/dashboard');
+          this.router.navigateByUrl(res.user.roles?.includes(ROLES.MEMBER) && res.user.roles.length === 1 ? '/member-dashboard' : '/dashboard');
         }
       },
       error: (err) => {

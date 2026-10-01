@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using server.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using server.Infrastructure.Persistence;
 namespace server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261001154647_AddMeetingActionItems")]
+    partial class AddMeetingActionItems
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1602,92 +1605,6 @@ namespace server.Migrations
                     b.ToTable("post_attachments", (string)null);
                 });
 
-            modelBuilder.Entity("server.Domain.Entities.PostComment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("AuthorMemberId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("author_member_id");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("content");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("created_at");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
-
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("post_id");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("tenant_id");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorMemberId");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("post_comments", (string)null);
-                });
-
-            modelBuilder.Entity("server.Domain.Entities.PostReaction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("MemberId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("member_id");
-
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("post_id");
-
-                    b.Property<string>("ReactionType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)")
-                        .HasColumnName("reaction_type");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("tenant_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MemberId");
-
-                    b.HasIndex("PostId", "MemberId", "ReactionType")
-                        .IsUnique();
-
-                    b.ToTable("post_reactions", (string)null);
-                });
-
             modelBuilder.Entity("server.Domain.Entities.Resolution", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2433,44 +2350,6 @@ namespace server.Migrations
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Post");
-                });
-
-            modelBuilder.Entity("server.Domain.Entities.PostComment", b =>
-                {
-                    b.HasOne("server.Domain.Entities.Member", "Author")
-                        .WithMany()
-                        .HasForeignKey("AuthorMemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("server.Domain.Entities.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Author");
-
-                    b.Navigation("Post");
-                });
-
-            modelBuilder.Entity("server.Domain.Entities.PostReaction", b =>
-                {
-                    b.HasOne("server.Domain.Entities.Member", "Member")
-                        .WithMany()
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("server.Domain.Entities.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Member");
 
                     b.Navigation("Post");
                 });

@@ -14,6 +14,8 @@ import { PostSummaryDto } from '@models/post.model';
 import { CommunityStore } from '../../store/community.store';
 import { CommunityApiService } from '../../services/community-api.service';
 import { PostFormDrawerComponent } from '../../components/post-form-drawer/post-form-drawer.component';
+import { AuthStore } from '@core/auth/auth.store';
+import { PERMISSIONS } from '@core/auth/models/permission.model';
 
 @Component({
   selector: 'app-community-feed',
@@ -33,7 +35,9 @@ import { PostFormDrawerComponent } from '../../components/post-form-drawer/post-
           <h1 class="text-2xl font-bold text-gray-800">{{ 'community.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'community.subtitle' | translate }}</p>
         </div>
-        <p-button [label]="'community.new_post' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+        @if (authStore.hasPermission(PERMISSIONS.COMMUNITY_WRITE)) {
+          <p-button [label]="'community.new_post' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+        }
       </div>
 
       <!-- Search -->
@@ -104,8 +108,10 @@ import { PostFormDrawerComponent } from '../../components/post-form-drawer/post-
   `,
 })
 export class CommunityFeedPage implements OnInit {
-  protected readonly store = inject(CommunityStore);
-  private readonly api     = inject(CommunityApiService);
+  protected readonly PERMISSIONS = PERMISSIONS;
+  protected readonly store      = inject(CommunityStore);
+  protected readonly authStore  = inject(AuthStore);
+  private readonly api          = inject(CommunityApiService);
 
   private readonly formDrawer = viewChild.required<PostFormDrawerComponent>('formDrawer');
 
