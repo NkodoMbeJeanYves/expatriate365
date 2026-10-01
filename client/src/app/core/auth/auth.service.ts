@@ -73,6 +73,13 @@ export class AuthService {
     );
   }
 
+  changePassword(currentPassword: string, newPassword: string) {
+    return this.http.post(`${this.base}/auth/change-password`, {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
+  }
+
   me() {
     return this.http.get<MeResponse>(`${this.base}/auth/me`).pipe(
       tap((user) => {
