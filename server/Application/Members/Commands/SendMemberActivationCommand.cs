@@ -31,12 +31,16 @@ public class SendMemberActivationHandler(
         if (string.IsNullOrWhiteSpace(member.User.ContactEmail))
             return ServiceResult<bool>.Failure("Ce membre n'a pas d'adresse email de contact renseignée.");
 
-        var token = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-        var setPasswordUrl = $"https://app.expatriate365.mu/set-password?token={token}";
         var memberName = $"{member.User.FirstName} {member.User.LastName}";
+        var (plainToken, tokenHash) = server.Application.Common.TokenGenerator.Generate();
+        member.User.ActivationTokenHash      = tokenHash;
+        member.User.ActivationTokenExpiresAt = DateTime.UtcNow.AddHours(72);
+        member.User.UpdatedAt                = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
 
-        log.LogInformation("[ACTIVATION] Member {MembershipNumber} | ContactEmail: {Email} | Token: {Token}",
-            member.MembershipNumber, member.User.ContactEmail, token);
+        var baseUrl = "https://app.expatriate365.mu";
+        var setPasswordUrl = $"{baseUrl}/set-password?token={plainToken}";
+        log.LogInformation("Activation token generated for member {MembershipNumber}", member.MembershipNumber);
 
         _ = emailService.SendAsync(
             member.User.ContactEmail, memberName,

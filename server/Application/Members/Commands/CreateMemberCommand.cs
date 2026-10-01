@@ -101,8 +101,12 @@ public class CreateMemberCommandHandler(
         {
             var tenant = await db.Tenants.FindAsync([tenantId], ct);
             var baseUrl = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
-            var activationToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-            var setPasswordUrl = $"{baseUrl}/set-password?token={activationToken}";
+            var (plainToken, tokenHash) = server.Application.Common.TokenGenerator.Generate();
+            user.ActivationTokenHash      = tokenHash;
+            user.ActivationTokenExpiresAt = DateTime.UtcNow.AddHours(72);
+            await db.SaveChangesAsync(ct);
+
+            var setPasswordUrl = $"{baseUrl}/set-password?token={plainToken}";
             _ = emailService.SendAsync(
                 user.ContactEmail,
                 user.FullName,

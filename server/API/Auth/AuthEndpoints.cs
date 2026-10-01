@@ -79,6 +79,16 @@ public static class AuthEndpoints
                 : Results.BadRequest(new { error = result.ErrorMessage });
         }).RequireAuthorization();
 
+        group.MapPost("/set-password", async (
+            server.Application.Auth.Commands.SetPasswordRequest dto,
+            IMediator mediator) =>
+        {
+            var result = await mediator.Send(new server.Application.Auth.Commands.SetPasswordCommand(dto));
+            return result.IsSuccess
+                ? Results.NoContent()
+                : Results.BadRequest(new { error = result.ErrorMessage });
+        });
+
         group.MapPost("/forgot-password", async (
             ForgotPasswordRequest dto,
             IMediator mediator) =>
