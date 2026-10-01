@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -10,12 +11,13 @@ import { AuthService } from '@core/auth/auth.service';
 import { ToastService } from '@service/toast.service';
 import { HttpClient } from '@angular/common/http';
 import { APP_CONFIG } from '@core/config/app-config.token';
+import { PERMISSIONS } from '@core/auth/models/permission.model';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, ButtonModule, InputTextModule, PasswordModule, TranslatePipe, PageHeaderComponent],
+  imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, PasswordModule, TranslatePipe, PageHeaderComponent],
   template: `
     <div class="p-6 max-w-2xl mx-auto">
       <app-page-header
@@ -66,6 +68,21 @@ import { APP_CONFIG } from '@core/config/app-config.token';
         </form>
       </div>
 
+      <!-- Membership card (only for members with membership.read_own) -->
+      @if (authStore.hasPermission(PERMISSIONS.MEMBERS_READ_OWN)) {
+        <a routerLink="/my-membership"
+          class="flex items-center gap-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4 mt-4 hover:shadow-sm transition-shadow">
+          <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+            <i class="pi pi-id-card text-lg"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Ma fiche membre</p>
+            <p class="text-xs text-indigo-500 dark:text-indigo-400">Voir mes informations d'adhésion</p>
+          </div>
+          <i class="pi pi-chevron-right text-indigo-400"></i>
+        </a>
+      }
+
       <!-- Security section -->
       <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mt-6">
         <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-5">
@@ -110,7 +127,9 @@ import { APP_CONFIG } from '@core/config/app-config.token';
   `,
 })
 export class ProfilePage implements OnInit {
+  protected readonly PERMISSIONS = PERMISSIONS;
   private readonly store  = inject(AuthStore);
+  protected readonly authStore   = this.store;
   private readonly auth   = inject(AuthService);
   private readonly toast  = inject(ToastService);
   private readonly http   = inject(HttpClient);

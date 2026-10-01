@@ -1,9 +1,11 @@
 using System.Security.Claims;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using server.Application.Common;
 using server.Application.Members.Commands;
 using server.Application.Members.DTOs;
 using server.Application.Members.Queries;
+using server.Infrastructure.Persistence;
 
 namespace server.Api.Members;
 
@@ -24,6 +26,33 @@ public static class MemberEndpoints
             var result = await mediator.Send(new GetMembersQuery(tenantId.Value, page, limit, search, status, category_id));
             return Results.Ok(result);
         }).RequireAuthorization(Permissions.MembersRead);
+
+        group.MapGet("/me", async (ClaimsPrincipal principal, IMediator mediator, AppDbContext db) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+
+            // Try entity_id (member UUID from JWT), fall back to resolving via user_id
+            var entityId = principal.FindFirstValue("entity_id");
+            Guid? memberId = Guid.TryParse(entityId, out var eid) ? eid : null;
+
+            if (memberId is null)
+            {
+                var raw = principal.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)
+                       ?? principal.FindFirstValue("sub");
+                if (Guid.TryParse(raw, out var uid))
+                {
+                    var m = await db.Members.AsNoTracking()
+                        .FirstOrDefaultAsync(x => x.UserId == uid && x.TenantId == tenantId.Value && x.IsActive);
+                    memberId = m?.Id;
+                }
+            }
+
+            if (memberId is null) return Results.NotFound(new { error = "No member record linked to this account." });
+
+            var result = await mediator.Send(new GetMemberByIdQuery(tenantId.Value, memberId.Value));
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.MembersReadOwn);
 
         group.MapGet("/categories", async (ClaimsPrincipal principal, IMediator mediator) =>
         {

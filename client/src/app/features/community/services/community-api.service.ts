@@ -3,8 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { APP_CONFIG } from '@core/config/app-config.token';
 import {
-  AddAttachmentRequest, CreatePostRequest, PostAttachmentDto,
-  PostDto, PostPagedResult, UpdatePostRequest,
+  AddAttachmentRequest, AddCommentRequest, CreatePostRequest, PostAttachmentDto,
+  PostCommentDto, PostDto, PostPagedResult, PostReactionCountDto, ToggleReactionRequest, UpdatePostRequest,
 } from '@models/post.model';
 
 @Injectable({ providedIn: 'root' })
@@ -56,5 +56,25 @@ export class CommunityApiService {
 
   deleteAttachment(postId: string, attachmentId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${postId}/attachments/${attachmentId}`);
+  }
+
+  listComments(postId: string): Observable<PostCommentDto[]> {
+    return this.http.get<PostCommentDto[]>(`${this.base}/${postId}/comments`);
+  }
+
+  addComment(postId: string, request: AddCommentRequest): Observable<PostCommentDto> {
+    return this.http.post<PostCommentDto>(`${this.base}/${postId}/comments`, request);
+  }
+
+  deleteComment(commentId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/comments/${commentId}`);
+  }
+
+  getReactions(postId: string): Observable<PostReactionCountDto[]> {
+    return this.http.get<PostReactionCountDto[]>(`${this.base}/${postId}/reactions`);
+  }
+
+  toggleReaction(postId: string, request: ToggleReactionRequest): Observable<PostReactionCountDto> {
+    return this.http.post<PostReactionCountDto>(`${this.base}/${postId}/reactions`, request);
   }
 }

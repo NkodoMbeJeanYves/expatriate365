@@ -18,6 +18,10 @@ export class MembersApiService {
     return `${this.config.apiUrl}/api/v1/members`;
   }
 
+  me(): Observable<Member> {
+    return this.http.get<Member>(`${this.base}/me`);
+  }
+
   list(filters: MemberFilters): Observable<PagedResult<MemberListItem>> {
     let params = new HttpParams()
       .set('page', filters.page)

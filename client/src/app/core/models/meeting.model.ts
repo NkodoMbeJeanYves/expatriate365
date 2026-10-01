@@ -87,3 +87,28 @@ export interface MeetingFilters {
 export const MEETING_TYPES = ['general', 'board', 'extraordinary'] as const;
 export const MEETING_STATUSES = ['scheduled', 'in_progress', 'completed', 'cancelled'] as const;
 export const ATTENDANCE_STATUSES = ['present', 'absent', 'excused', 'proxy'] as const;
+export const ACTION_ITEM_STATUSES = ['open', 'in_progress', 'done', 'cancelled'] as const;
+
+export interface ActionItemDto {
+  id: string;
+  meeting_id: string;
+  title: string;
+  description?: string;
+  assigned_to_member_id?: string;
+  assigned_to_name?: string;
+  due_date?: string;
+  status: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface CreateActionItemRequest {
+  title: string;
+  description?: string;
+  assigned_to_member_id?: string;
+  due_date?: string;
+}
+
+export interface UpdateActionItemRequest extends CreateActionItemRequest {
+  status: string;
+}

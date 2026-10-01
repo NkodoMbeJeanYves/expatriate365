@@ -59,3 +59,27 @@ export interface AddAttachmentRequest {
   file_size_bytes: number;
   attachment_type: 'photo' | 'document';
 }
+
+export interface PostCommentDto {
+  id: string;
+  post_id: string;
+  author_member_id: string;
+  author_name: string;
+  content: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface PostReactionCountDto {
+  reaction_type: string;
+  count: number;
+  user_reacted: boolean;
+}
+
+export interface AddCommentRequest {
+  content: string;
+}
+
+export interface ToggleReactionRequest {
+  reaction_type: string;
+}

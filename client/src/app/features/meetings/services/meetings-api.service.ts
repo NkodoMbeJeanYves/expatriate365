@@ -6,6 +6,7 @@ import { PagedResult } from '@shared/models/pagination.model';
 import {
   MeetingDto, MeetingFilters, MeetingAttendanceDto, MeetingMinuteDto, MeetingStatsDto,
   CreateMeetingRequest, UpdateMeetingRequest, RecordAttendanceRequest, SaveMinutesRequest,
+  ActionItemDto, CreateActionItemRequest, UpdateActionItemRequest,
 } from '@models/meeting.model';
 
 @Injectable({ providedIn: 'root' })
@@ -58,5 +59,21 @@ export class MeetingsApiService {
 
   approveMinutes(id: string): Observable<MeetingMinuteDto> {
     return this.http.post<MeetingMinuteDto>(`${this.base}/${id}/minutes/approve`, {});
+  }
+
+  listActionItems(meetingId: string): Observable<ActionItemDto[]> {
+    return this.http.get<ActionItemDto[]>(`${this.base}/${meetingId}/action-items`);
+  }
+
+  createActionItem(meetingId: string, dto: CreateActionItemRequest): Observable<ActionItemDto> {
+    return this.http.post<ActionItemDto>(`${this.base}/${meetingId}/action-items`, dto);
+  }
+
+  updateActionItem(itemId: string, dto: UpdateActionItemRequest): Observable<ActionItemDto> {
+    return this.http.put<ActionItemDto>(`${this.base}/action-items/${itemId}`, dto);
+  }
+
+  deleteActionItem(itemId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/action-items/${itemId}`);
   }
 }

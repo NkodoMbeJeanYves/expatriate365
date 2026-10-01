@@ -4,6 +4,7 @@ using server.Application.Common;
 using server.Application.Community.Commands;
 using server.Application.Community.DTOs;
 using server.Application.Community.Queries;
+using server.Infrastructure.Persistence;
 
 namespace server.API.Community;
 
@@ -140,6 +141,59 @@ public static class CommunityEndpoints
             return result.IsSuccess
                 ? Results.NoContent()
                 : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.CommunityWrite);
+
+        // ── Comments ──────────────────────────────────────────────────────────
+
+        group.MapGet("/{id:guid}/comments", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            return Results.Ok(await mediator.Send(new ListCommentsQuery(tenantId.Value, id)));
+        }).RequireAuthorization(Permissions.CommunityRead);
+
+        group.MapPost("/{id:guid}/comments", async (Guid id, AddCommentRequest request,
+            ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            var memberId = GetMemberId(principal);
+            if (tenantId is null || memberId is null) return Results.Unauthorized();
+
+            var result = await mediator.Send(new AddCommentCommand(tenantId.Value, id, memberId.Value, request.Content));
+            return result.IsSuccess
+                ? Results.Created($"/api/v1/posts/{id}/comments/{result.Data!.Id}", result.Data)
+                : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.CommunityWrite);
+
+        group.MapDelete("/comments/{commentId:guid}", async (Guid commentId,
+            ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            var memberId = GetMemberId(principal);
+            if (tenantId is null || memberId is null) return Results.Unauthorized();
+            var isStaff = IsStaff(principal);
+            var result = await mediator.Send(new DeleteCommentCommand(tenantId.Value, commentId, memberId.Value, isStaff));
+            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.CommunityRead);
+
+        // ── Reactions ─────────────────────────────────────────────────────────
+
+        group.MapGet("/{id:guid}/reactions", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            var memberId = GetMemberId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            return Results.Ok(await mediator.Send(new GetPostReactionsQuery(tenantId.Value, id, memberId)));
+        }).RequireAuthorization(Permissions.CommunityRead);
+
+        group.MapPost("/{id:guid}/reactions", async (Guid id, ToggleReactionRequest request,
+            ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            var memberId = GetMemberId(principal);
+            if (tenantId is null || memberId is null) return Results.Unauthorized();
+            var result = await mediator.Send(new ToggleReactionCommand(tenantId.Value, id, memberId.Value, request.ReactionType));
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityWrite);
     }
 

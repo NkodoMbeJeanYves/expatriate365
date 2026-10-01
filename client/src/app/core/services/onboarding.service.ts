@@ -10,6 +10,7 @@ export interface OnboardingStep {
   descKey: string;
   route: string;
   done?: boolean;
+  badge?: string;
 }
 
 const STORAGE_PREFIX = 'exp365_onboarding_seen_';
@@ -42,23 +43,30 @@ export class OnboardingService {
 
 const STEPS: Record<RoleFamily, OnboardingStep[]> = {
   super_admin: [
-    { icon: 'pi pi-building', titleKey: 'onboarding.super_admin.step1_title', descKey: 'onboarding.super_admin.step1_desc', route: '/admin/tenants' },
-    { icon: 'pi pi-sign-in',  titleKey: 'onboarding.super_admin.step2_title', descKey: 'onboarding.super_admin.step2_desc', route: '/admin/tenants' },
-    { icon: 'pi pi-chart-bar',titleKey: 'onboarding.super_admin.step3_title', descKey: 'onboarding.super_admin.step3_desc', route: '/admin/tenants' },
+    { icon: 'pi pi-building',  titleKey: 'onboarding.super_admin.step1_title', descKey: 'onboarding.super_admin.step1_desc', route: '/admin/tenants' },
+    { icon: 'pi pi-sign-in',   titleKey: 'onboarding.super_admin.step2_title', descKey: 'onboarding.super_admin.step2_desc', route: '/admin/tenants' },
+    { icon: 'pi pi-chart-bar', titleKey: 'onboarding.super_admin.step3_title', descKey: 'onboarding.super_admin.step3_desc', route: '/admin/tenants' },
   ],
   org_admin: [
-    { icon: 'pi pi-cog',   titleKey: 'onboarding.org_admin.step1_title', descKey: 'onboarding.org_admin.step1_desc', route: '/admin/settings' },
-    { icon: 'pi pi-users', titleKey: 'onboarding.org_admin.step2_title', descKey: 'onboarding.org_admin.step2_desc', route: '/admin/users' },
-    { icon: 'pi pi-id-card',titleKey: 'onboarding.org_admin.step3_title', descKey: 'onboarding.org_admin.step3_desc', route: '/members' },
+    { icon: 'pi pi-cog',        titleKey: 'onboarding.org_admin.step1_title', descKey: 'onboarding.org_admin.step1_desc', route: '/admin/settings' },
+    { icon: 'pi pi-users',      titleKey: 'onboarding.org_admin.step2_title', descKey: 'onboarding.org_admin.step2_desc', route: '/admin/users' },
+    { icon: 'pi pi-id-card',    titleKey: 'onboarding.org_admin.step3_title', descKey: 'onboarding.org_admin.step3_desc', route: '/members' },
+    { icon: 'pi pi-shield',     titleKey: 'onboarding.org_admin.step4_title', descKey: 'onboarding.org_admin.step4_desc', route: '/governance' },
+    { icon: 'pi pi-microphone', titleKey: 'onboarding.org_admin.step5_title', descKey: 'onboarding.org_admin.step5_desc', route: '/meetings' },
   ],
   staff: [
-    { icon: 'pi pi-home',      titleKey: 'onboarding.staff.step1_title', descKey: 'onboarding.staff.step1_desc', route: '/dashboard' },
-    { icon: 'pi pi-calendar',  titleKey: 'onboarding.staff.step2_title', descKey: 'onboarding.staff.step2_desc', route: '/events' },
-    { icon: 'pi pi-users',     titleKey: 'onboarding.staff.step3_title', descKey: 'onboarding.staff.step3_desc', route: '/members' },
+    { icon: 'pi pi-home',            titleKey: 'onboarding.staff.step1_title', descKey: 'onboarding.staff.step1_desc', route: '/dashboard' },
+    { icon: 'pi pi-users',           titleKey: 'onboarding.staff.step2_title', descKey: 'onboarding.staff.step2_desc', route: '/members' },
+    { icon: 'pi pi-microphone',      titleKey: 'onboarding.staff.step3_title', descKey: 'onboarding.staff.step3_desc', route: '/meetings', badge: 'onboarding.badge_new' },
+    { icon: 'pi pi-check-square',    titleKey: 'onboarding.staff.step4_title', descKey: 'onboarding.staff.step4_desc', route: '/meetings', badge: 'onboarding.badge_new' },
+    { icon: 'pi pi-shield',          titleKey: 'onboarding.staff.step5_title', descKey: 'onboarding.staff.step5_desc', route: '/governance', badge: 'onboarding.badge_new' },
+    { icon: 'pi pi-comments',        titleKey: 'onboarding.staff.step6_title', descKey: 'onboarding.staff.step6_desc', route: '/community/moderation' },
   ],
   member: [
-    { icon: 'pi pi-user-edit', titleKey: 'onboarding.member.step1_title', descKey: 'onboarding.member.step1_desc', route: '/profile' },
-    { icon: 'pi pi-wallet',    titleKey: 'onboarding.member.step2_title', descKey: 'onboarding.member.step2_desc', route: '/contributions' },
-    { icon: 'pi pi-calendar',  titleKey: 'onboarding.member.step3_title', descKey: 'onboarding.member.step3_desc', route: '/events' },
+    { icon: 'pi pi-user-edit',  titleKey: 'onboarding.member.step1_title', descKey: 'onboarding.member.step1_desc', route: '/profile' },
+    { icon: 'pi pi-id-card',    titleKey: 'onboarding.member.step2_title', descKey: 'onboarding.member.step2_desc', route: '/my-membership', badge: 'onboarding.badge_new' },
+    { icon: 'pi pi-wallet',     titleKey: 'onboarding.member.step3_title', descKey: 'onboarding.member.step3_desc', route: '/contributions' },
+    { icon: 'pi pi-comments',   titleKey: 'onboarding.member.step4_title', descKey: 'onboarding.member.step4_desc', route: '/community', badge: 'onboarding.badge_new' },
+    { icon: 'pi pi-calendar',   titleKey: 'onboarding.member.step5_title', descKey: 'onboarding.member.step5_desc', route: '/events' },
   ],
 };

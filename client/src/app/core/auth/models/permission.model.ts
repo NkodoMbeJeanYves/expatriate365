@@ -62,6 +62,11 @@ export const PERMISSIONS = {
   DOCUMENTS_MANAGE:  'documents.manage',
   DOCUMENTS_PUBLISH: 'documents.publish',
 
+  // Community / Posts
+  COMMUNITY_READ:     'community.read',
+  COMMUNITY_WRITE:    'community.write',
+  COMMUNITY_MODERATE: 'community.moderate',
+
   // Announcements
   ANNOUNCEMENTS_READ:    'announcements.read',
   ANNOUNCEMENTS_CREATE:  'announcements.create',

@@ -101,6 +101,46 @@ public static class MeetingEndpoints
             var result = await mediator.Send(new ApproveMinutesCommand(tenantId.Value, id));
             return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsUpdate);
+
+        // ── Action Items ─────────────────────────────────────────────────────
+
+        group.MapGet("/{id:guid}/action-items", async (
+            Guid id, ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var result = await mediator.Send(new ListActionItemsQuery(tenantId.Value, id));
+            return Results.Ok(result);
+        }).RequireAuthorization(Permissions.EventsRead);
+
+        group.MapPost("/{id:guid}/action-items", async (
+            Guid id, ClaimsPrincipal principal, IMediator mediator, CreateActionItemRequest dto) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var result = await mediator.Send(new CreateActionItemCommand(tenantId.Value, id, dto));
+            return result.IsSuccess
+                ? Results.Created($"/api/v1/meetings/{id}/action-items/{result.Data!.Id}", result.Data)
+                : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.EventsUpdate);
+
+        group.MapPut("/action-items/{itemId:guid}", async (
+            Guid itemId, ClaimsPrincipal principal, IMediator mediator, UpdateActionItemRequest dto) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var result = await mediator.Send(new UpdateActionItemCommand(tenantId.Value, itemId, dto));
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.EventsUpdate);
+
+        group.MapDelete("/action-items/{itemId:guid}", async (
+            Guid itemId, ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var result = await mediator.Send(new DeleteActionItemCommand(tenantId.Value, itemId));
+            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.EventsUpdate);
     }
 
     private static Guid? GetTenantId(ClaimsPrincipal principal)

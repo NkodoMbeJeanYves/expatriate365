@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, viewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -16,6 +16,7 @@ import { MeetingsApiService } from '../../services/meetings-api.service';
 import { MeetingFormDrawerComponent } from '../../components/meeting-form-drawer/meeting-form-drawer.component';
 import { MeetingAttendanceDrawerComponent } from '../../components/meeting-attendance-drawer/meeting-attendance-drawer.component';
 import { MeetingMinutesDrawerComponent } from '../../components/meeting-minutes-drawer/meeting-minutes-drawer.component';
+import { MeetingActionItemsDrawerComponent } from '../../components/meeting-action-items-drawer/meeting-action-items-drawer.component';
 
 @Component({
   selector: 'app-meeting-list',
@@ -25,6 +26,7 @@ import { MeetingMinutesDrawerComponent } from '../../components/meeting-minutes-
     CommonModule, FormsModule, ButtonModule, CardModule, TagModule,
     SelectModule, ProgressSpinnerModule, TooltipModule, TranslatePipe,
     MeetingFormDrawerComponent, MeetingAttendanceDrawerComponent, MeetingMinutesDrawerComponent,
+    MeetingActionItemsDrawerComponent,
   ],
   template: `
     <div class="p-6 flex flex-col gap-6">
@@ -111,6 +113,8 @@ import { MeetingMinutesDrawerComponent } from '../../components/meeting-minutes-
                     [pTooltip]="'meetings.attendances' | translate" (onClick)="openAttendance(m)" />
                   <p-button icon="pi pi-file-edit" size="small" severity="secondary" [text]="true"
                     [pTooltip]="'meetings.minutes' | translate" (onClick)="openMinutes(m)" />
+                  <p-button icon="pi pi-check-square" size="small" severity="secondary" [text]="true"
+                    pTooltip="Actions / suivi" (onClick)="openActionItems(m)" />
                   @if (isStaff()) {
                     @if (m.status === 'scheduled') {
                       <p-button icon="pi pi-play" size="small" severity="info" [text]="true"
@@ -149,6 +153,9 @@ import { MeetingMinutesDrawerComponent } from '../../components/meeting-minutes-
     <app-meeting-form-drawer #formDrawer (saved)="onSaved($event)" />
     <app-meeting-attendance-drawer #attendanceDrawer />
     <app-meeting-minutes-drawer #minutesDrawer />
+    @if (actionItemMeetingId()) {
+      <app-meeting-action-items-drawer #actionItemsDrawer [meetingId]="actionItemMeetingId()!" />
+    }
   `,
 })
 export class MeetingListPage implements OnInit {
@@ -161,6 +168,9 @@ export class MeetingListPage implements OnInit {
   private readonly formDrawer = viewChild.required<MeetingFormDrawerComponent>('formDrawer');
   private readonly attendanceDrawer = viewChild.required<MeetingAttendanceDrawerComponent>('attendanceDrawer');
   private readonly minutesDrawer = viewChild.required<MeetingMinutesDrawerComponent>('minutesDrawer');
+  private readonly actionItemsDrawer = viewChild<MeetingActionItemsDrawerComponent>('actionItemsDrawer');
+
+  readonly actionItemMeetingId = signal<string | null>(null);
 
   protected filterStatus: string | null = null;
   protected filterType: string | null = null;
@@ -192,6 +202,10 @@ export class MeetingListPage implements OnInit {
 
   protected openForm(m?: MeetingDto): void { this.formDrawer().open(m); }
   protected openAttendance(m: MeetingDto): void { this.attendanceDrawer().open(m); }
+  protected openActionItems(m: MeetingDto): void {
+    this.actionItemMeetingId.set(m.id);
+    setTimeout(() => this.actionItemsDrawer()?.open(), 0);
+  }
 
   protected openMinutes(m: MeetingDto): void {
     this.api.getById(m.id).subscribe({

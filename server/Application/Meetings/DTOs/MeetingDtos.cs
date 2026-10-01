@@ -31,3 +31,15 @@ public record AttendanceEntry(string MemberId, string Status, string? ProxyName)
 public record RecordAttendanceRequest(List<AttendanceEntry> Entries);
 
 public record SaveMinutesRequest(string Content, string? Decisions, string? AttachmentUrl);
+
+public record ActionItemDto(
+    string Id, string MeetingId, string Title, string? Description,
+    string? AssignedToMemberId, string? AssignedToName,
+    string? DueDate, string Status,
+    string CreatedAt, string? UpdatedAt);
+
+public record CreateActionItemRequest(
+    string Title, string? Description, string? AssignedToMemberId, string? DueDate);
+
+public record UpdateActionItemRequest(
+    string Title, string? Description, string? AssignedToMemberId, string? DueDate, string Status);
