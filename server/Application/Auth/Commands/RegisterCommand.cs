@@ -78,7 +78,7 @@ public class RegisterCommandHandler(
         await permissionResolver.SeedForTenantAsync(tenant.Id, ct);
 
         // Envoyer confirmation de création de compte
-        var loginUrl = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
+        var loginUrl = config["FrontendBaseUrl"] ?? config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
         if (!string.IsNullOrWhiteSpace(user.ContactEmail))
             _ = emailService.SendAsync(
                 user.ContactEmail,

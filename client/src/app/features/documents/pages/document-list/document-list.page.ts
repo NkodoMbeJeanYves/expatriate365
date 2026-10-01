@@ -53,6 +53,16 @@ import { DocumentFormDrawerComponent } from '../../components/document-form-draw
             <div class="text-xs text-orange-600 mt-1">Privés</div>
           </div>
         </div>
+        @if (s.by_category?.length) {
+          <div class="flex gap-2 flex-wrap">
+            @for (cat of s.by_category; track cat.category) {
+              <span class="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3 py-1 text-xs text-gray-600 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                {{ cat.category }} <strong class="text-gray-800">{{ cat.count }}</strong>
+              </span>
+            }
+          </div>
+        }
       }
 
       <!-- Filtres -->

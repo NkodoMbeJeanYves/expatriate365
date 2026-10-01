@@ -12,19 +12,20 @@ public class GetDocumentStatsQueryHandler(AppDbContext db)
 {
     public async Task<DocumentStatsDto> Handle(GetDocumentStatsQuery request, CancellationToken ct)
     {
-        var stats = await db.Documents
+        var docs = await db.Documents
             .Where(d => d.TenantId == request.TenantId && d.IsActive)
-            .GroupBy(_ => 1)
-            .Select(g => new
-            {
-                Total = g.Count(),
-                Public = g.Count(d => d.IsPublic),
-                Private = g.Count(d => !d.IsPublic),
-            })
-            .FirstOrDefaultAsync(ct);
+            .Select(d => new { d.IsPublic, d.Category })
+            .ToListAsync(ct);
 
-        return stats is null
-            ? new DocumentStatsDto(0, 0, 0)
-            : new DocumentStatsDto(stats.Total, stats.Public, stats.Private);
+        var total   = docs.Count;
+        var pub     = docs.Count(d => d.IsPublic);
+        var priv    = docs.Count(d => !d.IsPublic);
+        var byCategory = docs
+            .GroupBy(d => d.Category)
+            .Select(g => new DocumentCategoryStatDto(g.Key, g.Count()))
+            .OrderByDescending(c => c.Count)
+            .ToList();
+
+        return new DocumentStatsDto(total, pub, priv, byCategory);
     }
 }

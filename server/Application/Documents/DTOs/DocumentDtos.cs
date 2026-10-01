@@ -7,7 +7,9 @@ public record DocumentDto(
     string UploadedBy, string UploaderName,
     string CreatedAt, string? UpdatedAt);
 
-public record DocumentStatsDto(int Total, int Public, int Private);
+public record DocumentStatsDto(int Total, int Public, int Private, List<DocumentCategoryStatDto> ByCategory);
+
+public record DocumentCategoryStatDto(string Category, int Count);
 
 public record CreateDocumentRequest(
     string Title, string? Description, string Type, string Category,

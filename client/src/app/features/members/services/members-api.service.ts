@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { APP_CONFIG } from '@core/config/app-config.token';
 import { PagedResult } from '@core/api/api-types';
 import {
+  BulkImportMemberRow, BulkImportResult,
   CreateCategoryRequest, CreateMemberRequest, Member, MemberFilters, MemberListItem,
   MembershipCategory, UpdateMemberRequest,
 } from '@core/models/member.model';
@@ -61,6 +62,10 @@ export class MembersApiService {
 
   sendActivation(id: string): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.base}/${id}/send-activation`, {});
+  }
+
+  bulkImport(rows: BulkImportMemberRow[]): Observable<BulkImportResult> {
+    return this.http.post<BulkImportResult>(`${this.base}/bulk-import`, rows);
   }
 
   exportCsv(status?: string): void {

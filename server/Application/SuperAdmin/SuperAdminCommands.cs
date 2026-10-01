@@ -79,7 +79,7 @@ public class CreateTenantCommandHandler(
         log.LogInformation("Tenant {TenantId} created by super_admin with admin {UserId}", tenant.Id, admin.Id);
 
         // Envoyer les identifiants à l'org_admin
-        var loginUrl = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
+        var loginUrl = config["FrontendBaseUrl"] ?? config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
         if (!string.IsNullOrWhiteSpace(admin.ContactEmail))
             _ = emailService.SendAsync(
                 admin.ContactEmail,

@@ -114,6 +114,18 @@ public static class MemberEndpoints
             var result = await mediator.Send(new SendMemberActivationCommand(tenantId.Value, id));
             return result.IsSuccess ? Results.Ok(new { message = "Activation envoyée." }) : Results.BadRequest(new { error = result.ErrorMessage });
         }).RequireAuthorization(Permissions.MembersSendActivation);
+
+        group.MapPost("/bulk-import", async (
+            ClaimsPrincipal principal, IMediator mediator,
+            List<BulkImportMemberRow> rows) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            if (rows is null || rows.Count == 0) return Results.BadRequest(new { error = "No rows provided." });
+            if (rows.Count > 500) return Results.BadRequest(new { error = "Maximum 500 rows per import." });
+            var result = await mediator.Send(new BulkImportMembersCommand(tenantId.Value, rows));
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.MembersCreate);
     }
 
     private static Guid? GetTenantId(ClaimsPrincipal principal)

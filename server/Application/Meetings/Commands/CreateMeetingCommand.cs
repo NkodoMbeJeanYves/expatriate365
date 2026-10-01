@@ -48,7 +48,7 @@ public class CreateMeetingCommandHandler(
         log.LogInformation("Meeting {Id} created: {Title}", meeting.Id, meeting.Title);
 
         // Notifier les membres actifs en background
-        _ = NotifyMembersAsync(meeting, request.TenantId, config["App:BaseUrl"] ?? "https://app.expatriate365.mu", ct);
+        _ = NotifyMembersAsync(meeting, request.TenantId, config["FrontendBaseUrl"] ?? config["App:BaseUrl"] ?? "https://app.expatriate365.mu", ct);
 
         return ServiceResult<MeetingDto>.Success(ListMeetingsQueryHandler.ToDto(meeting));
     }

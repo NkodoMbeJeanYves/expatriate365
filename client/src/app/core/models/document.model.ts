@@ -16,10 +16,16 @@ export interface DocumentDto {
   updated_at?: string;
 }
 
+export interface DocumentCategoryStatDto {
+  category: string;
+  count: number;
+}
+
 export interface DocumentStatsDto {
   total: number;
   public: number;
   private: number;
+  by_category: DocumentCategoryStatDto[];
 }
 
 export interface CreateDocumentRequest {

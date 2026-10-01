@@ -15,6 +15,7 @@ import { EventsApiService } from '../../services/events-api.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthStore } from '@core/auth/auth.store';
 import { STAFF_ROLES } from '@core/auth/models/role.model';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-event-list',
@@ -24,7 +25,7 @@ import { STAFF_ROLES } from '@core/auth/models/role.model';
     CommonModule, FormsModule, ButtonModule, CardModule,
     TagModule, SelectModule, ProgressSpinnerModule, TooltipModule,
     EventFormDrawerComponent, EventRegistrationsDrawerComponent,
-    TranslatePipe,
+    TranslatePipe, RouterLink,
   ],
   template: `
     <div class="p-6 flex flex-col gap-6">
@@ -108,6 +109,9 @@ import { STAFF_ROLES } from '@core/auth/models/role.model';
                 </div>
               </div>
               <div class="px-4 pb-3 flex gap-2 border-t border-gray-50 pt-3">
+                <a [routerLink]="['/events', ev.id]">
+                  <p-button icon="pi pi-eye" size="small" severity="secondary" [text]="true" pTooltip="View details" />
+                </a>
                 <p-button icon="pi pi-users" size="small" severity="secondary" [text]="true"
                   [pTooltip]="'events.registrations' | translate" (onClick)="openRegistrations(ev)" />
                 @if (isStaff()) {

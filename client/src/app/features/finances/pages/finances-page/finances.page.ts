@@ -26,7 +26,14 @@ import { FinancesApiService } from '../../services/finances-api.service';
           <h1 class="text-2xl font-bold text-gray-800">{{ 'finances.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'finances.subtitle' | translate }}</p>
         </div>
-        <p-button icon="pi pi-refresh" severity="secondary" (onClick)="loadAll()" />
+        <div class="flex gap-2">
+          <button (click)="exportCsv()" [disabled]="exporting()"
+            class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 bg-white shadow-sm disabled:opacity-50">
+            <i [class]="exporting() ? 'pi pi-spin pi-spinner text-sm' : 'pi pi-download text-sm'"></i>
+            <span class="hidden sm:inline">Export CSV</span>
+          </button>
+          <p-button icon="pi pi-refresh" severity="secondary" (onClick)="loadAll()" />
+        </div>
       </div>
 
       <!-- KPIs -->
@@ -143,10 +150,11 @@ export class FinancesPage implements OnInit {
   private readonly api = inject(FinancesApiService);
   private readonly translate = inject(TranslateService);
 
-  readonly summary = signal<FinanceSummaryDto | null>(null);
+  readonly summary      = signal<FinanceSummaryDto | null>(null);
   readonly transactions = signal<FinanceTransactionDto[]>([]);
   readonly totalRecords = signal(0);
-  readonly txLoading = signal(false);
+  readonly txLoading    = signal(false);
+  readonly exporting    = signal(false);
 
   filterType: string | null = null;
   filterStatus: string | null = null;
@@ -203,5 +211,34 @@ export class FinancesPage implements OnInit {
   onPageChange(event: PageChangeEvent): void {
     this.currentPage = event.page;
     this.loadTransactions();
+  }
+
+  exportCsv(): void {
+    this.exporting.set(true);
+    this.api.transactions({
+      page: 1, limit: 10000,
+      type: this.filterType ?? undefined,
+      status: this.filterStatus ?? undefined,
+      from: this.filterFrom || undefined,
+      to: this.filterTo || undefined,
+    }).subscribe({
+      next: (res) => {
+        const header = ['Member', 'Membership #', 'Type', 'Description', 'Date', 'Amount', 'Currency', 'Status'];
+        const rows = res.data.map(tx => [
+          tx.member_name, tx.membership_number, tx.type, tx.description ?? '',
+          tx.date.slice(0, 10), tx.amount, tx.currency, tx.status,
+        ]);
+        const csv = [header, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting.set(false);
+      },
+      error: () => this.exporting.set(false),
+    });
   }
 }

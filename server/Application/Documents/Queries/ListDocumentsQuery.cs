@@ -25,7 +25,7 @@ public class ListDocumentsQueryHandler(AppDbContext db)
         if (!string.IsNullOrWhiteSpace(request.Category))
             query = query.Where(d => d.Category == request.Category);
         if (!string.IsNullOrWhiteSpace(request.Search))
-            query = query.Where(d => d.Title.Contains(request.Search));
+            query = query.Where(d => d.Title.Contains(request.Search) || (d.Description != null && d.Description.Contains(request.Search)));
 
         var total = await query.CountAsync(ct);
         var items = await query

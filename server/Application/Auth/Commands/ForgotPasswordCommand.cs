@@ -37,7 +37,7 @@ public class ForgotPasswordCommandHandler(
 
         await db.SaveChangesAsync(ct);
 
-        var baseUrl  = config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
+        var baseUrl  = config["FrontendBaseUrl"] ?? config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
         var resetUrl = $"{baseUrl}/reset-password/{plainToken}";
 
         _ = emailService.SendAsync(
