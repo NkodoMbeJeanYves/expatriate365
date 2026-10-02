@@ -66,7 +66,7 @@ public static class EmailTemplates
             <p>Vous avez &eacute;t&eacute; invit&eacute;(e) &agrave; rejoindre l&rsquo;association <strong>{associationName}</strong> sur Expatriate365.</p>
             <p>Cliquez sur le bouton ci-dessous pour d&eacute;finir votre mot de passe et activer votre compte :</p>
             <a href="{setPasswordUrl}" style="{BtnStyle}">Activer mon compte</a>
-            <p style="color:#94a3b8;font-size:.82rem;margin-top:16px">Ce lien expire dans 24h.</p>
+            <p style="color:#94a3b8;font-size:.82rem;margin-top:16px">Ce lien expire dans 72h.</p>
             """);
 
     public static string PasswordReset(string fullName, string resetUrl) =>

@@ -62,5 +62,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/directory/pages/directory.page').then((m) => m.DirectoryPage),
   },
   { path: 'forbidden', loadComponent: () => import('@shared/components/forbidden/forbidden.component').then((m) => m.ForbiddenComponent) },
+  { path: 'set-password', redirectTo: 'auth/set-password', pathMatch: 'full' },
   { path: '**', redirectTo: 'dashboard' },
 ];
