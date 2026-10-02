@@ -56,11 +56,11 @@ public class SendCommunicationCommandHandler(AppDbContext db, INotificationServi
             .Select(m => new { m.Id, m.UserId })
             .ToListAsync(ct);
 
-        var preview = comm.Body[..Math.Min(200, comm.Body.Length)];
+        var preview = comm.Content[..Math.Min(200, comm.Content.Length)];
         foreach (var m in members)
         {
             _ = notif.NotifyAsync(request.TenantId, m.UserId, "communication",
-                comm.Subject, preview, ct);
+                comm.Title, preview, ct);
         }
 
         return ServiceResult<CommunicationDto>.Success(ListCommunicationsQueryHandler.ToDto(comm));
