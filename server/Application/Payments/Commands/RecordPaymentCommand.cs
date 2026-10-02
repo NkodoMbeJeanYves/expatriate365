@@ -5,6 +5,7 @@ using server.Application.Common;
 using server.Application.Payments.DTOs;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Payments.Commands;
 
@@ -22,7 +23,7 @@ public class RecordPaymentValidator : AbstractValidator<RecordPaymentCommand>
     }
 }
 
-public class RecordPaymentCommandHandler(AppDbContext db, ILogger<RecordPaymentCommandHandler> log)
+public class RecordPaymentCommandHandler(AppDbContext db, ILogger<RecordPaymentCommandHandler> log, INotificationService notif)
     : IRequestHandler<RecordPaymentCommand, ServiceResult<PaymentDto>>
 {
     private static readonly string[] ValidMethods = ["cash", "bank_transfer", "mobile_money", "card", "cheque"];
@@ -75,6 +76,15 @@ public class RecordPaymentCommandHandler(AppDbContext db, ILogger<RecordPaymentC
         await db.SaveChangesAsync(ct);
 
         log.LogInformation("Payment {ReceiptNumber} recorded for charge {ChargeId}", receiptNumber, chargeId);
+
+        var lang = charge.Member.User.PreferredLanguage ?? "fr";
+        _ = notif.NotifyAsync(request.TenantId, charge.Member.UserId,
+            "payment_recorded",
+            lang == "fr" ? "Paiement enregistré" : "Payment recorded",
+            lang == "fr"
+                ? $"Votre paiement de {dto.Amount} ({charge.ContributionType.Name}) a été enregistré et est en attente de confirmation."
+                : $"Your payment of {dto.Amount} ({charge.ContributionType.Name}) has been recorded and is pending confirmation.",
+            ct);
 
         return ServiceResult<PaymentDto>.Success(new PaymentDto(
             payment.Id.ToString(), payment.TenantId.ToString(), payment.MemberId.ToString(),

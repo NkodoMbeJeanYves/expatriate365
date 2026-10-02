@@ -8,6 +8,8 @@ public class NotificationService(AppDbContext db, IEmailService email, ILogger<N
 {
     public async Task NotifyAsync(Guid tenantId, Guid userId, string type, string title, string body, CancellationToken ct = default)
     {
+        if (!await IsEnabledAsync(tenantId, userId, type, ct)) return;
+
         db.Notifications.Add(new Notification
         {
             TenantId = tenantId,
@@ -23,6 +25,8 @@ public class NotificationService(AppDbContext db, IEmailService email, ILogger<N
     public async Task NotifyWithEmailAsync(Guid tenantId, Guid userId, string type, string title, string body,
         string emailSubject, string emailHtml, CancellationToken ct = default)
     {
+        if (!await IsEnabledAsync(tenantId, userId, type, ct)) return;
+
         db.Notifications.Add(new Notification
         {
             TenantId = tenantId,
@@ -37,5 +41,13 @@ public class NotificationService(AppDbContext db, IEmailService email, ILogger<N
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
         if (user is not null)
             await email.SendAsync(user.Email, $"{user.FirstName} {user.LastName}", emailSubject, emailHtml, ct);
+    }
+
+    private async Task<bool> IsEnabledAsync(Guid tenantId, Guid userId, string type, CancellationToken ct)
+    {
+        var pref = await db.NotificationPreferences
+            .FirstOrDefaultAsync(p => p.TenantId == tenantId && p.UserId == userId && p.NotificationType == type, ct);
+        // Default: enabled unless explicitly disabled
+        return pref is not { Enabled: false };
     }
 }

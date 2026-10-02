@@ -469,7 +469,9 @@
     "no_charges": "Aucune charge trouvée",
     "penalty": "Pénalité",
     "waiver": "Remise",
-    "total_due": "Total dû"
+    "total_due": "Total dû",
+    "send_reminders": "Envoyer les rappels",
+    "send_reminders_tooltip": "Envoyer des rappels in-app et par email aux membres ayant des cotisations en retard"
   },
   "payments": {
     "title": "Paiements",

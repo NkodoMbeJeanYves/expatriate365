@@ -5,6 +5,7 @@ using server.Application.Common;
 using server.Application.Welfare.DTOs;
 using server.Application.Welfare.Queries;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Welfare.Commands;
 
@@ -19,7 +20,7 @@ public class RejectWelfareRequestValidator : AbstractValidator<RejectWelfareRequ
     }
 }
 
-public class RejectWelfareRequestCommandHandler(AppDbContext db, ILogger<RejectWelfareRequestCommandHandler> log)
+public class RejectWelfareRequestCommandHandler(AppDbContext db, ILogger<RejectWelfareRequestCommandHandler> log, INotificationService notif)
     : IRequestHandler<RejectWelfareRequestCommand, ServiceResult<WelfareRequestDto>>
 {
     public async Task<ServiceResult<WelfareRequestDto>> Handle(RejectWelfareRequestCommand request, CancellationToken ct)
@@ -38,6 +39,15 @@ public class RejectWelfareRequestCommandHandler(AppDbContext db, ILogger<RejectW
 
         await db.SaveChangesAsync(ct);
         log.LogInformation("WelfareRequest {Id} rejected", request.Id);
+
+        var lang = welfare.Member.User.PreferredLanguage ?? "fr";
+        _ = notif.NotifyAsync(welfare.TenantId, welfare.Member.UserId,
+            "welfare_update",
+            lang == "fr" ? "Demande d'aide refusée" : "Welfare request rejected",
+            lang == "fr"
+                ? $"Votre demande d'aide a été refusée. Motif : {request.Dto.Reason}"
+                : $"Your welfare request has been rejected. Reason: {request.Dto.Reason}",
+            ct);
 
         return ServiceResult<WelfareRequestDto>.Success(ListWelfareRequestsQueryHandler.ToDto(welfare));
     }

@@ -24,7 +24,8 @@ public class BulkGenerateChargesValidator : AbstractValidator<BulkGenerateCharge
 public class BulkGenerateChargesCommandHandler(
     AppDbContext db,
     ILogger<BulkGenerateChargesCommandHandler> log,
-    IEmailService emailService)
+    IEmailService emailService,
+    INotificationService notif)
     : IRequestHandler<BulkGenerateChargesCommand, ServiceResult<int>>
 {
     public async Task<ServiceResult<int>> Handle(BulkGenerateChargesCommand request, CancellationToken ct)
@@ -77,18 +78,18 @@ public class BulkGenerateChargesCommandHandler(
         log.LogInformation("Bulk generated {Count} charges for type {TypeId}, due {DueDate}",
             charges.Count, typeId, dueDate);
 
-        _ = NotifyMembersAsync(toGenerate, type.Name, type.BaseAmount, dueDate, ct);
+        _ = NotifyMembersAsync(toGenerate, type.Name, type.BaseAmount, dueDate, request.TenantId, ct);
 
         return ServiceResult<int>.Success(charges.Count);
     }
 
     private async Task NotifyMembersAsync(
         List<server.Domain.Entities.Member> members,
-        string typeName, decimal amount, DateOnly dueDate, CancellationToken ct)
+        string typeName, decimal amount, DateOnly dueDate, Guid tenantId, CancellationToken ct)
     {
         try
         {
-            var tasks = members
+            var emailTasks = members
                 .Where(m => !string.IsNullOrWhiteSpace(m.User.ContactEmail))
                 .Select(m =>
                 {
@@ -100,7 +101,20 @@ public class BulkGenerateChargesCommandHandler(
                         EmailTemplates.ChargeGenerated(name, typeName, amount, dueDate.ToString("dd/MM/yyyy"), lang),
                         ct);
                 });
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(emailTasks);
+
+            var notifTasks = members.Select(m =>
+            {
+                var lang = m.User.PreferredLanguage ?? "fr";
+                return notif.NotifyAsync(tenantId, m.UserId,
+                    "charge_generated",
+                    lang == "fr" ? "Nouvelle cotisation" : "New charge",
+                    lang == "fr"
+                        ? $"Une nouvelle cotisation {typeName} de {amount} vous a été générée. Échéance : {dueDate:dd/MM/yyyy}."
+                        : $"A new charge {typeName} of {amount} has been generated for you. Due: {dueDate:dd/MM/yyyy}.",
+                    ct);
+            });
+            await Task.WhenAll(notifTasks);
         }
         catch (Exception ex)
         {

@@ -69,4 +69,8 @@ export class ContributionsApiService {
   bulkGenerate(dto: BulkGenerateRequest): Observable<{ generated: number }> {
     return this.http.post<{ generated: number }>(`${this.base}/contribution-charges/bulk-generate`, dto);
   }
+
+  sendReminders(): Observable<{ sent: number }> {
+    return this.http.post<{ sent: number }>(`${this.base}/contribution-charges/send-reminders`, {});
+  }
 }

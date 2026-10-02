@@ -469,7 +469,9 @@
     "no_charges": "No charges found",
     "penalty": "Penalty",
     "waiver": "Waiver",
-    "total_due": "Total due"
+    "total_due": "Total due",
+    "send_reminders": "Send reminders",
+    "send_reminders_tooltip": "Send in-app and email reminders to members with overdue charges"
   },
   "payments": {
     "title": "Payments",

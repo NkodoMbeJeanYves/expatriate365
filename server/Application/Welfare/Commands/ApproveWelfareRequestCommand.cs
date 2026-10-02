@@ -5,6 +5,7 @@ using server.Application.Common;
 using server.Application.Welfare.DTOs;
 using server.Application.Welfare.Queries;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Welfare.Commands;
 
@@ -19,7 +20,7 @@ public class ApproveWelfareRequestValidator : AbstractValidator<ApproveWelfareRe
     }
 }
 
-public class ApproveWelfareRequestCommandHandler(AppDbContext db, ILogger<ApproveWelfareRequestCommandHandler> log)
+public class ApproveWelfareRequestCommandHandler(AppDbContext db, ILogger<ApproveWelfareRequestCommandHandler> log, INotificationService notif)
     : IRequestHandler<ApproveWelfareRequestCommand, ServiceResult<WelfareRequestDto>>
 {
     public async Task<ServiceResult<WelfareRequestDto>> Handle(ApproveWelfareRequestCommand request, CancellationToken ct)
@@ -39,6 +40,15 @@ public class ApproveWelfareRequestCommandHandler(AppDbContext db, ILogger<Approv
 
         await db.SaveChangesAsync(ct);
         log.LogInformation("WelfareRequest {Id} approved for {Amount}", request.Id, request.Dto.AmountApproved);
+
+        var lang = welfare.Member.User.PreferredLanguage ?? "fr";
+        _ = notif.NotifyAsync(welfare.TenantId, welfare.Member.UserId,
+            "welfare_update",
+            lang == "fr" ? "Demande d'aide approuvée" : "Welfare request approved",
+            lang == "fr"
+                ? $"Votre demande d'aide a été approuvée. Montant accordé : {request.Dto.AmountApproved}."
+                : $"Your welfare request has been approved. Amount granted: {request.Dto.AmountApproved}.",
+            ct);
 
         return ServiceResult<WelfareRequestDto>.Success(ListWelfareRequestsQueryHandler.ToDto(welfare));
     }

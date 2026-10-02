@@ -5,6 +5,7 @@ using server.Application.Common;
 using server.Application.Events.DTOs;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Events.Commands;
 
@@ -61,7 +62,7 @@ public class RegisterToEventCommandHandler(AppDbContext db, ILogger<RegisterToEv
     }
 }
 
-public class CancelRegistrationCommandHandler(AppDbContext db, ILogger<CancelRegistrationCommandHandler> log)
+public class CancelRegistrationCommandHandler(AppDbContext db, ILogger<CancelRegistrationCommandHandler> log, INotificationService notif)
     : IRequestHandler<CancelRegistrationCommand, ServiceResult<EventRegistrationDto>>
 {
     public async Task<ServiceResult<EventRegistrationDto>> Handle(CancelRegistrationCommand request, CancellationToken ct)
@@ -93,6 +94,21 @@ public class CancelRegistrationCommandHandler(AppDbContext db, ILogger<CancelReg
                     nextWaiting.Status = "registered";
                     nextWaiting.UpdatedAt = DateTime.UtcNow;
                     log.LogInformation("Promoted waitlisted member {MemberId} to registered for event {EventId}", nextWaiting.MemberId, request.EventId);
+
+                    // Notify promoted member
+                    var promotedMember = await db.Members.Include(m => m.User)
+                        .FirstOrDefaultAsync(m => m.Id == nextWaiting.MemberId && m.TenantId == request.TenantId, ct);
+                    if (promotedMember is not null)
+                    {
+                        var lang = promotedMember.User.PreferredLanguage ?? "fr";
+                        _ = notif.NotifyAsync(request.TenantId, promotedMember.UserId,
+                            "event_invite",
+                            lang == "fr" ? "Place disponible — vous êtes inscrit(e) !" : "Spot available — you are registered!",
+                            lang == "fr"
+                                ? "Une place s'est libérée. Vous avez été transféré(e) de la liste d'attente vers les inscrits."
+                                : "A spot has opened up. You have been moved from the waitlist to registered.",
+                            ct);
+                    }
                 }
             }
         }
