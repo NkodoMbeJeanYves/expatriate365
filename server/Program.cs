@@ -92,6 +92,8 @@ try
     builder.Services.AddSingleton<JwtService>();
     builder.Services.AddScoped<server.Infrastructure.Services.AuditService>();
     builder.Services.AddScoped<server.Infrastructure.Services.PermissionResolverService>();
+    builder.Services.AddScoped<server.Infrastructure.Services.INotificationService,
+        server.Infrastructure.Services.NotificationService>();
 
     var jwtSecret = builder.Configuration["Jwt:SecretKey"]
         ?? throw new InvalidOperationException("Jwt:SecretKey not configured");
