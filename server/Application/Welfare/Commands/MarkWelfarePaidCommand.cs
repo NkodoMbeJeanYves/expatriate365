@@ -4,13 +4,14 @@ using server.Application.Common;
 using server.Application.Welfare.DTOs;
 using server.Application.Welfare.Queries;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Welfare.Commands;
 
 public record MarkWelfarePaidCommand(Guid TenantId, Guid Id, Guid PaidBy)
     : IRequest<ServiceResult<WelfareRequestDto>>;
 
-public class MarkWelfarePaidCommandHandler(AppDbContext db, ILogger<MarkWelfarePaidCommandHandler> log)
+public class MarkWelfarePaidCommandHandler(AppDbContext db, ILogger<MarkWelfarePaidCommandHandler> log, INotificationService notif)
     : IRequestHandler<MarkWelfarePaidCommand, ServiceResult<WelfareRequestDto>>
 {
     public async Task<ServiceResult<WelfareRequestDto>> Handle(MarkWelfarePaidCommand request, CancellationToken ct)
@@ -29,6 +30,15 @@ public class MarkWelfarePaidCommandHandler(AppDbContext db, ILogger<MarkWelfareP
 
         await db.SaveChangesAsync(ct);
         log.LogInformation("WelfareRequest {Id} marked paid", request.Id);
+
+        var userId = welfare.Member?.UserId;
+        if (userId.HasValue && userId.Value != Guid.Empty)
+        {
+            _ = notif.NotifyAsync(request.TenantId, userId.Value, "welfare_update",
+                "Payment Received",
+                $"Your welfare payment of {welfare.AmountPaid:C} has been disbursed.",
+                ct);
+        }
 
         return ServiceResult<WelfareRequestDto>.Success(ListWelfareRequestsQueryHandler.ToDto(welfare));
     }

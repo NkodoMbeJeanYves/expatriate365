@@ -13,6 +13,7 @@ public record EventDto(
     int? MaxCapacity,
     int RegistrationCount,
     int AttendedCount,
+    int WaitlistCount,
     bool IsPublic,
     string CreatedAt,
     string? UpdatedAt

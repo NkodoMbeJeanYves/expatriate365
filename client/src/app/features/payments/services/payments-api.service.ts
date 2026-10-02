@@ -49,4 +49,9 @@ export class PaymentsApiService {
     fd.append('file', file);
     return this.http.post<{ receipt_file_url: string }>(`${this.base}/${id}/receipt`, fd);
   }
+
+  /** Opens the server-generated HTML receipt in a new tab (printable as PDF). */
+  openReceiptPage(id: string): void {
+    window.open(`${this.base}/${id}/receipt`, '_blank');
+  }
 }

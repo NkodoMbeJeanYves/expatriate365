@@ -69,11 +69,12 @@ public class CreateContributionChargeCommandHandler(
         log.LogInformation("ContributionCharge {Id} created for member {MemberId}", charge.Id, memberId);
 
         var memberName = $"{member.User.FirstName} {member.User.LastName}";
+        var lang = member.User.PreferredLanguage ?? "fr";
         if (!string.IsNullOrWhiteSpace(member.User.ContactEmail))
         _ = emailService.SendAsync(
             member.User.ContactEmail, memberName,
-            "Nouvelle échéance de cotisation",
-            EmailTemplates.ChargeGenerated(memberName, type.Name, amount, dueDate.ToString("dd/MM/yyyy")),
+            EmailTemplates.Subjects.ChargeGenerated(lang),
+            EmailTemplates.ChargeGenerated(memberName, type.Name, amount, dueDate.ToString("dd/MM/yyyy"), lang),
             ct);
 
         return ServiceResult<ContributionChargeDto>.Success(new ContributionChargeDto(

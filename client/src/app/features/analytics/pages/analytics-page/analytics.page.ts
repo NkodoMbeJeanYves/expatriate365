@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
 import { forkJoin } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ChartModule } from 'primeng/chart';
 import {
@@ -14,7 +16,7 @@ import { AnalyticsApiService } from '../../services/analytics-api.service';
   selector: 'app-analytics-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AppCurrencyPipe, ButtonModule, ProgressSpinnerModule, ChartModule, TranslatePipe],
+  imports: [FormsModule, AppCurrencyPipe, ButtonModule, SelectModule, ProgressSpinnerModule, ChartModule, TranslatePipe],
   template: `
     <div class="p-6 flex flex-col gap-8">
       <div class="flex items-center justify-between">
@@ -22,7 +24,20 @@ import { AnalyticsApiService } from '../../services/analytics-api.service';
           <h1 class="text-2xl font-bold text-gray-800">{{ 'analytics.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'analytics.subtitle' | translate }}</p>
         </div>
-        <p-button icon="pi pi-refresh" severity="secondary" [label]="'common.refresh' | translate" (onClick)="load()" />
+        <div class="flex items-center gap-3 flex-wrap">
+          <p-select [options]="rangeOptions" [(ngModel)]="selectedRange" optionLabel="label" optionValue="value"
+            (onChange)="onRangeChange()" styleClass="text-sm" />
+          @if (selectedRange === 'custom') {
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <input type="date" [(ngModel)]="customFrom" (change)="load()"
+                class="border border-gray-200 rounded-lg px-2 py-1 text-sm" />
+              <span>–</span>
+              <input type="date" [(ngModel)]="customTo" (change)="load()"
+                class="border border-gray-200 rounded-lg px-2 py-1 text-sm" />
+            </div>
+          }
+          <p-button icon="pi pi-refresh" severity="secondary" (onClick)="load()" />
+        </div>
       </div>
 
       @if (loading()) {
@@ -124,6 +139,39 @@ export class AnalyticsPage implements OnInit {
   private readonly translate = inject(TranslateService);
 
   readonly loading = signal(true);
+
+  selectedRange = '12m';
+  customFrom = '';
+  customTo = '';
+
+  get rangeOptions() {
+    return [
+      { label: this.translate.instant('analytics.range_12m'), value: '12m' },
+      { label: this.translate.instant('analytics.range_6m'),  value: '6m' },
+      { label: this.translate.instant('analytics.range_3m'),  value: '3m' },
+      { label: this.translate.instant('analytics.range_ytd'), value: 'ytd' },
+      { label: this.translate.instant('analytics.range_custom'), value: 'custom' },
+    ];
+  }
+
+  onRangeChange(): void {
+    if (this.selectedRange !== 'custom') this.load();
+  }
+
+  private getDateRange(): { from?: string; to?: string } {
+    const now = new Date();
+    const toStr = now.toISOString().slice(0, 10);
+    if (this.selectedRange === 'custom') {
+      return { from: this.customFrom || undefined, to: this.customTo || undefined };
+    }
+    const months = this.selectedRange === '3m' ? 3 : this.selectedRange === '6m' ? 6 : 12;
+    if (this.selectedRange === 'ytd') {
+      return { from: `${now.getFullYear()}-01-01`, to: toStr };
+    }
+    const from = new Date(now);
+    from.setMonth(from.getMonth() - months);
+    return { from: from.toISOString().slice(0, 10), to: toStr };
+  }
   readonly overview = signal<AnalyticsOverviewDto | null>(null);
   readonly members = signal<MemberAnalyticsDto | null>(null);
   readonly finance = signal<FinanceAnalyticsDto | null>(null);
@@ -168,11 +216,12 @@ export class AnalyticsPage implements OnInit {
 
   load(): void {
     this.loading.set(true);
+    const range = this.getDateRange();
     forkJoin({
       overview: this.api.overview(),
-      members: this.api.members(),
-      finance: this.api.finance(),
-      engagement: this.api.engagement(),
+      members: this.api.members(range),
+      finance: this.api.finance(range),
+      engagement: this.api.engagement(range),
     }).subscribe({
       next: ({ overview, members, finance, engagement }) => {
         this.overview.set(overview);

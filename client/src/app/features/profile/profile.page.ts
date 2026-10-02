@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
@@ -17,7 +18,7 @@ import { PERMISSIONS } from '@core/auth/models/permission.model';
   selector: 'app-profile',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, PasswordModule, TranslatePipe, PageHeaderComponent],
+  imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, PasswordModule, TranslatePipe, PageHeaderComponent, LangSwitcherComponent],
   template: `
     <div class="p-6 max-w-2xl mx-auto">
       <app-page-header
@@ -66,6 +67,15 @@ import { PERMISSIONS } from '@core/auth/models/permission.model';
               [loading]="saving()" [disabled]="form.invalid || form.pristine" />
           </div>
         </form>
+      </div>
+
+      <!-- Language preference -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mt-4">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-1">
+          {{ 'profile.language' | translate }}
+        </h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ 'profile.language_hint' | translate }}</p>
+        <app-lang-switcher />
       </div>
 
       <!-- Membership card (only for members with membership.read_own) -->

@@ -40,8 +40,9 @@ public class ListEventsQueryHandler(AppDbContext db)
         e.Type, e.Status, e.Location,
         e.StartDate.ToString("O"), e.EndDate.ToString("O"),
         e.MaxCapacity,
-        e.Registrations.Count(r => r.Status != "cancelled" && r.IsActive),
+        e.Registrations.Count(r => r.Status is "registered" or "attended" && r.IsActive),
         e.Registrations.Count(r => r.Status == "attended"),
+        e.Registrations.Count(r => r.Status == "waitlisted" && r.IsActive),
         e.IsPublic,
         e.CreatedAt.ToString("O"), e.UpdatedAt?.ToString("O"));
 }

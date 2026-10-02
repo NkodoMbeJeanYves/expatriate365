@@ -20,4 +20,8 @@ export class SuperAdminApiService {
   toggleTenantActive(id: string): Observable<TenantSummaryDto> {
     return this.http.patch<TenantSummaryDto>(`${this.base}/tenants/${id}/toggle-active`, {});
   }
+
+  downloadBackup(): Observable<Blob> {
+    return this.http.get(`${this.base}/backup`, { responseType: 'blob' });
+  }
 }

@@ -22,6 +22,7 @@ public class User
     public DateTime? PasswordResetTokenExpiresAt { get; set; }
     public string? ActivationTokenHash { get; set; }
     public DateTime? ActivationTokenExpiresAt { get; set; }
+    public string PreferredLanguage { get; set; } = "fr";
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

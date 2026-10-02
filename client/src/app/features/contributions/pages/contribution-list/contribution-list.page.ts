@@ -57,6 +57,12 @@ import { PageChangeEvent } from '@shared/components/paginator/app-paginator.comp
               <i [class]="exporting() ? 'pi pi-spin pi-spinner text-sm' : 'pi pi-download text-sm'"></i>
               <span class="hidden sm:inline">Export CSV</span>
             </button>
+            <button (click)="sendReminders()" [disabled]="sendingReminders()"
+              class="inline-flex items-center gap-2 px-4 py-2.5 border border-amber-300 rounded-xl text-sm font-medium text-amber-700 hover:bg-amber-50 bg-white shadow-sm disabled:opacity-50"
+              [title]="'contributions.send_reminders_tooltip' | translate">
+              <i [class]="sendingReminders() ? 'pi pi-spin pi-spinner text-sm' : 'pi pi-bell text-sm'"></i>
+              <span class="hidden sm:inline">{{ 'contributions.send_reminders' | translate }}</span>
+            </button>
             <button (click)="openPlan()" class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 bg-white shadow-sm">
               <i class="pi pi-cog text-sm"></i>
               <span class="hidden sm:inline">Plans</span>
@@ -346,6 +352,7 @@ export class ContributionListPageComponent implements OnInit {
   printing = signal(false);
   exporting = signal(false);
   reportLoading = signal(false);
+  sendingReminders = signal(false);
   reportCharges = signal<ContributionCharge[]>([]);
 
   readonly reportByType = computed(() => {
@@ -602,6 +609,17 @@ ${stats ? `
     this.api.getCharges(1, 1000).subscribe({
       next: (res) => { this.reportCharges.set(res.data); this.reportLoading.set(false); },
       error: () => this.reportLoading.set(false),
+    });
+  }
+
+  sendReminders() {
+    this.sendingReminders.set(true);
+    this.api.sendReminders().subscribe({
+      next: (res) => {
+        this.sendingReminders.set(false);
+        alert(`${res.sent} rappel(s) envoyé(s).`);
+      },
+      error: () => this.sendingReminders.set(false),
     });
   }
 

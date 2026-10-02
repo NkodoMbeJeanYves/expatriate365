@@ -10,7 +10,7 @@ using server.Infrastructure.Services;
 
 namespace server.Application.Members.Commands;
 
-public record CreateMemberCommand(Guid TenantId, CreateMemberRequest Dto)
+public record CreateMemberCommand(Guid TenantId, CreateMemberRequest Dto, string Lang = "fr")
     : IRequest<ServiceResult<MemberDto>>;
 
 public class CreateMemberCommandValidator : AbstractValidator<CreateMemberCommand>
@@ -107,11 +107,12 @@ public class CreateMemberCommandHandler(
             await db.SaveChangesAsync(ct);
 
             var setPasswordUrl = $"{baseUrl}/set-password?token={plainToken}";
+            var lang = request.Lang;
             _ = emailService.SendAsync(
                 user.ContactEmail,
                 user.FullName,
-                $"Activez votre compte — {tenant?.Name ?? "l'association"}",
-                EmailTemplates.MemberInvitation(user.FullName, tenant?.Name ?? "", setPasswordUrl),
+                EmailTemplates.Subjects.MemberInvitation(tenant?.Name ?? "", lang),
+                EmailTemplates.MemberInvitation(user.FullName, tenant?.Name ?? "", setPasswordUrl, lang),
                 ct);
         }
 

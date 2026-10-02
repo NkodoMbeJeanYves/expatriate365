@@ -25,11 +25,15 @@ public class GetFinanceSummaryQueryHandler(AppDbContext db)
 
         var txCount = await db.Payments.CountAsync(p => p.TenantId == request.TenantId && p.IsActive, ct);
 
+        var totalExpenses = await db.Expenses
+            .Where(e => e.TenantId == request.TenantId && e.IsActive && e.Status == "validated")
+            .SumAsync(e => (decimal?)e.Amount, ct) ?? 0;
+
         var collected = charges?.Collected ?? 0;
         var expected = charges?.Expected ?? 0;
         var rate = expected > 0 ? Math.Round(collected / expected * 100, 1) : 0;
 
-        return new FinanceSummaryDto(collected, expected, collected - expected, rate, txCount);
+        return new FinanceSummaryDto(collected, expected, collected - expected, rate, txCount, totalExpenses, collected - totalExpenses);
     }
 }
 

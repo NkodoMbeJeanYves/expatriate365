@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject, Service } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import { NotificationsResponse } from '@models/notification.model';
@@ -16,10 +16,23 @@ export class NotificationsApiService {
   }
 
   markRead(id: string): Observable<void> {
-    return this.http.post<void>(`${this.base}/${id}/read`, {});
+    return this.http.patch<void>(`${this.base}/${id}/read`, {});
   }
 
   markAllRead(): Observable<{ marked: number }> {
     return this.http.post<{ marked: number }>(`${this.base}/read-all`, {});
   }
+
+  getPreferences(): Observable<NotificationPreferenceDto[]> {
+    return this.http.get<NotificationPreferenceDto[]>(`${this.base}/preferences`);
+  }
+
+  updatePreferences(prefs: NotificationPreferenceDto[]): Observable<NotificationPreferenceDto[]> {
+    return this.http.put<NotificationPreferenceDto[]>(`${this.base}/preferences`, { preferences: prefs });
+  }
+}
+
+export interface NotificationPreferenceDto {
+  type: string;
+  enabled: boolean;
 }

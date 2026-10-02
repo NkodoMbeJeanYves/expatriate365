@@ -7,7 +7,7 @@ using server.Infrastructure.Persistence;
 namespace server.Application.Documents.Queries;
 
 public record ListDocumentsQuery(
-    Guid TenantId, int Page, int Limit, string? Type, string? Category, string? Search
+    Guid TenantId, int Page, int Limit, string? Type, string? Category, string? Search, bool IsBoardMember = false
 ) : IRequest<PagedResult<DocumentDto>>;
 
 public class ListDocumentsQueryHandler(AppDbContext db)
@@ -19,6 +19,10 @@ public class ListDocumentsQueryHandler(AppDbContext db)
             .Include(d => d.Uploader)
             .Where(d => d.TenantId == request.TenantId && d.IsActive)
             .AsQueryable();
+
+        // Visibility enforcement: regular members cannot see board-only documents
+        if (!request.IsBoardMember)
+            query = query.Where(d => d.Visibility != "board" && !(string.IsNullOrEmpty(d.Visibility) && !d.IsPublic));
 
         if (!string.IsNullOrWhiteSpace(request.Type))
             query = query.Where(d => d.Type == request.Type);
@@ -40,6 +44,7 @@ public class ListDocumentsQueryHandler(AppDbContext db)
     internal static DocumentDto ToDto(Domain.Entities.Document d) => new(
         d.Id.ToString(), d.TenantId.ToString(), d.Title, d.Description,
         d.Type, d.Category, d.FileName, d.FileUrl, d.FileSizeBytes, d.MimeType, d.IsPublic,
+        string.IsNullOrEmpty(d.Visibility) ? (d.IsPublic ? "public" : "members") : d.Visibility,
         d.UploadedBy.ToString(), $"{d.Uploader.FirstName} {d.Uploader.LastName}",
         d.CreatedAt.ToString("O"), d.UpdatedAt?.ToString("O"));
 }

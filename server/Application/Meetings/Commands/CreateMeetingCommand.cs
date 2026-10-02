@@ -59,21 +59,26 @@ public class CreateMeetingCommandHandler(
         {
             var users = await db.Users
                 .Where(u => u.TenantId == tenantId && u.IsActive && u.ContactEmail != null && u.ContactEmail != "")
-                .Select(u => new { FullName = u.FirstName + " " + u.LastName, NotifEmail = u.ContactEmail! })
+                .Select(u => new { FullName = u.FirstName + " " + u.LastName, NotifEmail = u.ContactEmail!, u.PreferredLanguage })
                 .ToListAsync(ct);
 
             var tenant    = await db.Tenants.FindAsync([tenantId], ct);
             var assocName = tenant?.Name ?? "Expatriate365";
             var agendaUrl = $"{baseUrl}/meetings/{meeting.Id}";
-            var dateStr   = meeting.ScheduledAt.ToString("dddd d MMMM yyyy à HH:mm", new System.Globalization.CultureInfo("fr-FR"));
-            var location  = meeting.Location ?? "À définir";
+            var rawLocation = meeting.Location ?? string.Empty;
 
-            var tasks = users.Select(u => emailService.SendAsync(
-                u.NotifEmail,
-                u.FullName,
-                $"[{assocName}] Convocation : {meeting.Title}",
-                EmailTemplates.MeetingConvocation(u.FullName, meeting.Title, dateStr, location, assocName, agendaUrl),
-                ct));
+            var tasks = users.Select(u =>
+            {
+                var lang    = u.PreferredLanguage ?? "fr";
+                var culture = lang == "en" ? new System.Globalization.CultureInfo("en-GB") : new System.Globalization.CultureInfo("fr-FR");
+                var dateStr = meeting.ScheduledAt.ToString("dddd d MMMM yyyy HH:mm", culture);
+                var loc     = string.IsNullOrWhiteSpace(rawLocation) ? (lang == "en" ? "TBD" : "À définir") : rawLocation;
+                return emailService.SendAsync(
+                    u.NotifEmail, u.FullName,
+                    EmailTemplates.Subjects.MeetingConvocation(assocName, meeting.Title, lang),
+                    EmailTemplates.MeetingConvocation(u.FullName, meeting.Title, dateStr, loc, assocName, agendaUrl, lang),
+                    ct);
+            });
 
             await Task.WhenAll(tasks);
             log.LogInformation("Meeting convocations sent to {Count} members for meeting {Id}", users.Count, meeting.Id);

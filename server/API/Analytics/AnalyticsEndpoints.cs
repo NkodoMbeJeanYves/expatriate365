@@ -18,25 +18,28 @@ public static class AnalyticsEndpoints
             return Results.Ok(await mediator.Send(new GetAnalyticsOverviewQuery(tenantId.Value)));
         }).RequireAuthorization(Permissions.DashboardRead);
 
-        group.MapGet("/members", async (ClaimsPrincipal principal, IMediator mediator) =>
+        group.MapGet("/members", async (ClaimsPrincipal principal, IMediator mediator,
+            string? from = null, string? to = null) =>
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            return Results.Ok(await mediator.Send(new GetMemberAnalyticsQuery(tenantId.Value)));
+            return Results.Ok(await mediator.Send(new GetMemberAnalyticsQuery(tenantId.Value, ParseDate(from), ParseDate(to))));
         }).RequireAuthorization(Permissions.DashboardMembers);
 
-        group.MapGet("/finance", async (ClaimsPrincipal principal, IMediator mediator) =>
+        group.MapGet("/finance", async (ClaimsPrincipal principal, IMediator mediator,
+            string? from = null, string? to = null) =>
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            return Results.Ok(await mediator.Send(new GetFinanceAnalyticsQuery(tenantId.Value)));
+            return Results.Ok(await mediator.Send(new GetFinanceAnalyticsQuery(tenantId.Value, ParseDate(from), ParseDate(to))));
         }).RequireAuthorization(Permissions.DashboardFinancial);
 
-        group.MapGet("/engagement", async (ClaimsPrincipal principal, IMediator mediator) =>
+        group.MapGet("/engagement", async (ClaimsPrincipal principal, IMediator mediator,
+            string? from = null, string? to = null) =>
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            return Results.Ok(await mediator.Send(new GetEngagementAnalyticsQuery(tenantId.Value)));
+            return Results.Ok(await mediator.Send(new GetEngagementAnalyticsQuery(tenantId.Value, ParseDate(from), ParseDate(to))));
         }).RequireAuthorization(Permissions.DashboardRead);
     }
 
@@ -45,4 +48,7 @@ public static class AnalyticsEndpoints
         var claim = principal.FindFirst("tenant_id")?.Value;
         return Guid.TryParse(claim, out var id) ? id : null;
     }
+
+    private static DateTime? ParseDate(string? s) =>
+        s is not null && DateTime.TryParse(s, out var d) ? d : null;
 }

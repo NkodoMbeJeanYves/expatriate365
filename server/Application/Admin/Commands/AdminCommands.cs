@@ -5,40 +5,66 @@ using server.Application.Admin.Queries;
 using server.Application.Common;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Admin.Commands;
 
-public record InviteUserCommand(Guid TenantId, InviteUserRequest Request)
+public record InviteUserCommand(Guid TenantId, InviteUserRequest Request, string Lang = "fr")
     : IRequest<ServiceResult<AdminUserDto>>;
 
-public class InviteUserCommandHandler(AppDbContext db)
+public class InviteUserCommandHandler(
+    AppDbContext db,
+    IEmailService emailService,
+    IConfiguration config,
+    ILogger<InviteUserCommandHandler> log)
     : IRequestHandler<InviteUserCommand, ServiceResult<AdminUserDto>>
 {
     public async Task<ServiceResult<AdminUserDto>> Handle(InviteUserCommand request, CancellationToken ct)
     {
         var req = request.Request;
-        var existing = await db.Users.FirstOrDefaultAsync(u => u.Email == req.Email.ToLowerInvariant(), ct);
+        var email = req.Email.ToLowerInvariant();
+
+        var existing = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
         if (existing is not null)
             return ServiceResult<AdminUserDto>.Failure("Un utilisateur avec cet email existe déjà.");
 
-        // Temporary password — user must reset on first login in a real implementation
-        var tempPassword = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N")[..12]);
+        var tenant = await db.Tenants.FindAsync([request.TenantId], ct);
+
+        var (plainToken, tokenHash) = TokenGenerator.Generate();
 
         var user = new User
         {
-            Id = Guid.NewGuid(),
-            TenantId = request.TenantId,
-            Email = req.Email.ToLowerInvariant(),
-            FirstName = req.FirstName,
-            LastName = req.LastName,
-            Phone = req.Phone,
-            Role = req.Role,
-            PasswordHash = tempPassword,
-            Status = "pending",
-            IsActive = true,
+            Id                       = Guid.NewGuid(),
+            TenantId                 = request.TenantId,
+            Email                    = email,
+            ContactEmail             = email,
+            FirstName                = req.FirstName,
+            LastName                 = req.LastName,
+            Phone                    = req.Phone,
+            Role                     = req.Role,
+            PasswordHash             = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
+            Status                   = "pending",
+            IsActive                 = true,
+            ActivationTokenHash      = tokenHash,
+            ActivationTokenExpiresAt = DateTime.UtcNow.AddHours(72),
         };
+
         db.Users.Add(user);
         await db.SaveChangesAsync(ct);
+
+        var baseUrl       = config["FrontendBaseUrl"] ?? config["App:BaseUrl"] ?? "https://app.expatriate365.mu";
+        var setPasswordUrl = $"{baseUrl}/set-password?token={plainToken}";
+        var lang          = request.Lang;
+        var assocName     = tenant?.Name ?? "";
+
+        _ = emailService.SendAsync(
+            email, user.FullName,
+            EmailTemplates.Subjects.MemberInvitation(assocName, lang),
+            EmailTemplates.MemberInvitation(user.FullName, assocName, setPasswordUrl, lang),
+            ct);
+
+        log.LogInformation("User {UserId} ({Role}) invited to tenant {TenantId}", user.Id, user.Role, request.TenantId);
+
         return ServiceResult<AdminUserDto>.Success(ListAdminUsersQueryHandler.ToDto(user));
     }
 }

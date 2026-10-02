@@ -69,21 +69,26 @@ public class CreateEventCommandHandler(
         {
             var users = await db.Users
                 .Where(u => u.TenantId == tenantId && u.IsActive && u.ContactEmail != null && u.ContactEmail != "")
-                .Select(u => new { FullName = u.FirstName + " " + u.LastName, NotifEmail = u.ContactEmail! })
+                .Select(u => new { FullName = u.FirstName + " " + u.LastName, NotifEmail = u.ContactEmail!, u.PreferredLanguage })
                 .ToListAsync(ct);
 
             var tenant = await db.Tenants.FindAsync([tenantId], ct);
-            var assocName  = tenant?.Name ?? "Expatriate365";
-            var eventUrl   = $"{baseUrl}/events/{ev.Id}";
-            var dateStr    = ev.StartDate.ToString("dddd d MMMM yyyy à HH:mm", new System.Globalization.CultureInfo("fr-FR"));
-            var location   = ev.Location ?? "À définir";
+            var assocName = tenant?.Name ?? "Expatriate365";
+            var eventUrl  = $"{baseUrl}/events/{ev.Id}";
+            var location  = ev.Location ?? (string.Empty);
 
-            var tasks = users.Select(u => emailService.SendAsync(
-                u.NotifEmail,
-                u.FullName,
-                $"[{assocName}] Événement : {ev.Title}",
-                EmailTemplates.EventInvite(u.FullName, ev.Title, dateStr, location, assocName, eventUrl),
-                ct));
+            var tasks = users.Select(u =>
+            {
+                var lang    = u.PreferredLanguage ?? "fr";
+                var culture = lang == "en" ? new System.Globalization.CultureInfo("en-GB") : new System.Globalization.CultureInfo("fr-FR");
+                var dateStr = ev.StartDate.ToString("dddd d MMMM yyyy HH:mm", culture);
+                var loc     = string.IsNullOrWhiteSpace(location) ? (lang == "en" ? "TBD" : "À définir") : location;
+                return emailService.SendAsync(
+                    u.NotifEmail, u.FullName,
+                    EmailTemplates.Subjects.EventInvite(assocName, ev.Title, lang),
+                    EmailTemplates.EventInvite(u.FullName, ev.Title, dateStr, loc, assocName, eventUrl, lang),
+                    ct);
+            });
 
             await Task.WhenAll(tasks);
             log.LogInformation("Event notifications sent to {Count} members for event {Id}", users.Count, ev.Id);

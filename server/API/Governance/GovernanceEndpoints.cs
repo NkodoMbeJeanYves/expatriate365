@@ -92,6 +92,15 @@ public static class GovernanceEndpoints
             return Results.Ok(new { is_board_member = isBoardMember });
         }).RequireAuthorization();
 
+        grp.MapPut("/board/{id:guid}", async (Guid id, UpdateBoardMemberRequest req, ClaimsPrincipal p, IMediator m) =>
+        {
+            var tid = GetTenantId(p); if (tid is null) return Results.Unauthorized();
+            var result = await m.Send(new UpdateBoardMemberCommand(tid.Value, id, req));
+            return result.IsSuccess
+                ? Results.Ok(result.Data)
+                : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.RolesAssign);
+
         grp.MapDelete("/board/{id:guid}", async (Guid id, ClaimsPrincipal p, IMediator m) =>
         {
             var tid = GetTenantId(p); if (tid is null) return Results.Unauthorized();

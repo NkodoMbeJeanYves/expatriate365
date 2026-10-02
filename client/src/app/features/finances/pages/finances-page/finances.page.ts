@@ -62,6 +62,21 @@ import { FinancesApiService } from '../../services/finances-api.service';
             <div class="text-2xl font-bold text-gray-700">{{ summary()!.total_transactions }}</div>
             <div class="text-xs text-gray-500 mt-1">{{ 'finances.transactions' | translate }}</div>
           </div>
+          @if (summary()!.total_expenses > 0) {
+            <div class="bg-orange-50 rounded-xl p-4 border border-orange-100 shadow-sm text-center">
+              <div class="text-2xl font-bold text-orange-700">{{ summary()!.total_expenses | appCurrency }}</div>
+              <div class="text-xs text-orange-600 mt-1">{{ 'finances.expenses_validated' | translate }}</div>
+            </div>
+            <div class="rounded-xl p-4 border shadow-sm text-center"
+              [class]="summary()!.net_balance >= 0 ? 'bg-teal-50 border-teal-100' : 'bg-red-50 border-red-100'">
+              <div class="text-2xl font-bold" [class]="summary()!.net_balance >= 0 ? 'text-teal-700' : 'text-red-600'">
+                {{ summary()!.net_balance | appCurrency }}
+              </div>
+              <div class="text-xs mt-1" [class]="summary()!.net_balance >= 0 ? 'text-teal-600' : 'text-red-500'">
+                {{ 'finances.net_balance' | translate }}
+              </div>
+            </div>
+          }
         </div>
 
         <!-- Barre de progression -->

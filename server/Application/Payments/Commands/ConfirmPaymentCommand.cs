@@ -14,7 +14,8 @@ public record ConfirmPaymentCommand(Guid TenantId, Guid PaymentId, Guid Confirme
 public class ConfirmPaymentCommandHandler(
     AppDbContext db,
     ILogger<ConfirmPaymentCommandHandler> log,
-    IEmailService emailService)
+    IEmailService emailService,
+    INotificationService notif)
     : IRequestHandler<ConfirmPaymentCommand, ServiceResult<PaymentDto>>
 {
     public async Task<ServiceResult<PaymentDto>> Handle(ConfirmPaymentCommand request, CancellationToken ct)
@@ -47,11 +48,21 @@ public class ConfirmPaymentCommandHandler(
         log.LogInformation("Payment {Id} confirmed by {UserId}", payment.Id, request.ConfirmedBy);
 
         var memberName = $"{payment.Member.User.FirstName} {payment.Member.User.LastName}";
+        var lang = payment.Member.User.PreferredLanguage ?? "fr";
         if (!string.IsNullOrWhiteSpace(payment.Member.User.ContactEmail))
-        _ = emailService.SendAsync(
-            payment.Member.User.ContactEmail, memberName,
-            "Paiement confirmé",
-            EmailTemplates.PaymentConfirmed(memberName, payment.Charge.ContributionType.Name, payment.Amount, payment.ReceiptNumber),
+            _ = emailService.SendAsync(
+                payment.Member.User.ContactEmail, memberName,
+                EmailTemplates.Subjects.PaymentConfirmed(lang),
+                EmailTemplates.PaymentConfirmed(memberName, payment.Charge.ContributionType.Name, payment.Amount, payment.ReceiptNumber, lang),
+                ct);
+
+        // In-app notification
+        _ = notif.NotifyAsync(payment.TenantId, payment.Member.UserId,
+            "payment_confirmed",
+            lang == "fr" ? "Paiement confirmé" : "Payment confirmed",
+            lang == "fr"
+                ? $"Votre paiement de {payment.Amount} ({payment.Charge.ContributionType.Name}) a été confirmé. Reçu : {payment.ReceiptNumber}."
+                : $"Your payment of {payment.Amount} ({payment.Charge.ContributionType.Name}) has been confirmed. Receipt: {payment.ReceiptNumber}.",
             ct);
 
         return ServiceResult<PaymentDto>.Success(ListPaymentsQueryHandler.ToDto(payment));

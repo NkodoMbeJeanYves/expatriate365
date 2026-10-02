@@ -10,6 +10,7 @@ export interface DocumentDto {
   file_size_bytes: number;
   mime_type: string;
   is_public: boolean;
+  visibility: string;
   uploaded_by: string;
   uploader_name: string;
   created_at: string;
@@ -38,6 +39,7 @@ export interface CreateDocumentRequest {
   file_size_bytes: number;
   mime_type: string;
   is_public: boolean;
+  visibility?: string;
 }
 
 export interface UpdateDocumentRequest {
@@ -46,6 +48,7 @@ export interface UpdateDocumentRequest {
   type: string;
   category: string;
   is_public: boolean;
+  visibility?: string;
 }
 
 export interface DocumentFilters {

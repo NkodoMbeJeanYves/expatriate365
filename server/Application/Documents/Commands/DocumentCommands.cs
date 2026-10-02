@@ -29,7 +29,8 @@ public class CreateDocumentCommandHandler(AppDbContext db)
             FileUrl = req.FileUrl,
             FileSizeBytes = req.FileSizeBytes,
             MimeType = req.MimeType,
-            IsPublic = req.IsPublic,
+            IsPublic = req.Visibility == "public",
+            Visibility = req.Visibility,
             UploadedBy = request.UploadedBy,
         };
         db.Documents.Add(doc);
@@ -59,7 +60,8 @@ public class UpdateDocumentCommandHandler(AppDbContext db)
         doc.Description = req.Description;
         doc.Type = req.Type;
         doc.Category = req.Category;
-        doc.IsPublic = req.IsPublic;
+        doc.IsPublic = req.Visibility == "public";
+        doc.Visibility = req.Visibility;
         await db.SaveChangesAsync(ct);
 
         return ServiceResult<DocumentDto>.Success(ListDocumentsQueryHandler.ToDto(doc));

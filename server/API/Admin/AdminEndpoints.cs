@@ -32,7 +32,8 @@ public static class AdminEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            var result = await mediator.Send(new InviteUserCommand(tenantId.Value, request));
+            var lang = principal.FindFirstValue("preferred_language") ?? "fr";
+            var result = await mediator.Send(new InviteUserCommand(tenantId.Value, request, lang));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/admin/users/{result.Data!.Id}", result.Data)
                 : Results.Conflict(new { error = result.ErrorMessage });

@@ -5,6 +5,7 @@ using server.Application.Elections.DTOs;
 using server.Application.Elections.Queries;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Elections.Commands;
 
@@ -12,7 +13,7 @@ public record OpenElectionCommand(Guid TenantId, Guid Id) : IRequest<ServiceResu
 public record CloseElectionCommand(Guid TenantId, Guid Id) : IRequest<ServiceResult<ElectionDto>>;
 public record PublishResultsCommand(Guid TenantId, Guid Id) : IRequest<ServiceResult<ElectionDto>>;
 
-public class OpenElectionCommandHandler(AppDbContext db, ILogger<OpenElectionCommandHandler> log)
+public class OpenElectionCommandHandler(AppDbContext db, ILogger<OpenElectionCommandHandler> log, INotificationService notif)
     : IRequestHandler<OpenElectionCommand, ServiceResult<ElectionDto>>
 {
     public async Task<ServiceResult<ElectionDto>> Handle(OpenElectionCommand request, CancellationToken ct)
@@ -27,7 +28,38 @@ public class OpenElectionCommandHandler(AppDbContext db, ILogger<OpenElectionCom
         e.Status = "open";
         await db.SaveChangesAsync(ct);
         log.LogInformation("Election {Id} opened", e.Id);
+
+        // Notify all active members
+        _ = NotifyMembersAsync(request.TenantId, e.Title, ct);
+
         return ServiceResult<ElectionDto>.Success(ListElectionsQueryHandler.ToDto(e));
+    }
+
+    private async Task NotifyMembersAsync(Guid tenantId, string electionTitle, CancellationToken ct)
+    {
+        try
+        {
+            var members = await db.Members.Include(m => m.User)
+                .Where(m => m.TenantId == tenantId && m.Status == "active" && m.IsActive)
+                .ToListAsync(ct);
+
+            var tasks = members.Select(m =>
+            {
+                var lang = m.User.PreferredLanguage ?? "fr";
+                return notif.NotifyAsync(tenantId, m.UserId,
+                    "election_open",
+                    lang == "fr" ? "Élection ouverte" : "Election open",
+                    lang == "fr"
+                        ? $"L'élection « {electionTitle} » est maintenant ouverte. Votez dès maintenant !"
+                        : $"The election \"{electionTitle}\" is now open. Cast your vote!",
+                    ct);
+            });
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Error sending election open notifications for {ElectionTitle}", electionTitle);
+        }
     }
 }
 

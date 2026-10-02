@@ -6,7 +6,7 @@ using server.Infrastructure.Services;
 
 namespace server.Application.Members.Commands;
 
-public record SendMemberActivationCommand(Guid TenantId, Guid MemberId)
+public record SendMemberActivationCommand(Guid TenantId, Guid MemberId, string Lang = "fr")
     : IRequest<ServiceResult<bool>>;
 
 public class SendMemberActivationHandler(
@@ -43,10 +43,11 @@ public class SendMemberActivationHandler(
         var setPasswordUrl = $"{baseUrl}/set-password?token={plainToken}";
         log.LogInformation("Activation token generated for member {MembershipNumber}", member.MembershipNumber);
 
+        var lang = request.Lang;
         _ = emailService.SendAsync(
             member.User.ContactEmail, memberName,
-            "Activez votre compte",
-            EmailTemplates.MemberInvitation(memberName, member.Tenant.Name, setPasswordUrl),
+            EmailTemplates.Subjects.MemberInvitation(member.Tenant.Name, lang),
+            EmailTemplates.MemberInvitation(memberName, member.Tenant.Name, setPasswordUrl, lang),
             ct);
 
         return ServiceResult<bool>.Success(true);

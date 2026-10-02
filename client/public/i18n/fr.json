@@ -5,6 +5,7 @@
     "contributions": "Cotisations",
     "payments": "Paiements",
     "finances": "Finances",
+    "expenses": "Dépenses",
     "events": "Événements",
     "welfare": "Solidarité",
     "elections": "Élections",
@@ -28,6 +29,10 @@
     "title": "Gestion des associations",
     "subtitle": "Créez et gérez les associations de la plateforme",
     "new": "Nouvelle association",
+    "backup": "Télécharger la sauvegarde",
+    "backup_hint": "Télécharge un dump MySQL complet (.sql.gz)",
+    "backup_success": "Sauvegarde téléchargée avec succès.",
+    "backup_error": "Échec de la sauvegarde. Vérifiez que mysqldump est disponible sur le serveur.",
     "count": "association(s)",
     "empty": "Aucune association pour l'instant",
     "create": "Créer l'association",
@@ -68,6 +73,21 @@
     "select_role_hint": "Sélectionnez un rôle pour modifier ses permissions",
     "select_all": "Tout sélectionner",
     "deselect_all": "Tout désélectionner",
+    "super_admin": "Super Administrateur",
+    "org_admin": "Administrateur de l'organisation",
+    "president": "Président(e)",
+    "vice_president": "Vice-Président(e)",
+    "treasurer": "Trésorier(ère)",
+    "deputy_treasurer": "Trésorier(ère) Adjoint(e)",
+    "secretary": "Secrétaire Général(e)",
+    "deputy_secretary": "Secrétaire Adjoint(e)",
+    "auditor": "Commissaire aux Comptes",
+    "deputy_auditor": "Adjoint(e) Commissaire aux Comptes",
+    "censor": "Censeur",
+    "committee_member": "Membre du Comité",
+    "regional_coordinator": "Coordinateur(trice) Régional(e)",
+    "event_manager": "Gestionnaire Événements",
+    "member": "Membre",
     "domain_members": "Membres",
     "domain_categories": "Catégories",
     "domain_contributions": "Cotisations",
@@ -231,7 +251,12 @@
     "last_name": "Nom",
     "phone": "Téléphone",
     "email": "Email de connexion",
-    "password": "Mot de passe"
+    "password": "Mot de passe",
+    "optional": "optionnel",
+    "generic_error": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Veuillez réessayer."
   },
   "profile": {
     "title": "Mon profil",
@@ -245,7 +270,9 @@
     "new_password": "Nouveau mot de passe",
     "confirm_password": "Confirmer le nouveau mot de passe",
     "password_mismatch": "Les mots de passe ne correspondent pas.",
-    "password_wrong_current": "Mot de passe actuel incorrect."
+    "password_wrong_current": "Mot de passe actuel incorrect.",
+    "language": "Langue de l'interface",
+    "language_hint": "Cette langue sera aussi utilisée pour les emails qui vous sont envoyés."
   },
   "community": {
     "title": "Communauté",
@@ -374,6 +401,17 @@
     "send_activation": "Envoyer email d'activation",
     "email_auto_hint": "Email genere automatiquement a partir du nom",
     "role": "Role",
+    "section_identity": "Identité",
+    "section_membership": "Adhésion",
+    "section_contact": "Contact",
+    "photo": "Photo",
+    "photo_choose": "Choisir une photo",
+    "photo_uploading": "Envoi en cours…",
+    "photo_error": "Échec de l'envoi de la photo.",
+    "created": "Membre créé avec succès.",
+    "updated": "Membre mis à jour.",
+    "save_error": "Erreur lors de l'enregistrement.",
+    "load_error": "Impossible de charger le membre.",
     "categories_title": "Categories de membres",
     "categories_subtitle": "Gerez les categories et leurs conditions d'adhesion",
     "new_category": "Nouvelle categorie",
@@ -397,7 +435,19 @@
     "view_contributions": "Voir mes cotisations",
     "view_payments": "Voir mes paiements",
     "good_standing": "Situation à jour",
-    "has_overdue": "Cotisation(s) en retard"
+    "has_overdue": "Cotisation(s) en retard",
+    "upcoming_events": "Événements à venir",
+    "no_upcoming_events": "Aucun événement à venir",
+    "view_events": "Voir tous les événements",
+    "recent_notifications": "Notifications récentes",
+    "no_notifications": "Aucune notification",
+    "view_notifications": "Voir toutes les notifications",
+    "welfare_summary": "Entraide",
+    "welfare_pending": "En attente",
+    "welfare_approved": "Approuvées",
+    "welfare_approved_amount": "Montant approuvé",
+    "welfare_paid": "Montant versé",
+    "view_welfare": "Voir mes demandes d'entraide"
   },
   "contributions": {
     "title": "Cotisations",
@@ -431,7 +481,9 @@
     "no_charges": "Aucune charge trouvée",
     "penalty": "Pénalité",
     "waiver": "Remise",
-    "total_due": "Total dû"
+    "total_due": "Total dû",
+    "send_reminders": "Envoyer les rappels",
+    "send_reminders_tooltip": "Envoyer des rappels in-app et par email aux membres ayant des cotisations en retard"
   },
   "payments": {
     "title": "Paiements",
@@ -439,6 +491,7 @@
     "new": "Enregistrer un paiement",
     "print_report": "Imprimer rapport",
     "receipt_number": "N° reçu",
+    "receipt": "Imprimer/Télécharger le reçu",
     "method": "Méthode",
     "method_cash": "Espèces",
     "method_bank_transfer": "Virement bancaire",
@@ -528,7 +581,10 @@
     "type_training": "Formation",
     "type_social": "Social",
     "type_sports": "Sportif",
-    "type_administrative": "Administratif"
+    "type_administrative": "Administratif",
+    "waitlist": "Liste d'attente",
+    "attendance_rate": "Taux de présence",
+    "status_waitlisted": "En attente"
   },
   "meetings": {
     "title": "Réunions",
@@ -639,6 +695,10 @@
     "mime_type": "Format",
     "uploaded_by": "Ajouté par",
     "is_public": "Document public",
+    "visibility": "Visibilité",
+    "visibility_public": "Public (tout le monde)",
+    "visibility_members": "Membres uniquement",
+    "visibility_board": "Bureau uniquement",
     "type_bylaw": "Statuts",
     "type_minutes": "Procès-verbal",
     "type_report": "Rapport",
@@ -718,7 +778,12 @@
     "collection_rate": "Taux de collecte",
     "meeting_attendance": "Taux de présence aux réunions",
     "election_participation": "Participation aux élections",
-    "event_registrations": "Inscriptions aux événements"
+    "event_registrations": "Inscriptions aux événements",
+    "range_12m": "12 derniers mois",
+    "range_6m": "6 derniers mois",
+    "range_3m": "3 derniers mois",
+    "range_ytd": "Depuis le début de l'année",
+    "range_custom": "Période personnalisée"
   },
   "finances": {
     "title": "Finances",
@@ -742,7 +807,9 @@
     "member": "Membre",
     "income": "Recettes",
     "expenses": "Dépenses",
-    "budget": "Budget"
+    "budget": "Budget",
+    "expenses_validated": "Dépenses validées",
+    "net_balance": "Solde net"
   },
   "admin": {
     "title": "Administration",
@@ -932,6 +999,50 @@
       "banner_title": "Bienvenue dans l'association !",
       "banner_desc": "Commencez par compléter votre profil pour que les autres membres puissent vous trouver."
     }
+  },
+  "expenses": {
+    "title": "Dépenses",
+    "subtitle": "Suivi et validation des dépenses de l'association",
+    "new": "Nouvelle dépense",
+    "edit": "Modifier la dépense",
+    "label": "Libellé",
+    "category": "Catégorie",
+    "total_validated": "Dépenses validées",
+    "total": "Total",
+    "pending": "En attente",
+    "validated": "Validées",
+    "rejected": "Rejetées",
+    "all_statuses": "Tous les statuts",
+    "all_categories": "Toutes les catégories",
+    "empty": "Aucune dépense enregistrée",
+    "validate": "Valider",
+    "reject": "Rejeter",
+    "delete_confirm": "Supprimer la dépense",
+    "status_pending": "En attente",
+    "status_validated": "Validée",
+    "status_rejected": "Rejetée",
+    "cat_travel": "Transport / Voyage",
+    "cat_supplies": "Fournitures",
+    "cat_communication": "Communication",
+    "cat_event": "Événement",
+    "cat_other": "Autre"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Vos notifications récentes",
+    "mark_all_read": "Tout marquer comme lu",
+    "empty": "Aucune notification",
+    "no_more": "Vous êtes à jour",
+    "type_charge_generated": "Nouvelle cotisation",
+    "type_payment_confirmed": "Paiement confirmé",
+    "type_payment_recorded": "Paiement enregistré",
+    "type_event_invite": "Événement",
+    "type_welfare_update": "Solidarité",
+    "type_meeting_invite": "Réunion",
+    "type_election_open": "Élection ouverte",
+    "see_all": "Voir toutes les notifications",
+    "preferences_title": "Préférences de notifications",
+    "preferences_saved": "Préférences enregistrées"
   },
   "countries": {
     "DZ": "Algérie",

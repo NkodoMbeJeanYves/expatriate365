@@ -57,19 +57,19 @@ import { MembersStore } from '../../store/members.store';
       }
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4 pb-24">
-        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Identité</p>
+        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">{{ 'members.section_identity' | translate }}</p>
 
         <!-- Photo -->
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium"
-            >Photo <span class="text-gray-400 text-xs">(optionnel)</span></label
+            >{{ 'members.photo' | translate }} <span class="text-gray-400 text-xs">({{ 'common.optional' | translate }})</span></label
           >
           <div class="flex items-center gap-4">
             <div
               class="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0"
             >
               @if (photoPreview()) {
-                <img [src]="photoPreview()" alt="Photo" class="w-full h-full object-cover" />
+                <img [src]="photoPreview()" [alt]="'members.photo' | translate" class="w-full h-full object-cover" />
               } @else {
                 <i class="pi pi-user text-2xl text-gray-400"></i>
               }
@@ -78,9 +78,9 @@ import { MembersStore } from '../../store/members.store';
               class="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
             >
               @if (photoUploading()) {
-                <i class="pi pi-spin pi-spinner text-sm"></i> Envoi en cours…
+                <i class="pi pi-spin pi-spinner text-sm"></i> {{ 'members.photo_uploading' | translate }}
               } @else {
-                <i class="pi pi-upload text-sm"></i> Choisir une photo
+                <i class="pi pi-upload text-sm"></i> {{ 'members.photo_choose' | translate }}
               }
               <input
                 type="file"
@@ -186,7 +186,7 @@ import { MembersStore } from '../../store/members.store';
           </div>
         </div>
 
-        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide mt-2">Adhésion</p>
+        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide mt-2">{{ 'members.section_membership' | translate }}</p>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="flex flex-col gap-1">
@@ -224,7 +224,7 @@ import { MembersStore } from '../../store/members.store';
           />
         </div>
 
-        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide mt-2">Contact</p>
+        <p class="text-sm font-medium text-gray-500 uppercase tracking-wide mt-2">{{ 'members.section_contact' | translate }}</p>
 
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">{{ 'members.contact_email' | translate }}</label>
@@ -353,7 +353,7 @@ export class MemberFormDrawerComponent implements OnInit {
   }
 
   readonly roleOptions = signal<{ label: string; value: string }[]>([
-    { label: 'Membre', value: 'member' }, // fallback
+    { label: this.translate.instant('roles.member'), value: 'member' },
   ]);
 
   readonly form = new FormGroup({
@@ -387,7 +387,12 @@ export class MemberFormDrawerComponent implements OnInit {
           this.store.loadCategories();
           this.rolesApi.list().subscribe({
             next: (roles) =>
-              this.roleOptions.set(roles.map((r) => ({ label: r.label, value: r.name }))),
+              this.roleOptions.set(roles.map((r) => ({
+                label: this.translate.instant(`roles.${r.name}`) !== `roles.${r.name}`
+                  ? this.translate.instant(`roles.${r.name}`)
+                  : r.label,
+                value: r.name,
+              }))),
             error: () => {},
           });
         }
@@ -429,7 +434,7 @@ export class MemberFormDrawerComponent implements OnInit {
           this.photoUploading.set(false);
         },
         error: () => {
-          this.photoError.set("Échec de l'envoi de la photo.");
+          this.photoError.set(this.translate.instant('members.photo_error'));
           this.photoPreview.set(null);
           this.photoUploading.set(false);
         },
@@ -477,7 +482,7 @@ export class MemberFormDrawerComponent implements OnInit {
           is_directory_visible: m.is_directory_visible ?? false,
         });
       },
-      error: () => this.error.set('Impossible de charger le membre.'),
+      error: () => this.error.set(this.translate.instant('members.load_error')),
     });
   }
 
@@ -546,7 +551,7 @@ export class MemberFormDrawerComponent implements OnInit {
 
         const finish = () => {
           this.loading.set(false);
-          this.toast.success(id ? 'Membre mis à jour.' : 'Membre créé avec succès.');
+          this.toast.success(this.translate.instant(id ? 'members.updated' : 'members.created'));
           this.saved.emit();
         };
 
@@ -558,8 +563,8 @@ export class MemberFormDrawerComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.toast.error("Erreur lors de l'enregistrement.");
-        this.error.set(err?.error?.error ?? 'Une erreur est survenue.');
+        this.toast.error(this.translate.instant('members.save_error'));
+        this.error.set(err?.error?.error ?? this.translate.instant('errors.generic'));
       },
     });
   }

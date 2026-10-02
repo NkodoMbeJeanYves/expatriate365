@@ -111,7 +111,8 @@ public static class MemberEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            var result = await mediator.Send(new CreateMemberCommand(tenantId.Value, dto));
+            var lang = principal.FindFirstValue("preferred_language") ?? "fr";
+            var result = await mediator.Send(new CreateMemberCommand(tenantId.Value, dto, lang));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/members/{result.Data!.Id}", result.Data)
                 : Results.BadRequest(new { error = result.ErrorMessage });
@@ -140,7 +141,8 @@ public static class MemberEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            var result = await mediator.Send(new SendMemberActivationCommand(tenantId.Value, id));
+            var lang = principal.FindFirstValue("preferred_language") ?? "fr";
+            var result = await mediator.Send(new SendMemberActivationCommand(tenantId.Value, id, lang));
             return result.IsSuccess ? Results.Ok(new { message = "Activation envoyée." }) : Results.BadRequest(new { error = result.ErrorMessage });
         }).RequireAuthorization(Permissions.MembersSendActivation);
 

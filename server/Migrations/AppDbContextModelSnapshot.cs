@@ -530,6 +530,10 @@ namespace server.Migrations
                         .HasColumnType("char(36)")
                         .HasColumnName("uploaded_by");
 
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId");
@@ -931,6 +935,67 @@ namespace server.Migrations
                         .IsUnique();
 
                     b.ToTable("event_registrations", (string)null);
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.Expense", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("ValidatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("ValidatedBy")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("ValidatorId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("ValidatorId");
+
+                    b.ToTable("Expenses");
                 });
 
             modelBuilder.Entity("server.Domain.Entities.Meeting", b =>
@@ -1993,6 +2058,10 @@ namespace server.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
+                    b.Property<string>("PreferredLanguage")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("RefreshTokenExpiresAt")
                         .HasColumnType("datetime(6)");
 
@@ -2300,6 +2369,23 @@ namespace server.Migrations
                     b.Navigation("Event");
 
                     b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.Expense", b =>
+                {
+                    b.HasOne("server.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("server.Domain.Entities.User", "Validator")
+                        .WithMany()
+                        .HasForeignKey("ValidatorId");
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("Validator");
                 });
 
             modelBuilder.Entity("server.Domain.Entities.MeetingActionItem", b =>

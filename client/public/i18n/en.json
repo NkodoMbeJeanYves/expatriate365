@@ -5,6 +5,7 @@
     "contributions": "Contributions",
     "payments": "Payments",
     "finances": "Finances",
+    "expenses": "Expenses",
     "events": "Events",
     "welfare": "Welfare",
     "elections": "Elections",
@@ -28,6 +29,10 @@
     "title": "Association management",
     "subtitle": "Create and manage platform associations",
     "new": "New association",
+    "backup": "Download backup",
+    "backup_hint": "Download a full MySQL dump (.sql.gz)",
+    "backup_success": "Backup downloaded successfully.",
+    "backup_error": "Backup failed. Check that mysqldump is available on the server.",
     "count": "association(s)",
     "empty": "No associations yet",
     "create": "Create association",
@@ -68,6 +73,21 @@
     "select_role_hint": "Select a role to edit its permissions",
     "select_all": "Select all",
     "deselect_all": "Deselect all",
+    "super_admin": "Super Administrator",
+    "org_admin": "Organisation Administrator",
+    "president": "President",
+    "vice_president": "Vice-President",
+    "treasurer": "Treasurer",
+    "deputy_treasurer": "Deputy Treasurer",
+    "secretary": "Secretary General",
+    "deputy_secretary": "Deputy Secretary",
+    "auditor": "Auditor",
+    "deputy_auditor": "Deputy Auditor",
+    "censor": "Censor",
+    "committee_member": "Committee Member",
+    "regional_coordinator": "Regional Coordinator",
+    "event_manager": "Events Manager",
+    "member": "Member",
     "domain_members": "Members",
     "domain_categories": "Categories",
     "domain_contributions": "Contributions",
@@ -231,7 +251,12 @@
     "last_name": "Last name",
     "phone": "Phone",
     "email": "Login email",
-    "password": "Password"
+    "password": "Password",
+    "optional": "optional",
+    "generic_error": "An error occurred. Please try again."
+  },
+  "errors": {
+    "generic": "An error occurred. Please try again."
   },
   "profile": {
     "title": "My profile",
@@ -245,7 +270,9 @@
     "new_password": "New password",
     "confirm_password": "Confirm new password",
     "password_mismatch": "Passwords do not match.",
-    "password_wrong_current": "Current password is incorrect."
+    "password_wrong_current": "Current password is incorrect.",
+    "language": "Interface language",
+    "language_hint": "This language will also be used for emails sent to you."
   },
   "community": {
     "title": "Community",
@@ -374,6 +401,17 @@
     "send_activation": "Send activation email",
     "email_auto_hint": "Email automatically generated from name",
     "role": "Role",
+    "section_identity": "Identity",
+    "section_membership": "Membership",
+    "section_contact": "Contact",
+    "photo": "Photo",
+    "photo_choose": "Choose a photo",
+    "photo_uploading": "Uploading…",
+    "photo_error": "Failed to upload photo.",
+    "created": "Member created successfully.",
+    "updated": "Member updated.",
+    "save_error": "Failed to save.",
+    "load_error": "Unable to load member.",
     "categories_title": "Member categories",
     "categories_subtitle": "Manage membership categories and their conditions",
     "new_category": "New category",
@@ -397,7 +435,19 @@
     "view_contributions": "View my contributions",
     "view_payments": "View my payments",
     "good_standing": "Up to date",
-    "has_overdue": "Overdue contribution(s)"
+    "has_overdue": "Overdue contribution(s)",
+    "upcoming_events": "Upcoming events",
+    "no_upcoming_events": "No upcoming events",
+    "view_events": "View all events",
+    "recent_notifications": "Recent notifications",
+    "no_notifications": "No notifications",
+    "view_notifications": "View all notifications",
+    "welfare_summary": "Welfare",
+    "welfare_pending": "Pending",
+    "welfare_approved": "Approved",
+    "welfare_approved_amount": "Approved amount",
+    "welfare_paid": "Amount disbursed",
+    "view_welfare": "View my welfare requests"
   },
   "contributions": {
     "title": "Contributions",
@@ -431,7 +481,9 @@
     "no_charges": "No charges found",
     "penalty": "Penalty",
     "waiver": "Waiver",
-    "total_due": "Total due"
+    "total_due": "Total due",
+    "send_reminders": "Send reminders",
+    "send_reminders_tooltip": "Send in-app and email reminders to members with overdue charges"
   },
   "payments": {
     "title": "Payments",
@@ -439,6 +491,7 @@
     "new": "Record payment",
     "print_report": "Print report",
     "receipt_number": "Receipt #",
+    "receipt": "Print/Download receipt",
     "method": "Method",
     "method_cash": "Cash",
     "method_bank_transfer": "Bank transfer",
@@ -528,7 +581,10 @@
     "type_training": "Training",
     "type_social": "Social",
     "type_sports": "Sports",
-    "type_administrative": "Administrative"
+    "type_administrative": "Administrative",
+    "waitlist": "Waitlist",
+    "attendance_rate": "Attendance rate",
+    "status_waitlisted": "Waitlisted"
   },
   "meetings": {
     "title": "Meetings",
@@ -639,6 +695,10 @@
     "mime_type": "Format",
     "uploaded_by": "Uploaded by",
     "is_public": "Public document",
+    "visibility": "Visibility",
+    "visibility_public": "Public (everyone)",
+    "visibility_members": "Members only",
+    "visibility_board": "Board only",
     "type_bylaw": "Bylaws",
     "type_minutes": "Minutes",
     "type_report": "Report",
@@ -718,7 +778,12 @@
     "collection_rate": "Collection rate",
     "meeting_attendance": "Meeting attendance rate",
     "election_participation": "Election participation",
-    "event_registrations": "Event registrations"
+    "event_registrations": "Event registrations",
+    "range_12m": "Last 12 months",
+    "range_6m": "Last 6 months",
+    "range_3m": "Last 3 months",
+    "range_ytd": "Year to date",
+    "range_custom": "Custom period"
   },
   "finances": {
     "title": "Finances",
@@ -742,7 +807,9 @@
     "member": "Member",
     "income": "Income",
     "expenses": "Expenses",
-    "budget": "Budget"
+    "budget": "Budget",
+    "expenses_validated": "Validated expenses",
+    "net_balance": "Net balance"
   },
   "admin": {
     "title": "Administration",
@@ -932,6 +999,50 @@
       "banner_title": "Welcome to the association!",
       "banner_desc": "Start by completing your profile so other members can find you."
     }
+  },
+  "expenses": {
+    "title": "Expenses",
+    "subtitle": "Track and validate association expenses",
+    "new": "New expense",
+    "edit": "Edit expense",
+    "label": "Label",
+    "category": "Category",
+    "total_validated": "Validated expenses",
+    "total": "Total",
+    "pending": "Pending",
+    "validated": "Validated",
+    "rejected": "Rejected",
+    "all_statuses": "All statuses",
+    "all_categories": "All categories",
+    "empty": "No expenses recorded yet",
+    "validate": "Validate",
+    "reject": "Reject",
+    "delete_confirm": "Delete expense",
+    "status_pending": "Pending",
+    "status_validated": "Validated",
+    "status_rejected": "Rejected",
+    "cat_travel": "Travel",
+    "cat_supplies": "Supplies",
+    "cat_communication": "Communication",
+    "cat_event": "Event",
+    "cat_other": "Other"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Your recent notifications",
+    "mark_all_read": "Mark all as read",
+    "empty": "No notifications",
+    "no_more": "All caught up",
+    "type_charge_generated": "New charge",
+    "type_payment_confirmed": "Payment confirmed",
+    "type_payment_recorded": "Payment recorded",
+    "type_event_invite": "Event",
+    "type_welfare_update": "Solidarity",
+    "type_meeting_invite": "Meeting",
+    "type_election_open": "Election open",
+    "see_all": "See all notifications",
+    "preferences_title": "Notification preferences",
+    "preferences_saved": "Preferences saved"
   },
   "countries": {
     "DZ": "Algeria",

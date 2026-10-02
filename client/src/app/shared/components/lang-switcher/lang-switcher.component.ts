@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
+import { AuthStore } from '@core/auth/auth.store';
+import { APP_CONFIG } from '@core/config/app-config.token';
 
 type Lang = 'fr' | 'en';
 const LANGS: Lang[] = ['fr', 'en'];
@@ -25,13 +28,20 @@ const LANGS: Lang[] = ['fr', 'en'];
 })
 export class LangSwitcherComponent {
   private readonly translate = inject(TranslateService);
+  private readonly http      = inject(HttpClient);
+  private readonly authStore = inject(AuthStore);
+  private readonly config    = inject(APP_CONFIG);
 
-  readonly langs      = LANGS;
+  readonly langs       = LANGS;
   readonly currentLang = signal<Lang>((localStorage.getItem('exp365_lang') ?? 'fr') as Lang);
 
   setLang(lang: Lang): void {
     this.translate.use(lang);
     this.currentLang.set(lang);
     localStorage.setItem('exp365_lang', lang);
+
+    if (this.authStore.isAuthenticated()) {
+      this.http.patch(`${this.config.apiUrl}/api/v1/auth/language`, { preferred_language: lang }).subscribe();
+    }
   }
 }

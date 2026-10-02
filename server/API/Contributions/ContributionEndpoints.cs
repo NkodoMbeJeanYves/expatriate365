@@ -109,6 +109,16 @@ public static class ContributionEndpoints
             var result = await mediator.Send(new BulkGenerateChargesCommand(tenantId.Value, dto));
             return result.IsSuccess ? Results.Ok(new { generated = result.Data }) : Results.BadRequest(new { error = result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsCreate);
+
+        charges.MapPost("/send-reminders", async (ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var result = await mediator.Send(new SendPaymentRemindersCommand(tenantId.Value));
+            return result.IsSuccess
+                ? Results.Ok(new { sent = result.Data })
+                : Results.BadRequest(new { error = result.ErrorMessage });
+        }).RequireAuthorization(Permissions.ContributionsValidate);
     }
 
     private static Guid? GetTenantId(ClaimsPrincipal principal)

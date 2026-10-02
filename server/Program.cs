@@ -27,6 +27,8 @@ using server.API.Audit;
 using server.API.Roles;
 using server.API.DirectoryFeature;
 using server.API.SuperAdmin;
+using server.API.Notifications;
+using server.API.Expenses;
 using Microsoft.AspNetCore.Authorization;
 using server.Infrastructure.Auth;
 using server.Infrastructure.BackgroundServices;
@@ -90,6 +92,8 @@ try
     builder.Services.AddSingleton<JwtService>();
     builder.Services.AddScoped<server.Infrastructure.Services.AuditService>();
     builder.Services.AddScoped<server.Infrastructure.Services.PermissionResolverService>();
+    builder.Services.AddScoped<server.Infrastructure.Services.INotificationService,
+        server.Infrastructure.Services.NotificationService>();
 
     var jwtSecret = builder.Configuration["Jwt:SecretKey"]
         ?? throw new InvalidOperationException("Jwt:SecretKey not configured");
@@ -220,6 +224,8 @@ try
     app.MapTenantEndpoints();
     app.MapRoleEndpoints();
     app.MapAuditEndpoints();
+    app.MapNotificationEndpoints();
+    app.MapExpenseEndpoints();
     app.MapDirectoryEndpoints();
 
     app.Run();

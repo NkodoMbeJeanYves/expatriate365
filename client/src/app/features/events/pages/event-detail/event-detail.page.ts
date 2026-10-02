@@ -97,7 +97,7 @@ import { TranslatePipe } from '@ngx-translate/core';
         </div>
 
         <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
             <div class="text-2xl font-bold text-blue-700">{{ ev.registered_count }}</div>
             <div class="text-xs text-gray-500 mt-1">{{ 'events.registrations' | translate }}</div>
@@ -106,11 +106,17 @@ import { TranslatePipe } from '@ngx-translate/core';
             <div class="text-2xl font-bold text-green-700">{{ ev.attended_count }}</div>
             <div class="text-xs text-gray-500 mt-1">{{ 'events.checkin' | translate }}</div>
           </div>
+          @if (ev.waitlist_count > 0) {
+            <div class="bg-amber-50 rounded-xl border border-amber-200 p-4 text-center">
+              <div class="text-2xl font-bold text-amber-600">{{ ev.waitlist_count }}</div>
+              <div class="text-xs text-amber-600 mt-1">{{ 'events.waitlist' | translate }}</div>
+            </div>
+          }
           <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
             <div class="text-2xl font-bold text-gray-700">
               {{ ev.registered_count > 0 ? ((ev.attended_count / ev.registered_count) * 100 | number:'1.0-0') : 0 }}%
             </div>
-            <div class="text-xs text-gray-500 mt-1">Attendance rate</div>
+            <div class="text-xs text-gray-500 mt-1">{{ 'events.attendance_rate' | translate }}</div>
           </div>
         </div>
 
@@ -245,7 +251,7 @@ export class EventDetailPage implements OnInit {
 
   regSeverity(status: string): 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
     const map: Record<string, 'info' | 'success' | 'warn' | 'danger' | 'secondary'> = {
-      registered: 'info', attended: 'success', no_show: 'warn', cancelled: 'danger',
+      registered: 'info', attended: 'success', waitlisted: 'warn', no_show: 'warn', cancelled: 'danger',
     };
     return map[status] ?? 'secondary';
   }
