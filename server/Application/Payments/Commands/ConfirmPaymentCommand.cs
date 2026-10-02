@@ -47,11 +47,12 @@ public class ConfirmPaymentCommandHandler(
         log.LogInformation("Payment {Id} confirmed by {UserId}", payment.Id, request.ConfirmedBy);
 
         var memberName = $"{payment.Member.User.FirstName} {payment.Member.User.LastName}";
+        var lang = payment.Member.User.PreferredLanguage ?? "fr";
         if (!string.IsNullOrWhiteSpace(payment.Member.User.ContactEmail))
         _ = emailService.SendAsync(
             payment.Member.User.ContactEmail, memberName,
-            "Paiement confirmé",
-            EmailTemplates.PaymentConfirmed(memberName, payment.Charge.ContributionType.Name, payment.Amount, payment.ReceiptNumber),
+            EmailTemplates.Subjects.PaymentConfirmed(lang),
+            EmailTemplates.PaymentConfirmed(memberName, payment.Charge.ContributionType.Name, payment.Amount, payment.ReceiptNumber, lang),
             ct);
 
         return ServiceResult<PaymentDto>.Success(ListPaymentsQueryHandler.ToDto(payment));

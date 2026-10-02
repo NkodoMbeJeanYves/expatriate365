@@ -92,11 +92,12 @@ public class BulkGenerateChargesCommandHandler(
                 .Where(m => !string.IsNullOrWhiteSpace(m.User.ContactEmail))
                 .Select(m =>
                 {
+                    var lang = m.User.PreferredLanguage ?? "fr";
                     var name = $"{m.User.FirstName} {m.User.LastName}";
                     return emailService.SendAsync(
                         m.User.ContactEmail!, name,
-                        "Nouvelle échéance de cotisation",
-                        EmailTemplates.ChargeGenerated(name, typeName, amount, dueDate.ToString("dd/MM/yyyy")),
+                        EmailTemplates.Subjects.ChargeGenerated(lang),
+                        EmailTemplates.ChargeGenerated(name, typeName, amount, dueDate.ToString("dd/MM/yyyy"), lang),
                         ct);
                 });
             await Task.WhenAll(tasks);

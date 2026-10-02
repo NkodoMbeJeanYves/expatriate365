@@ -37,6 +37,7 @@ public class JwtService(IConfiguration config)
             new("full_name", user.FullName),
             new("role", user.Role),
             new("permissions", permissionsJson),
+            new("preferred_language", user.PreferredLanguage),
         };
         var effectiveTenantId = overrideTenantId ?? user.TenantId;
         if (effectiveTenantId.HasValue)

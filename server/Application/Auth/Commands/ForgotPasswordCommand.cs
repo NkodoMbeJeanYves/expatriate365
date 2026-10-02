@@ -43,8 +43,8 @@ public class ForgotPasswordCommandHandler(
         _ = emailService.SendAsync(
             user.ContactEmail!,
             user.FullName,
-            "Réinitialisation de votre mot de passe",
-            EmailTemplates.PasswordReset(user.FullName, resetUrl),
+            EmailTemplates.Subjects.PasswordReset(user.PreferredLanguage),
+            EmailTemplates.PasswordReset(user.FullName, resetUrl, user.PreferredLanguage),
             ct);
 
         log.LogInformation("Password reset token sent to contact_email of user {UserId}", user.Id);
