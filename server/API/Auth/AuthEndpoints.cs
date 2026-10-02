@@ -1,8 +1,11 @@
 using System.Security.Claims;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using server.Application.Auth.Commands;
 using server.Application.Auth.Queries;
 using server.Application.Common;
+using server.Application.Auth.DTOs;
+using server.Infrastructure.Persistence;
 
 namespace server.Api.Auth;
 
@@ -61,6 +64,28 @@ public static class AuthEndpoints
             return result.IsSuccess
                 ? Results.Ok(result.Data)
                 : Results.NotFound(new { error = result.ErrorMessage });
+        }).RequireAuthorization();
+
+        group.MapPatch("/language", async (
+            ClaimsPrincipal principal,
+            UpdateLanguageRequest dto,
+            AppDbContext db) =>
+        {
+            var sub = principal.FindFirstValue("sub")
+                   ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(sub, out var userId))
+                return Results.Unauthorized();
+
+            if (dto.PreferredLanguage != "fr" && dto.PreferredLanguage != "en")
+                return Results.BadRequest(new { error = "Supported languages: fr, en." });
+
+            var user = await db.Users.FindAsync(userId);
+            if (user is null) return Results.NotFound(new { error = "User not found." });
+
+            user.PreferredLanguage = dto.PreferredLanguage;
+            user.UpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            return Results.NoContent();
         }).RequireAuthorization();
 
         group.MapPut("/profile", async (

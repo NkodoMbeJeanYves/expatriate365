@@ -1,5 +1,7 @@
 namespace server.Application.Auth.DTOs;
 
+public record UpdateLanguageRequest(string PreferredLanguage);
+
 public record RegisterRequest(
     string AssociationName,
     string Slug,
@@ -49,5 +51,6 @@ public record MeResponse(
     string? EntityType,
     string? EntityId,
     string? EmailVerifiedAt,
-    string[] Permissions
+    string[] Permissions,
+    string PreferredLanguage = "fr"
 );

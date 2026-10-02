@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { switchMap, tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { AuthStore } from './auth.store';
 import { LoginRequest, LoginResponse, MeResponse, PublicTenant } from './models/user.model';
 import { APP_CONFIG } from '@core/config/app-config.token';
@@ -16,6 +17,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly config = inject(APP_CONFIG);
   private readonly tenantApi = inject(TenantApiService);
+  private readonly translate = inject(TranslateService);
 
   private get base(): string {
     return `${this.config.apiUrl}/api/v1`;
@@ -85,6 +87,11 @@ export class AuthService {
       tap((user) => {
         const token = this.store.accessToken();
         if (token) this.store.setSession(user, token);
+        const lang = (user.preferred_language ?? 'fr') as 'fr' | 'en';
+        if (lang !== localStorage.getItem('exp365_lang')) {
+          localStorage.setItem('exp365_lang', lang);
+          this.translate.use(lang);
+        }
       }),
       switchMap(() => this.tenantApi.getSettings()),
       tap((settings) => this.tenantStore.set(settings)),

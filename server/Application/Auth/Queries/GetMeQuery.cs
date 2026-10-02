@@ -39,7 +39,8 @@ public class GetMeQueryHandler(AppDbContext db) : IRequestHandler<GetMeQuery, Se
             "user",
             user.Id.ToString(),
             user.EmailVerifiedAt?.ToString("O"),
-            perms
+            perms,
+            user.PreferredLanguage
         ));
     }
 }

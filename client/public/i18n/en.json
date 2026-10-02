@@ -265,7 +265,9 @@
     "new_password": "New password",
     "confirm_password": "Confirm new password",
     "password_mismatch": "Passwords do not match.",
-    "password_wrong_current": "Current password is incorrect."
+    "password_wrong_current": "Current password is incorrect.",
+    "language": "Interface language",
+    "language_hint": "This language will also be used for emails sent to you."
   },
   "community": {
     "title": "Community",
