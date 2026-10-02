@@ -5,13 +5,14 @@ using server.Application.Communications.DTOs;
 using server.Application.Communications.Queries;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Application.Communications.Commands;
 
 public record SendCommunicationCommand(Guid TenantId, Guid Id)
     : IRequest<ServiceResult<CommunicationDto>>;
 
-public class SendCommunicationCommandHandler(AppDbContext db)
+public class SendCommunicationCommandHandler(AppDbContext db, INotificationService notif)
     : IRequestHandler<SendCommunicationCommand, ServiceResult<CommunicationDto>>
 {
     public async Task<ServiceResult<CommunicationDto>> Handle(SendCommunicationCommand request, CancellationToken ct)
@@ -47,6 +48,21 @@ public class SendCommunicationCommandHandler(AppDbContext db)
         comm.RecipientCount = existingIds.Count + newRecipients.Count;
 
         await db.SaveChangesAsync(ct);
+
+        // Fire in-app notifications for all recipients
+        var allMemberIds = existingIds.Union(newRecipients.Select(r => r.MemberId)).ToList();
+        var members = await db.Members
+            .Where(m => allMemberIds.Contains(m.Id) && m.IsActive)
+            .Select(m => new { m.Id, m.UserId })
+            .ToListAsync(ct);
+
+        var preview = comm.Body[..Math.Min(200, comm.Body.Length)];
+        foreach (var m in members)
+        {
+            _ = notif.NotifyAsync(request.TenantId, m.UserId, "communication",
+                comm.Subject, preview, ct);
+        }
+
         return ServiceResult<CommunicationDto>.Success(ListCommunicationsQueryHandler.ToDto(comm));
     }
 

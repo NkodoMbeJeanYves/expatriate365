@@ -435,7 +435,19 @@
     "view_contributions": "Voir mes cotisations",
     "view_payments": "Voir mes paiements",
     "good_standing": "Situation à jour",
-    "has_overdue": "Cotisation(s) en retard"
+    "has_overdue": "Cotisation(s) en retard",
+    "upcoming_events": "Événements à venir",
+    "no_upcoming_events": "Aucun événement à venir",
+    "view_events": "Voir tous les événements",
+    "recent_notifications": "Notifications récentes",
+    "no_notifications": "Aucune notification",
+    "view_notifications": "Voir toutes les notifications",
+    "welfare_summary": "Entraide",
+    "welfare_pending": "En attente",
+    "welfare_approved": "Approuvées",
+    "welfare_approved_amount": "Montant approuvé",
+    "welfare_paid": "Montant versé",
+    "view_welfare": "Voir mes demandes d'entraide"
   },
   "contributions": {
     "title": "Cotisations",

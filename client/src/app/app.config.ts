@@ -2,9 +2,11 @@ import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/ht
 import {
   ApplicationConfig,
   inject,
+  isDevMode,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
+import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import Aura from '@primeuix/themes/aura';
@@ -47,6 +49,10 @@ export const appConfig: ApplicationConfig = {
     }),
     { provide: APP_CONFIG, useValue: environment },
     MessageService,
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
     provideAppInitializer(async () => {
       // Resolve all services before any await — inject() is invalid after await
       const themeService = inject(ThemeService);

@@ -141,6 +141,64 @@ public class CreateBoardMemberCommandHandler(AppDbContext db)
     }
 }
 
+public record UpdateBoardMemberRequest(
+    string? RoleId,
+    string? StartDate,
+    string? EndDate,
+    bool? IsActive,
+    string? Notes);
+
+public record UpdateBoardMemberCommand(Guid TenantId, Guid BoardMemberId, UpdateBoardMemberRequest Dto)
+    : IRequest<ServiceResult<BoardMemberDto>>;
+
+public class UpdateBoardMemberCommandHandler(AppDbContext db)
+    : IRequestHandler<UpdateBoardMemberCommand, ServiceResult<BoardMemberDto>>
+{
+    public async Task<ServiceResult<BoardMemberDto>> Handle(UpdateBoardMemberCommand request, CancellationToken ct)
+    {
+        var bm = await db.BoardMembers
+            .Include(b => b.Member).ThenInclude(m => m.User)
+            .Include(b => b.BoardRole)
+            .FirstOrDefaultAsync(b => b.Id == request.BoardMemberId && b.TenantId == request.TenantId, ct);
+
+        if (bm is null) return ServiceResult<BoardMemberDto>.Failure("Board member not found.");
+
+        var dto = request.Dto;
+
+        if (dto.RoleId is not null)
+        {
+            if (Guid.TryParse(dto.RoleId, out var roleGuid))
+            {
+                var role = await db.BoardRoles
+                    .FirstOrDefaultAsync(r => r.Id == roleGuid && r.TenantId == request.TenantId && r.IsActive, ct);
+                if (role is null) return ServiceResult<BoardMemberDto>.Failure("Board role not found.");
+                bm.RoleId = roleGuid;
+                bm.BoardRole = role;
+            }
+            else
+            {
+                bm.RoleId = null;
+                bm.BoardRole = null;
+            }
+        }
+        if (dto.StartDate is not null) bm.StartDate = DateOnly.Parse(dto.StartDate);
+        if (dto.EndDate is not null) bm.EndDate = DateOnly.Parse(dto.EndDate);
+        if (dto.IsActive is not null) bm.IsActive = dto.IsActive.Value;
+        if (dto.Notes is not null) bm.Notes = dto.Notes;
+        bm.UpdatedAt = DateTime.UtcNow;
+
+        await db.SaveChangesAsync(ct);
+
+        return ServiceResult<BoardMemberDto>.Success(new BoardMemberDto(
+            bm.Id.ToString(), bm.TenantId.ToString(), bm.MemberId.ToString(),
+            $"{bm.Member.User.FirstName} {bm.Member.User.LastName}",
+            bm.Member.MembershipNumber,
+            bm.RoleId?.ToString(), bm.BoardRole?.Name, bm.BoardRole?.Label,
+            bm.StartDate.ToString("yyyy-MM-dd"), bm.EndDate?.ToString("yyyy-MM-dd"),
+            bm.Notes, bm.CreatedAt.ToString("O"), bm.UpdatedAt?.ToString("O")));
+    }
+}
+
 public record DeleteBoardMemberCommand(Guid TenantId, Guid Id) : IRequest<ServiceResult<bool>>;
 
 public class DeleteBoardMemberCommandHandler(AppDbContext db)

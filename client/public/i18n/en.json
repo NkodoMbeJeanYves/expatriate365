@@ -435,7 +435,19 @@
     "view_contributions": "View my contributions",
     "view_payments": "View my payments",
     "good_standing": "Up to date",
-    "has_overdue": "Overdue contribution(s)"
+    "has_overdue": "Overdue contribution(s)",
+    "upcoming_events": "Upcoming events",
+    "no_upcoming_events": "No upcoming events",
+    "view_events": "View all events",
+    "recent_notifications": "Recent notifications",
+    "no_notifications": "No notifications",
+    "view_notifications": "View all notifications",
+    "welfare_summary": "Welfare",
+    "welfare_pending": "Pending",
+    "welfare_approved": "Approved",
+    "welfare_approved_amount": "Approved amount",
+    "welfare_paid": "Amount disbursed",
+    "view_welfare": "View my welfare requests"
   },
   "contributions": {
     "title": "Contributions",
