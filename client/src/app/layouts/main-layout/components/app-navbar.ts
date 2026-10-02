@@ -115,7 +115,7 @@ type Lang = typeof LANGS[number];
             }
           </div>
           <div class="border-t border-gray-100 dark:border-gray-800 px-4 py-2 text-center">
-            <a routerLink="/notifications" (click)="notifOverlay.hide()"
+            <a routerLink="/notifications" (click)="notifPanel.hide()"
               class="text-xs text-emerald-600 hover:underline">
               {{ 'notifications.see_all' | translate }}
             </a>

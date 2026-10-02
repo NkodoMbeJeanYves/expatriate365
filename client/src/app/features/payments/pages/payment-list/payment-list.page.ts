@@ -228,7 +228,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 })
 export class PaymentListPageComponent implements OnInit {
   readonly store = inject(PaymentsStore);
-  private readonly api = inject(PaymentsApiService);
+  protected readonly api = inject(PaymentsApiService);
   private readonly translate = inject(TranslateService);
   private readonly authStore = inject(AuthStore);
   private readonly tenant = inject(TenantStore);

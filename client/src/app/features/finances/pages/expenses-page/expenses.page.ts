@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TooltipModule } from 'primeng/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -23,8 +25,8 @@ import { STAFF_ROLES } from '@core/auth/models/role.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ConfirmationService, MessageService],
   imports: [
-    FormsModule, ButtonModule, TagModule, SelectModule, DialogModule,
-    InputTextModule, TextareaModule, ConfirmDialogModule, ToastModule,
+    FormsModule, SlicePipe, ButtonModule, TagModule, SelectModule, DialogModule,
+    InputTextModule, TextareaModule, ConfirmDialogModule, ToastModule, TooltipModule,
     AppCurrencyPipe, AppPaginatorComponent, TranslatePipe,
   ],
   template: `

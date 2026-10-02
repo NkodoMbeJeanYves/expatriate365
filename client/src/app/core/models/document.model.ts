@@ -39,6 +39,7 @@ export interface CreateDocumentRequest {
   file_size_bytes: number;
   mime_type: string;
   is_public: boolean;
+  visibility?: string;
 }
 
 export interface UpdateDocumentRequest {
@@ -47,6 +48,7 @@ export interface UpdateDocumentRequest {
   type: string;
   category: string;
   is_public: boolean;
+  visibility?: string;
 }
 
 export interface DocumentFilters {

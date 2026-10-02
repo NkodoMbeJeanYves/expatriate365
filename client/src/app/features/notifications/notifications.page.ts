@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -13,7 +12,7 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
   selector: 'app-notifications-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ButtonModule, FormsModule, ToggleSwitchModule, AppPaginatorComponent, TranslatePipe],
+  imports: [ButtonModule, FormsModule, ToggleSwitchModule, AppPaginatorComponent, TranslatePipe],
   template: `
     <div class="p-6 max-w-3xl mx-auto flex flex-col gap-6">
       <div class="flex items-center justify-between">
