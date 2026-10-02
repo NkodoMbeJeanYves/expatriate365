@@ -39,6 +39,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PostReaction> PostReactions => Set<PostReaction>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Expense> Expenses => Set<Expense>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

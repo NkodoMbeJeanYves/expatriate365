@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using server.Application.Common;
+using server.Domain.Entities;
 using server.Infrastructure.Persistence;
 
 namespace server.Application.Notifications;
@@ -98,5 +99,85 @@ public class MarkAllNotificationsReadCommandHandler(AppDbContext db)
 
         await db.SaveChangesAsync(ct);
         return ServiceResult<int>.Success(unread.Count);
+    }
+}
+
+// --- Notification Preferences ---
+
+public record NotificationPreferenceDto(string Type, bool Enabled);
+
+public record UpdatePreferencesRequest(List<NotificationPreferenceDto> Preferences);
+
+public static class NotificationTypes
+{
+    public static readonly string[] All =
+    [
+        "charge_generated", "payment_confirmed", "payment_recorded",
+        "event_invite", "welfare_update", "meeting_invite", "election_open"
+    ];
+}
+
+public record GetNotificationPreferencesQuery(Guid TenantId, Guid UserId)
+    : IRequest<List<NotificationPreferenceDto>>;
+
+public class GetNotificationPreferencesQueryHandler(AppDbContext db)
+    : IRequestHandler<GetNotificationPreferencesQuery, List<NotificationPreferenceDto>>
+{
+    public async Task<List<NotificationPreferenceDto>> Handle(GetNotificationPreferencesQuery request, CancellationToken ct)
+    {
+        var saved = await db.NotificationPreferences
+            .Where(p => p.TenantId == request.TenantId && p.UserId == request.UserId)
+            .ToListAsync(ct);
+
+        // Return all known types; default to enabled if not explicitly saved
+        return NotificationTypes.All
+            .Select(type =>
+            {
+                var pref = saved.FirstOrDefault(p => p.NotificationType == type);
+                return new NotificationPreferenceDto(type, pref?.Enabled ?? true);
+            })
+            .ToList();
+    }
+}
+
+public record UpdateNotificationPreferencesCommand(Guid TenantId, Guid UserId, UpdatePreferencesRequest Dto)
+    : IRequest<ServiceResult<List<NotificationPreferenceDto>>>;
+
+public class UpdateNotificationPreferencesCommandHandler(AppDbContext db)
+    : IRequestHandler<UpdateNotificationPreferencesCommand, ServiceResult<List<NotificationPreferenceDto>>>
+{
+    public async Task<ServiceResult<List<NotificationPreferenceDto>>> Handle(UpdateNotificationPreferencesCommand request, CancellationToken ct)
+    {
+        var existing = await db.NotificationPreferences
+            .Where(p => p.TenantId == request.TenantId && p.UserId == request.UserId)
+            .ToListAsync(ct);
+
+        foreach (var dto in request.Dto.Preferences)
+        {
+            if (!NotificationTypes.All.Contains(dto.Type)) continue;
+
+            var pref = existing.FirstOrDefault(p => p.NotificationType == dto.Type);
+            if (pref is null)
+            {
+                db.NotificationPreferences.Add(new NotificationPreference
+                {
+                    TenantId = request.TenantId,
+                    UserId = request.UserId,
+                    NotificationType = dto.Type,
+                    Enabled = dto.Enabled,
+                });
+            }
+            else
+            {
+                pref.Enabled = dto.Enabled;
+                pref.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        var result = await new GetNotificationPreferencesQueryHandler(db)
+            .Handle(new GetNotificationPreferencesQuery(request.TenantId, request.UserId), ct);
+        return ServiceResult<List<NotificationPreferenceDto>>.Success(result);
     }
 }

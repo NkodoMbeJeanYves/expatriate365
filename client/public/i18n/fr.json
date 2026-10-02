@@ -477,6 +477,7 @@
     "new": "Enregistrer un paiement",
     "print_report": "Imprimer rapport",
     "receipt_number": "N° reçu",
+    "receipt": "Imprimer/Télécharger le reçu",
     "method": "Méthode",
     "method_cash": "Espèces",
     "method_bank_transfer": "Virement bancaire",
@@ -566,7 +567,10 @@
     "type_training": "Formation",
     "type_social": "Social",
     "type_sports": "Sportif",
-    "type_administrative": "Administratif"
+    "type_administrative": "Administratif",
+    "waitlist": "Liste d'attente",
+    "attendance_rate": "Taux de présence",
+    "status_waitlisted": "En attente"
   },
   "meetings": {
     "title": "Réunions",
@@ -1020,7 +1024,11 @@
     "type_payment_recorded": "Paiement enregistré",
     "type_event_invite": "Événement",
     "type_welfare_update": "Solidarité",
-    "see_all": "Voir toutes les notifications"
+    "type_meeting_invite": "Réunion",
+    "type_election_open": "Élection ouverte",
+    "see_all": "Voir toutes les notifications",
+    "preferences_title": "Préférences de notifications",
+    "preferences_saved": "Préférences enregistrées"
   },
   "countries": {
     "DZ": "Algérie",

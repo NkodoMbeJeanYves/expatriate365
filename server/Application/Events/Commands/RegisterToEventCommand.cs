@@ -29,30 +29,30 @@ public class RegisterToEventCommandHandler(AppDbContext db, ILogger<RegisterToEv
         if (ev is null) return ServiceResult<EventRegistrationDto>.Failure("Événement introuvable.");
         if (ev.Status != "published") return ServiceResult<EventRegistrationDto>.Failure("L'événement n'est pas ouvert aux inscriptions.");
 
-        var activeCount = ev.Registrations.Count(r => r.Status != "cancelled" && r.IsActive);
-        if (ev.MaxCapacity.HasValue && activeCount >= ev.MaxCapacity.Value)
-            return ServiceResult<EventRegistrationDto>.Failure("Capacité maximale atteinte.");
+        var activeCount = ev.Registrations.Count(r => r.Status is "registered" or "attended" && r.IsActive);
+        var isFull = ev.MaxCapacity.HasValue && activeCount >= ev.MaxCapacity.Value;
 
         var existing = ev.Registrations.FirstOrDefault(r => r.MemberId == memberId && r.IsActive);
-        if (existing is not null && existing.Status != "cancelled")
+        if (existing is not null && existing.Status is "registered" or "waitlisted" or "attended")
             return ServiceResult<EventRegistrationDto>.Failure("Ce membre est déjà inscrit.");
 
         var member = await db.Members.Include(m => m.User)
             .FirstOrDefaultAsync(m => m.Id == memberId && m.TenantId == request.TenantId, ct);
         if (member is null) return ServiceResult<EventRegistrationDto>.Failure("Membre introuvable.");
 
+        var status = isFull ? "waitlisted" : "registered";
         var reg = new EventRegistration
         {
             Id = Guid.NewGuid(),
             TenantId = request.TenantId,
             EventId = request.EventId,
             MemberId = memberId,
-            Status = "registered",
+            Status = status,
         };
 
         db.EventRegistrations.Add(reg);
         await db.SaveChangesAsync(ct);
-        log.LogInformation("Member {MemberId} registered to event {EventId}", memberId, request.EventId);
+        log.LogInformation("Member {MemberId} {Status} to event {EventId}", memberId, status, request.EventId);
 
         return ServiceResult<EventRegistrationDto>.Success(new EventRegistrationDto(
             reg.Id.ToString(), reg.EventId.ToString(), reg.MemberId.ToString(),
@@ -74,6 +74,29 @@ public class CancelRegistrationCommandHandler(AppDbContext db, ILogger<CancelReg
         if (reg.Status == "cancelled") return ServiceResult<EventRegistrationDto>.Failure("Inscription déjà annulée.");
 
         reg.Status = "cancelled";
+        reg.UpdatedAt = DateTime.UtcNow;
+
+        // Promote first waitlisted member when a spot frees up
+        var ev = await db.Events.Include(e => e.Registrations)
+            .FirstOrDefaultAsync(e => e.Id == request.EventId && e.TenantId == request.TenantId, ct);
+        if (ev?.MaxCapacity.HasValue == true)
+        {
+            var activeCount = ev.Registrations.Count(r => r.Status is "registered" or "attended" && r.IsActive && r.Id != request.RegistrationId);
+            if (activeCount < ev.MaxCapacity.Value)
+            {
+                var nextWaiting = ev.Registrations
+                    .Where(r => r.Status == "waitlisted" && r.IsActive)
+                    .OrderBy(r => r.CreatedAt)
+                    .FirstOrDefault();
+                if (nextWaiting is not null)
+                {
+                    nextWaiting.Status = "registered";
+                    nextWaiting.UpdatedAt = DateTime.UtcNow;
+                    log.LogInformation("Promoted waitlisted member {MemberId} to registered for event {EventId}", nextWaiting.MemberId, request.EventId);
+                }
+            }
+        }
+
         await db.SaveChangesAsync(ct);
         log.LogInformation("Registration {Id} cancelled", reg.Id);
 

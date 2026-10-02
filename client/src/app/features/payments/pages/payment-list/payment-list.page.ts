@@ -128,8 +128,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
                     <td class="px-4 py-3"><span [class]="statusClass(p.status)">{{ statusLabel(p.status) }}</span></td>
                     <td class="px-4 py-3 text-right">
                       <div class="flex gap-2 justify-end">
-                        <button (click)="viewReceipt(p)" class="text-xs px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium">
-                          <i class="pi pi-file-pdf text-xs"></i>
+                        <button (click)="api.openReceiptPage(p.id)" [title]="'payments.receipt' | translate" class="text-xs px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium">
+                          <i class="pi pi-print text-xs"></i>
                         </button>
                         @if (p.receipt_file_url) {
                           <a [href]="p.receipt_file_url" target="_blank" class="text-xs px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium">

@@ -33,6 +33,22 @@ public static class NotificationEndpoints
             var result = await mediator.Send(new MarkAllNotificationsReadCommand(tenantId.Value, userId.Value));
             return Results.Ok(new { marked = result.Data });
         });
+
+        group.MapGet("/preferences", async (ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var (tenantId, userId) = GetIds(principal);
+            if (tenantId is null || userId is null) return Results.Unauthorized();
+            var result = await mediator.Send(new GetNotificationPreferencesQuery(tenantId.Value, userId.Value));
+            return Results.Ok(result);
+        });
+
+        group.MapPut("/preferences", async (UpdatePreferencesRequest dto, ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var (tenantId, userId) = GetIds(principal);
+            if (tenantId is null || userId is null) return Results.Unauthorized();
+            var result = await mediator.Send(new UpdateNotificationPreferencesCommand(tenantId.Value, userId.Value, dto));
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+        });
     }
 
     private static (Guid? tenantId, Guid? userId) GetIds(ClaimsPrincipal principal)

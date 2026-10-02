@@ -13,6 +13,7 @@ export interface EventDto {
   max_capacity?: number;
   registered_count: number;
   attended_count: number;
+  waitlist_count: number;
   is_public: boolean;
   created_at: string;
   updated_at?: string;

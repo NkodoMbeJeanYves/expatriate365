@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, WritableSignal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { NotificationsStore } from '@core/stores/notifications.store';
-import { NotificationsApiService } from '@core/services/notifications-api.service';
+import { NotificationsApiService, NotificationPreferenceDto } from '@core/services/notifications-api.service';
 import { AppNotification } from '@models/notification.model';
 import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/paginator/app-paginator.component';
 
@@ -11,7 +13,7 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
   selector: 'app-notifications-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ButtonModule, AppPaginatorComponent, TranslatePipe],
+  imports: [RouterLink, ButtonModule, FormsModule, ToggleSwitchModule, AppPaginatorComponent, TranslatePipe],
   template: `
     <div class="p-6 max-w-3xl mx-auto flex flex-col gap-6">
       <div class="flex items-center justify-between">
@@ -57,6 +59,21 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
 
         <app-paginator [page]="currentPage" [limit]="30" [total]="total()" (pageChange)="onPageChange($event)" />
       }
+
+      <!-- Preferences -->
+      @if (preferences().length > 0) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4">
+          <h2 class="font-semibold text-gray-800">{{ 'notifications.preferences_title' | translate }}</h2>
+          <div class="divide-y divide-gray-50">
+            @for (pref of preferences(); track pref.type) {
+              <div class="flex items-center justify-between py-3">
+                <span class="text-sm text-gray-700">{{ ('notifications.type_' + pref.type) | translate }}</span>
+                <p-toggleswitch [(ngModel)]="pref.enabled" (onChange)="savePreferences()" />
+              </div>
+            }
+          </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -68,10 +85,14 @@ export class NotificationsPage implements OnInit {
   readonly total         = signal(0);
   readonly loading       = signal(true);
   readonly unreadCount   = this.store.unreadCount;
+  readonly preferences   = signal<NotificationPreferenceDto[]>([]);
 
   currentPage = 1;
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.load();
+    this.loadPreferences();
+  }
 
   load(): void {
     this.loading.set(true);
@@ -99,6 +120,14 @@ export class NotificationsPage implements OnInit {
   markAllRead(): void {
     this.store.markAllRead();
     this.notifications.update(list => list.map(n => ({ ...n, is_read: true })));
+  }
+
+  loadPreferences(): void {
+    this.api.getPreferences().subscribe({ next: prefs => this.preferences.set(prefs) });
+  }
+
+  savePreferences(): void {
+    this.api.updatePreferences(this.preferences()).subscribe();
   }
 
   icon(type: string): string {

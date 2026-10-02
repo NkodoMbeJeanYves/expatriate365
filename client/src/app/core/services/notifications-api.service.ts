@@ -22,4 +22,17 @@ export class NotificationsApiService {
   markAllRead(): Observable<{ marked: number }> {
     return this.http.post<{ marked: number }>(`${this.base}/read-all`, {});
   }
+
+  getPreferences(): Observable<NotificationPreferenceDto[]> {
+    return this.http.get<NotificationPreferenceDto[]>(`${this.base}/preferences`);
+  }
+
+  updatePreferences(prefs: NotificationPreferenceDto[]): Observable<NotificationPreferenceDto[]> {
+    return this.http.put<NotificationPreferenceDto[]>(`${this.base}/preferences`, { preferences: prefs });
+  }
+}
+
+export interface NotificationPreferenceDto {
+  type: string;
+  enabled: boolean;
 }

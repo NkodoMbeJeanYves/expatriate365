@@ -25,7 +25,8 @@ public static class DocumentEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            return Results.Ok(await mediator.Send(new ListDocumentsQuery(tenantId.Value, page, limit, type, category, search)));
+            var isBoardMember = IsBoardMember(principal);
+            return Results.Ok(await mediator.Send(new ListDocumentsQuery(tenantId.Value, page, limit, type, category, search, isBoardMember)));
         }).RequireAuthorization(Permissions.DocumentsRead);
 
         group.MapPost("/", async (CreateDocumentRequest request, ClaimsPrincipal principal, IMediator mediator) =>
@@ -65,6 +66,12 @@ public static class DocumentEndpoints
     {
         var claim = principal.FindFirst("tenant_id")?.Value;
         return Guid.TryParse(claim, out var id) ? id : null;
+    }
+
+    private static bool IsBoardMember(ClaimsPrincipal principal)
+    {
+        var entityType = principal.FindFirstValue("entity_type");
+        return entityType is "board_member" or "super_admin" or "admin";
     }
 
     private static Guid? GetUserId(ClaimsPrincipal principal)

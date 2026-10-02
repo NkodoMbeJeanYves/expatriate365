@@ -477,6 +477,7 @@
     "new": "Record payment",
     "print_report": "Print report",
     "receipt_number": "Receipt #",
+    "receipt": "Print/Download receipt",
     "method": "Method",
     "method_cash": "Cash",
     "method_bank_transfer": "Bank transfer",
@@ -566,7 +567,10 @@
     "type_training": "Training",
     "type_social": "Social",
     "type_sports": "Sports",
-    "type_administrative": "Administrative"
+    "type_administrative": "Administrative",
+    "waitlist": "Waitlist",
+    "attendance_rate": "Attendance rate",
+    "status_waitlisted": "Waitlisted"
   },
   "meetings": {
     "title": "Meetings",
@@ -1020,7 +1024,11 @@
     "type_payment_recorded": "Payment recorded",
     "type_event_invite": "Event",
     "type_welfare_update": "Solidarity",
-    "see_all": "See all notifications"
+    "type_meeting_invite": "Meeting",
+    "type_election_open": "Election open",
+    "see_all": "See all notifications",
+    "preferences_title": "Notification preferences",
+    "preferences_saved": "Preferences saved"
   },
   "countries": {
     "DZ": "Algeria",
