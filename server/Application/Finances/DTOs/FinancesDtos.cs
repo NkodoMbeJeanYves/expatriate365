@@ -5,7 +5,9 @@ public record FinanceSummaryDto(
     decimal TotalExpected,
     decimal Balance,
     decimal CollectionRate,
-    int TotalTransactions);
+    int TotalTransactions,
+    decimal TotalExpenses,
+    decimal NetBalance);
 
 public record FinanceTransactionDto(
     string Id, string Type, string MemberName, string MembershipNumber,

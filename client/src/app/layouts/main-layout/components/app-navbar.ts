@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthStore } from '@core/auth/auth.store';
 import { AuthService } from '@core/auth/auth.service';
 import { ThemeService } from '@core/theme/theme.service';
@@ -18,7 +19,7 @@ type Lang = typeof LANGS[number];
   selector: 'app-navbar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Button, AvatarModule, MenuModule, Popover, BadgeModule, TranslatePipe],
+  imports: [RouterLink, Button, AvatarModule, MenuModule, Popover, BadgeModule, TranslatePipe],
   template: `
     <header class="flex items-center justify-between px-4 py-3
                    bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
@@ -112,6 +113,12 @@ type Lang = typeof LANGS[number];
                 </div>
               }
             }
+          </div>
+          <div class="border-t border-gray-100 dark:border-gray-800 px-4 py-2 text-center">
+            <a routerLink="/notifications" (click)="notifOverlay.hide()"
+              class="text-xs text-emerald-600 hover:underline">
+              {{ 'notifications.see_all' | translate }}
+            </a>
           </div>
         </p-popover>
 

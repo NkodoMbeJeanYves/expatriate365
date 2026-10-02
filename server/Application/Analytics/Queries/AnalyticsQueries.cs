@@ -26,10 +26,6 @@ public class GetAnalyticsOverviewQueryHandler(AppDbContext db)
             })
             .FirstOrDefaultAsync(ct);
 
-        var totalMembers  = memberStats?.Total        ?? 0;
-        var activeMembers = memberStats?.Active       ?? 0;
-        var newThisMonth  = memberStats?.NewThisMonth ?? 0;
-
         var financeStats = await db.ContributionCharges
             .Where(c => c.TenantId == request.TenantId && c.IsActive)
             .GroupBy(_ => 1)
@@ -42,29 +38,30 @@ public class GetAnalyticsOverviewQueryHandler(AppDbContext db)
             .Select(g => new { Total = g.Count(), Upcoming = g.Count(e => e.StartDate > now) })
             .FirstOrDefaultAsync(ct);
 
-        var totalEvents    = eventStats?.Total    ?? 0;
-        var upcomingEvents = eventStats?.Upcoming ?? 0;
-        var totalMeetings = await db.Meetings.CountAsync(m => m.TenantId == request.TenantId && m.IsActive, ct);
+        var totalMeetings  = await db.Meetings.CountAsync(m => m.TenantId == request.TenantId && m.IsActive, ct);
         var totalElections = await db.Elections.CountAsync(e => e.TenantId == request.TenantId && e.IsActive, ct);
 
         return new AnalyticsOverviewDto(
-            totalMembers, activeMembers, newThisMonth,
-            financeStats?.Collected ?? 0, (financeStats?.Expected ?? 0) - (financeStats?.Collected ?? 0),
-            totalEvents, upcomingEvents, totalMeetings, totalElections);
+            memberStats?.Total ?? 0, memberStats?.Active ?? 0, memberStats?.NewThisMonth ?? 0,
+            financeStats?.Collected ?? 0,
+            (financeStats?.Expected ?? 0) - (financeStats?.Collected ?? 0),
+            eventStats?.Total ?? 0, eventStats?.Upcoming ?? 0,
+            totalMeetings, totalElections);
     }
 }
 
-public record GetMemberAnalyticsQuery(Guid TenantId) : IRequest<MemberAnalyticsDto>;
+public record GetMemberAnalyticsQuery(Guid TenantId, DateTime? From = null, DateTime? To = null) : IRequest<MemberAnalyticsDto>;
 
 public class GetMemberAnalyticsQueryHandler(AppDbContext db)
     : IRequestHandler<GetMemberAnalyticsQuery, MemberAnalyticsDto>
 {
     public async Task<MemberAnalyticsDto> Handle(GetMemberAnalyticsQuery request, CancellationToken ct)
     {
-        var since = DateTime.UtcNow.AddMonths(-12);
+        var from = request.From ?? DateTime.UtcNow.AddMonths(-12);
+        var to   = request.To   ?? DateTime.UtcNow;
 
         var monthly = await db.Members
-            .Where(m => m.TenantId == request.TenantId && m.IsActive && m.CreatedAt >= since)
+            .Where(m => m.TenantId == request.TenantId && m.IsActive && m.CreatedAt >= from && m.CreatedAt <= to)
             .GroupBy(m => new { m.CreatedAt.Year, m.CreatedAt.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
             .OrderBy(g => g.Year).ThenBy(g => g.Month)
@@ -82,25 +79,26 @@ public class GetMemberAnalyticsQueryHandler(AppDbContext db)
     }
 }
 
-public record GetFinanceAnalyticsQuery(Guid TenantId) : IRequest<FinanceAnalyticsDto>;
+public record GetFinanceAnalyticsQuery(Guid TenantId, DateTime? From = null, DateTime? To = null) : IRequest<FinanceAnalyticsDto>;
 
 public class GetFinanceAnalyticsQueryHandler(AppDbContext db)
     : IRequestHandler<GetFinanceAnalyticsQuery, FinanceAnalyticsDto>
 {
     public async Task<FinanceAnalyticsDto> Handle(GetFinanceAnalyticsQuery request, CancellationToken ct)
     {
-        var since = DateTime.UtcNow.AddMonths(-12);
+        var from = request.From ?? DateTime.UtcNow.AddMonths(-12);
+        var to   = request.To   ?? DateTime.UtcNow;
 
         var monthly = await db.Payments
             .Where(p => p.TenantId == request.TenantId && p.IsActive && p.Status == "confirmed"
-                && p.CreatedAt >= since)
+                && p.CreatedAt >= from && p.CreatedAt <= to)
             .GroupBy(p => new { p.CreatedAt.Year, p.CreatedAt.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, Amount = g.Sum(p => p.Amount) })
             .OrderBy(g => g.Year).ThenBy(g => g.Month)
             .ToListAsync(ct);
 
         var monthlyExpected = await db.ContributionCharges
-            .Where(c => c.TenantId == request.TenantId && c.IsActive && c.CreatedAt >= since)
+            .Where(c => c.TenantId == request.TenantId && c.IsActive && c.CreatedAt >= from && c.CreatedAt <= to)
             .GroupBy(c => new { c.CreatedAt.Year, c.CreatedAt.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, Amount = g.Sum(c => c.BaseAmount + c.PenaltyAmount - c.WaiverAmount) })
             .OrderBy(g => g.Year).ThenBy(g => g.Month)
@@ -113,7 +111,7 @@ public class GetFinanceAnalyticsQueryHandler(AppDbContext db)
             .FirstOrDefaultAsync(ct);
 
         var collected = totals?.Collected ?? 0;
-        var expected = totals?.Expected ?? 0;
+        var expected  = totals?.Expected  ?? 0;
         var rate = expected > 0 ? Math.Round(collected / expected * 100, 1) : 0;
 
         return new FinanceAnalyticsDto(
@@ -123,15 +121,18 @@ public class GetFinanceAnalyticsQueryHandler(AppDbContext db)
     }
 }
 
-public record GetEngagementAnalyticsQuery(Guid TenantId) : IRequest<EngagementAnalyticsDto>;
+public record GetEngagementAnalyticsQuery(Guid TenantId, DateTime? From = null, DateTime? To = null) : IRequest<EngagementAnalyticsDto>;
 
 public class GetEngagementAnalyticsQueryHandler(AppDbContext db)
     : IRequestHandler<GetEngagementAnalyticsQuery, EngagementAnalyticsDto>
 {
     public async Task<EngagementAnalyticsDto> Handle(GetEngagementAnalyticsQuery request, CancellationToken ct)
     {
-        var attendanceStats = await db.MeetingAttendances
-            .Where(a => a.TenantId == request.TenantId && a.IsActive)
+        var attendanceQ = db.MeetingAttendances.Where(a => a.TenantId == request.TenantId && a.IsActive);
+        if (request.From.HasValue) attendanceQ = attendanceQ.Where(a => a.CreatedAt >= request.From.Value);
+        if (request.To.HasValue)   attendanceQ = attendanceQ.Where(a => a.CreatedAt <= request.To.Value);
+
+        var attendanceStats = await attendanceQ
             .GroupBy(_ => 1)
             .Select(g => new { Total = g.Count(), Present = g.Count(a => a.Status == "present") })
             .FirstOrDefaultAsync(ct);
@@ -144,7 +145,10 @@ public class GetEngagementAnalyticsQueryHandler(AppDbContext db)
         var totalMembers = await db.Members.CountAsync(m => m.TenantId == request.TenantId && m.IsActive && m.Status == "active", ct);
         var electionRate = totalMembers > 0 ? Math.Round((decimal)totalVoters / totalMembers * 100, 1) : 0;
 
-        var eventRegistrations = await db.EventRegistrations.CountAsync(r => r.TenantId == request.TenantId && r.IsActive, ct);
+        var regQ = db.EventRegistrations.Where(r => r.TenantId == request.TenantId && r.IsActive);
+        if (request.From.HasValue) regQ = regQ.Where(r => r.CreatedAt >= request.From.Value);
+        if (request.To.HasValue)   regQ = regQ.Where(r => r.CreatedAt <= request.To.Value);
+        var eventRegistrations = await regQ.CountAsync(ct);
 
         return new EngagementAnalyticsDto(meetingRate, electionRate, eventRegistrations);
     }

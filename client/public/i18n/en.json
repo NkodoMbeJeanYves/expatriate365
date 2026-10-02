@@ -677,6 +677,10 @@
     "mime_type": "Format",
     "uploaded_by": "Uploaded by",
     "is_public": "Public document",
+    "visibility": "Visibility",
+    "visibility_public": "Public (everyone)",
+    "visibility_members": "Members only",
+    "visibility_board": "Board only",
     "type_bylaw": "Bylaws",
     "type_minutes": "Minutes",
     "type_report": "Report",
@@ -756,7 +760,12 @@
     "collection_rate": "Collection rate",
     "meeting_attendance": "Meeting attendance rate",
     "election_participation": "Election participation",
-    "event_registrations": "Event registrations"
+    "event_registrations": "Event registrations",
+    "range_12m": "Last 12 months",
+    "range_6m": "Last 6 months",
+    "range_3m": "Last 3 months",
+    "range_ytd": "Year to date",
+    "range_custom": "Custom period"
   },
   "finances": {
     "title": "Finances",
@@ -780,7 +789,9 @@
     "member": "Member",
     "income": "Income",
     "expenses": "Expenses",
-    "budget": "Budget"
+    "budget": "Budget",
+    "expenses_validated": "Validated expenses",
+    "net_balance": "Net balance"
   },
   "admin": {
     "title": "Administration",
@@ -1008,7 +1019,8 @@
     "type_payment_confirmed": "Payment confirmed",
     "type_payment_recorded": "Payment recorded",
     "type_event_invite": "Event",
-    "type_welfare_update": "Solidarity"
+    "type_welfare_update": "Solidarity",
+    "see_all": "See all notifications"
   },
   "countries": {
     "DZ": "Algeria",

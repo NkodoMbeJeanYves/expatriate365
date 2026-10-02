@@ -677,6 +677,10 @@
     "mime_type": "Format",
     "uploaded_by": "Ajouté par",
     "is_public": "Document public",
+    "visibility": "Visibilité",
+    "visibility_public": "Public (tout le monde)",
+    "visibility_members": "Membres uniquement",
+    "visibility_board": "Bureau uniquement",
     "type_bylaw": "Statuts",
     "type_minutes": "Procès-verbal",
     "type_report": "Rapport",
@@ -756,7 +760,12 @@
     "collection_rate": "Taux de collecte",
     "meeting_attendance": "Taux de présence aux réunions",
     "election_participation": "Participation aux élections",
-    "event_registrations": "Inscriptions aux événements"
+    "event_registrations": "Inscriptions aux événements",
+    "range_12m": "12 derniers mois",
+    "range_6m": "6 derniers mois",
+    "range_3m": "3 derniers mois",
+    "range_ytd": "Depuis le début de l'année",
+    "range_custom": "Période personnalisée"
   },
   "finances": {
     "title": "Finances",
@@ -780,7 +789,9 @@
     "member": "Membre",
     "income": "Recettes",
     "expenses": "Dépenses",
-    "budget": "Budget"
+    "budget": "Budget",
+    "expenses_validated": "Dépenses validées",
+    "net_balance": "Solde net"
   },
   "admin": {
     "title": "Administration",
@@ -1008,7 +1019,8 @@
     "type_payment_confirmed": "Paiement confirmé",
     "type_payment_recorded": "Paiement enregistré",
     "type_event_invite": "Événement",
-    "type_welfare_update": "Solidarité"
+    "type_welfare_update": "Solidarité",
+    "see_all": "Voir toutes les notifications"
   },
   "countries": {
     "DZ": "Algérie",

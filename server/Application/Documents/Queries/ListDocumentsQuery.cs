@@ -40,6 +40,7 @@ public class ListDocumentsQueryHandler(AppDbContext db)
     internal static DocumentDto ToDto(Domain.Entities.Document d) => new(
         d.Id.ToString(), d.TenantId.ToString(), d.Title, d.Description,
         d.Type, d.Category, d.FileName, d.FileUrl, d.FileSizeBytes, d.MimeType, d.IsPublic,
+        string.IsNullOrEmpty(d.Visibility) ? (d.IsPublic ? "public" : "members") : d.Visibility,
         d.UploadedBy.ToString(), $"{d.Uploader.FirstName} {d.Uploader.LastName}",
         d.CreatedAt.ToString("O"), d.UpdatedAt?.ToString("O"));
 }

@@ -4,6 +4,8 @@ export interface FinanceSummaryDto {
   balance: number;
   collection_rate: number;
   total_transactions: number;
+  total_expenses: number;
+  net_balance: number;
 }
 
 export interface FinanceTransactionDto {

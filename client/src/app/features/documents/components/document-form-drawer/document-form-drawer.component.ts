@@ -13,7 +13,6 @@ import { APP_CONFIG } from '@core/config/app-config.token';
 import { DOCUMENT_CATEGORIES, DOCUMENT_TYPES, DocumentDto } from '@models/document.model';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
-import { CheckboxModule } from 'primeng/checkbox';
 import { Drawer, DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -32,7 +31,6 @@ import { DocumentsStore } from '../../store/documents.store';
     InputTextModule,
     SelectModule,
     TextareaModule,
-    CheckboxModule,
     TranslatePipe,
   ],
   template: `
@@ -110,9 +108,9 @@ import { DocumentsStore } from '../../store/documents.store';
           <textarea pTextarea formControlName="description" rows="3" class="w-full"></textarea>
         </div>
 
-        <div class="flex items-center gap-2">
-          <p-checkbox formControlName="is_public" [binary]="true" inputId="is_public" />
-          <label for="is_public" class="text-sm">{{ 'documents.is_public' | translate }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium">{{ 'documents.visibility' | translate }}</label>
+          <p-select formControlName="visibility" [options]="visibilityOptions" optionLabel="label" optionValue="value" />
         </div>
 
         @if (error()) {
@@ -176,12 +174,19 @@ export class DocumentFormDrawerComponent {
     }));
   }
 
+  get visibilityOptions() {
+    return ['public', 'members', 'board'].map(v => ({
+      label: this.translate.instant('documents.visibility_' + v),
+      value: v,
+    }));
+  }
+
   readonly form = this.fb.group({
     title: ['', Validators.required],
     description: [''],
     type: ['other', Validators.required],
     category: ['general', Validators.required],
-    is_public: [true],
+    visibility: ['public'],
   });
 
   open(item?: DocumentDto): void {
@@ -189,14 +194,14 @@ export class DocumentFormDrawerComponent {
     this.error.set(null);
     this.uploadError.set(null);
     this.selectedFile.set(null);
-    this.form.reset({ type: 'other', category: 'general', is_public: true });
+    this.form.reset({ type: 'other', category: 'general', visibility: 'public' });
     if (item) {
       this.form.patchValue({
         title: item.title,
         description: item.description ?? '',
         type: item.type,
         category: item.category,
-        is_public: item.is_public,
+        visibility: item.visibility ?? (item.is_public ? 'public' : 'members'),
       });
     }
     this.visible = true;
@@ -237,7 +242,8 @@ export class DocumentFormDrawerComponent {
           description: v.description || undefined,
           type: v.type!,
           category: v.category!,
-          is_public: v.is_public!,
+          is_public: v.visibility === 'public',
+          visibility: v.visibility!,
         })
         .subscribe({
           next: (doc) => {
@@ -272,7 +278,8 @@ export class DocumentFormDrawerComponent {
                 file_name: upload.file_name,
                 file_size_bytes: upload.file_size_bytes,
                 mime_type: upload.mime_type,
-                is_public: v.is_public!,
+                is_public: v.visibility === 'public',
+                visibility: v.visibility!,
               })
               .subscribe({
                 next: (doc) => {

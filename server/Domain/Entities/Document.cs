@@ -13,6 +13,7 @@ public class Document
     public long FileSizeBytes { get; set; }
     public string MimeType { get; set; } = string.Empty;
     public bool IsPublic { get; set; } = true;
+    public string Visibility { get; set; } = "public";
     public Guid UploadedBy { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
