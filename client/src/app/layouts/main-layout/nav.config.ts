@@ -34,7 +34,8 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     titleKey: 'Finances',
     items: [
-      { labelKey: 'nav.finances', icon: 'pi pi-chart-bar', route: '/finances', roles: [ROLES.PRESIDENT, ROLES.TREASURER, ROLES.AUDITOR] },
+      { labelKey: 'nav.finances', icon: 'pi pi-chart-bar', route: '/finances/overview', roles: [ROLES.PRESIDENT, ROLES.TREASURER, ROLES.AUDITOR] },
+      { labelKey: 'nav.expenses', icon: 'pi pi-wallet', route: '/finances/expenses', roles: [ROLES.PRESIDENT, ROLES.TREASURER, ROLES.AUDITOR] },
       { labelKey: 'nav.analytics', icon: 'pi pi-chart-line', route: '/analytics', roles: [ROLES.PRESIDENT, ROLES.TREASURER] },
     ],
   },

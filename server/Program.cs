@@ -27,6 +27,8 @@ using server.API.Audit;
 using server.API.Roles;
 using server.API.DirectoryFeature;
 using server.API.SuperAdmin;
+using server.API.Notifications;
+using server.API.Expenses;
 using Microsoft.AspNetCore.Authorization;
 using server.Infrastructure.Auth;
 using server.Infrastructure.BackgroundServices;
@@ -220,6 +222,8 @@ try
     app.MapTenantEndpoints();
     app.MapRoleEndpoints();
     app.MapAuditEndpoints();
+    app.MapNotificationEndpoints();
+    app.MapExpenseEndpoints();
     app.MapDirectoryEndpoints();
 
     app.Run();

@@ -38,6 +38,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PostComment> PostComments => Set<PostComment>();
     public DbSet<PostReaction> PostReactions => Set<PostReaction>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Expense> Expenses => Set<Expense>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
