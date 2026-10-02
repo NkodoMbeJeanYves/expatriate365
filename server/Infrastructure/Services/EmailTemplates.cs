@@ -46,19 +46,6 @@ public static class EmailTemplates
             <a href="{loginUrl}" style="{BtnStyle}">Se connecter</a>
             """);
 
-    public static string WelcomeMember(string fullName, string associationName, string email, string password, string loginUrl) =>
-        Wrap($"Bienvenue dans {associationName}",
-            $"""
-            <p>Bonjour <strong>{fullName}</strong>,</p>
-            <p>Votre compte membre a &eacute;t&eacute; cr&eacute;&eacute; dans l&rsquo;association <strong>{associationName}</strong>.</p>
-            <table style="width:100%;border-collapse:collapse;margin:16px 0">
-              <tr><td style="{TdLabel}">Email de connexion</td><td style="{TdValue}"><strong>{email}</strong></td></tr>
-              <tr><td style="{TdLabel}">Mot de passe</td><td style="{TdValue}"><strong>{password}</strong></td></tr>
-            </table>
-            <p style="color:#b45309;font-size:.85rem">&#9888; Changez votre mot de passe d&egrave;s votre premi&egrave;re connexion.</p>
-            <a href="{loginUrl}" style="{BtnStyle}">Acc&eacute;der &agrave; mon espace</a>
-            """);
-
     public static string MemberInvitation(string fullName, string associationName, string setPasswordUrl) =>
         Wrap($"Invitation &mdash; {associationName}",
             $"""
