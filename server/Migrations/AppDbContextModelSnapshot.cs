@@ -1438,6 +1438,38 @@ namespace server.Migrations
                     b.ToTable("notifications", (string)null);
                 });
 
+            modelBuilder.Entity("server.Domain.Entities.NotificationPreference", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("NotificationType")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("NotificationPreferences");
+                });
+
             modelBuilder.Entity("server.Domain.Entities.Payment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2472,6 +2504,17 @@ namespace server.Migrations
                 });
 
             modelBuilder.Entity("server.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("server.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.NotificationPreference", b =>
                 {
                     b.HasOne("server.Domain.Entities.User", "User")
                         .WithMany()
