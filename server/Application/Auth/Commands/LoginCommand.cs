@@ -45,10 +45,10 @@ public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginC
             u => u.Email == dto.Email.ToLowerInvariant() && u.IsActive, ct);
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-            return ServiceResult<LoginResponse>.Failure("Email ou mot de passe incorrect.");
+            return ServiceResult<LoginResponse>.Failure("Email ou mot de passe incorrect.", "errors.auth.invalid_credentials");
 
         if (user.Status != "active")
-            return ServiceResult<LoginResponse>.Failure("Ce compte est suspendu.");
+            return ServiceResult<LoginResponse>.Failure("Ce compte est suspendu.", "errors.auth.account_suspended");
 
         if (user.TenantId.HasValue)
         {
@@ -56,7 +56,7 @@ public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginC
             if (tenant is null || !tenant.IsActive)
             {
                 log.LogWarning("Login blocked: tenant {TenantId} is inactive for user {UserId}", user.TenantId, user.Id);
-                return ServiceResult<LoginResponse>.Failure("Cette association est désactivée. Contactez votre administrateur.");
+                return ServiceResult<LoginResponse>.Failure("Cette association est désactivée. Contactez votre administrateur.", "errors.auth.tenant_disabled");
             }
         }
 

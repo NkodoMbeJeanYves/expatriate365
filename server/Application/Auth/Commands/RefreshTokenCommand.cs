@@ -34,7 +34,7 @@ public class RefreshTokenCommandHandler(AppDbContext db, JwtService jwt, ILogger
         if (user is null || user.RefreshTokenExpiresAt < DateTime.UtcNow)
         {
             log.LogWarning("Refresh token invalid or expired");
-            return ServiceResult<LoginResponse>.Failure("Refresh token invalide ou expiré.");
+            return ServiceResult<LoginResponse>.Failure("Refresh token invalide ou expiré.", "errors.auth.invalid_refresh_token");
         }
 
         if (user.TenantId.HasValue)
@@ -43,7 +43,7 @@ public class RefreshTokenCommandHandler(AppDbContext db, JwtService jwt, ILogger
             if (tenant is null || !tenant.IsActive)
             {
                 log.LogWarning("Refresh blocked: tenant {TenantId} is inactive for user {UserId}", user.TenantId, user.Id);
-                return ServiceResult<LoginResponse>.Failure("Cette association est désactivée. Contactez votre administrateur.");
+                return ServiceResult<LoginResponse>.Failure("Cette association est désactivée. Contactez votre administrateur.", "errors.auth.tenant_disabled");
             }
         }
 

@@ -26,7 +26,7 @@ public class InviteUserCommandHandler(
 
         var existing = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
         if (existing is not null)
-            return ServiceResult<AdminUserDto>.Failure("Un utilisateur avec cet email existe déjà.");
+            return ServiceResult<AdminUserDto>.Failure("Un utilisateur avec cet email existe déjà.", "errors.user.email_exists");
 
         var tenant = await db.Tenants.FindAsync([request.TenantId], ct);
 

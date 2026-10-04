@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using server.Application.Common;
 using server.Application.Roles.Commands;
@@ -49,7 +49,7 @@ public static class RoleEndpoints
                 var result = await mediator.Send(new UpdateTenantRolePermissionsCommand(tenantId.Value, id, dto));
                 return result.IsSuccess
                     ? Results.NoContent()
-                    : Results.BadRequest(new { error = result.ErrorMessage });
+                    : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
             })
             .RequireAuthorization(Permissions.RolesUpdate)
             .WithName("UpdateTenantRolePermissions");
@@ -63,7 +63,7 @@ public static class RoleEndpoints
                 var result = await mediator.Send(new ResetTenantRolePermissionsCommand(tenantId.Value, id));
                 return result.IsSuccess
                     ? Results.NoContent()
-                    : Results.BadRequest(new { error = result.ErrorMessage });
+                    : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
             })
             .RequireAuthorization(Permissions.RolesUpdate)
             .WithName("ResetTenantRolePermissions");
@@ -75,7 +75,7 @@ public static class RoleEndpoints
                 var result = await mediator.Send(new UpdateRolePermissionsCommand(id, dto));
                 return result.IsSuccess
                     ? Results.NoContent()
-                    : Results.BadRequest(new { error = result.ErrorMessage });
+                    : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
             })
             .RequireAuthorization(Permissions.RolesUpdate)
             .WithName("UpdateRolePermissions");
@@ -87,7 +87,7 @@ public static class RoleEndpoints
                 var result = await mediator.Send(new ResetRolePermissionsCommand(id));
                 return result.IsSuccess
                     ? Results.NoContent()
-                    : Results.BadRequest(new { error = result.ErrorMessage });
+                    : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
             })
             .RequireAuthorization(Permissions.RolesUpdate)
             .WithName("ResetRolePermissions");

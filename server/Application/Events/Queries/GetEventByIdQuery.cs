@@ -17,7 +17,7 @@ public class GetEventByIdQueryHandler(AppDbContext db)
             .Include(e => e.Registrations).ThenInclude(r => r.Member).ThenInclude(m => m.User)
             .FirstOrDefaultAsync(e => e.Id == request.Id && e.TenantId == request.TenantId, ct);
 
-        if (ev is null) return ServiceResult<(EventDto, List<EventRegistrationDto>)>.Failure("Événement introuvable.");
+        if (ev is null) return ServiceResult<(EventDto, List<EventRegistrationDto>)>.Failure("Événement introuvable.", "errors.event.not_found");
 
         var regs = ev.Registrations
             .Where(r => r.IsActive)

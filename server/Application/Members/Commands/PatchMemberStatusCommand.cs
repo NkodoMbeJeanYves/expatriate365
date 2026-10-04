@@ -16,12 +16,12 @@ public class PatchMemberStatusCommandHandler(AppDbContext db, ILogger<PatchMembe
     public async Task<ServiceResult<bool>> Handle(PatchMemberStatusCommand request, CancellationToken ct)
     {
         if (!ValidStatuses.Contains(request.Status))
-            return ServiceResult<bool>.Failure($"Statut invalide. Valeurs acceptées : {string.Join(", ", ValidStatuses)}");
+            return ServiceResult<bool>.Failure($"Statut invalide. Valeurs acceptées : {string.Join(", ", ValidStatuses)}", "errors.member.invalid_status");
 
         var member = await db.Members
             .FirstOrDefaultAsync(m => m.Id == request.MemberId && m.TenantId == request.TenantId, ct);
 
-        if (member is null) return ServiceResult<bool>.Failure("Membre introuvable.");
+        if (member is null) return ServiceResult<bool>.Failure("Membre introuvable.", "errors.member.not_found");
 
         member.Status = request.Status;
         await db.SaveChangesAsync(ct);

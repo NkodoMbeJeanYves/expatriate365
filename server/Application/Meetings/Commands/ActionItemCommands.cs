@@ -18,7 +18,7 @@ public class CreateActionItemHandler(AppDbContext db, ILogger<CreateActionItemHa
     public async Task<ServiceResult<ActionItemDto>> Handle(CreateActionItemCommand request, CancellationToken ct)
     {
         var meeting = await db.Meetings.FirstOrDefaultAsync(m => m.Id == request.MeetingId && m.TenantId == request.TenantId && m.IsActive, ct);
-        if (meeting is null) return ServiceResult<ActionItemDto>.Failure("Meeting not found.");
+        if (meeting is null) return ServiceResult<ActionItemDto>.Failure("Meeting not found.", "errors.meeting.not_found");
 
         var item = new MeetingActionItem
         {
@@ -50,7 +50,7 @@ public class UpdateActionItemHandler(AppDbContext db, ILogger<UpdateActionItemHa
     public async Task<ServiceResult<ActionItemDto>> Handle(UpdateActionItemCommand request, CancellationToken ct)
     {
         var item = await db.MeetingActionItems.FirstOrDefaultAsync(i => i.Id == request.ItemId && i.TenantId == request.TenantId && i.IsActive, ct);
-        if (item is null) return ServiceResult<ActionItemDto>.Failure("Action item not found.");
+        if (item is null) return ServiceResult<ActionItemDto>.Failure("Action item not found.", "errors.action_item.not_found");
 
         item.Title = request.Dto.Title.Trim();
         item.Description = request.Dto.Description?.Trim();
@@ -76,7 +76,7 @@ public class DeleteActionItemHandler(AppDbContext db, ILogger<DeleteActionItemHa
     public async Task<ServiceResult<bool>> Handle(DeleteActionItemCommand request, CancellationToken ct)
     {
         var item = await db.MeetingActionItems.FirstOrDefaultAsync(i => i.Id == request.ItemId && i.TenantId == request.TenantId && i.IsActive, ct);
-        if (item is null) return ServiceResult<bool>.Failure("Action item not found.");
+        if (item is null) return ServiceResult<bool>.Failure("Action item not found.", "errors.action_item.not_found");
 
         item.IsActive = false;
         item.UpdatedAt = DateTime.UtcNow;

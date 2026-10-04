@@ -20,8 +20,8 @@ public class MarkWelfarePaidCommandHandler(AppDbContext db, ILogger<MarkWelfareP
             .Include(w => w.Member).ThenInclude(m => m.User)
             .FirstOrDefaultAsync(w => w.Id == request.Id && w.TenantId == request.TenantId, ct);
 
-        if (welfare is null) return ServiceResult<WelfareRequestDto>.Failure("Demande introuvable.");
-        if (welfare.Status != "approved") return ServiceResult<WelfareRequestDto>.Failure("Seules les demandes approuvées peuvent être marquées versées.");
+        if (welfare is null) return ServiceResult<WelfareRequestDto>.Failure("Demande introuvable.", "errors.welfare.not_found");
+        if (welfare.Status != "approved") return ServiceResult<WelfareRequestDto>.Failure("Seules les demandes approuvées peuvent être marquées versées.", "errors.welfare.invalid_status");
 
         welfare.Status = "paid";
         welfare.AmountPaid = welfare.AmountApproved;

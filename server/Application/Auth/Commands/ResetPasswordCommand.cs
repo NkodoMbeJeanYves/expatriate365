@@ -26,16 +26,16 @@ public class ResetPasswordCommandHandler(AppDbContext db, ILogger<ResetPasswordC
     {
         var tokenHash = server.Application.Common.TokenGenerator.Hash(request.Dto.Token);
         if (tokenHash is null)
-            return ServiceResult<bool>.Failure("Lien de réinitialisation invalide.");
+            return ServiceResult<bool>.Failure("Lien de réinitialisation invalide.", "errors.auth.invalid_reset_link");
 
         var user = await db.Users
             .FirstOrDefaultAsync(u => u.PasswordResetTokenHash == tokenHash && u.IsActive, ct);
 
         if (user is null)
-            return ServiceResult<bool>.Failure("Lien de réinitialisation invalide ou déjà utilisé.");
+            return ServiceResult<bool>.Failure("Lien de réinitialisation invalide ou déjà utilisé.", "errors.auth.invalid_reset_link");
 
         if (user.PasswordResetTokenExpiresAt is null || user.PasswordResetTokenExpiresAt < DateTime.UtcNow)
-            return ServiceResult<bool>.Failure("Ce lien a expiré. Veuillez faire une nouvelle demande.");
+            return ServiceResult<bool>.Failure("Ce lien a expiré. Veuillez faire une nouvelle demande.", "errors.auth.reset_link_expired");
 
         user.PasswordHash                = BCrypt.Net.BCrypt.HashPassword(request.Dto.NewPassword);
         user.PasswordResetTokenHash      = null;

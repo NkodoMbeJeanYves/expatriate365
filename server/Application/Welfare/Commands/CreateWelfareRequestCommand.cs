@@ -31,12 +31,12 @@ public class CreateWelfareRequestCommandHandler(AppDbContext db, ILogger<CreateW
     public async Task<ServiceResult<WelfareRequestDto>> Handle(CreateWelfareRequestCommand request, CancellationToken ct)
     {
         if (!Guid.TryParse(request.Dto.MemberId, out var memberId))
-            return ServiceResult<WelfareRequestDto>.Failure("MemberId invalide.");
+            return ServiceResult<WelfareRequestDto>.Failure("MemberId invalide.", "errors.common.invalid_id");
 
         var member = await db.Members
             .Include(m => m.User)
             .FirstOrDefaultAsync(m => m.Id == memberId && m.TenantId == request.TenantId, ct);
-        if (member is null) return ServiceResult<WelfareRequestDto>.Failure("Membre introuvable.");
+        if (member is null) return ServiceResult<WelfareRequestDto>.Failure("Membre introuvable.", "errors.member.not_found");
 
         var welfare = new WelfareRequest
         {

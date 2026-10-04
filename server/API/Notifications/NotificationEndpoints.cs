@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using server.Application.Notifications;
 
@@ -23,7 +23,7 @@ public static class NotificationEndpoints
             var (tenantId, userId) = GetIds(principal);
             if (tenantId is null || userId is null) return Results.Unauthorized();
             var result = await mediator.Send(new MarkNotificationReadCommand(tenantId.Value, userId.Value, id));
-            return result.IsSuccess ? Results.Ok(new { ok = true }) : Results.NotFound(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(new { ok = true }) : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         });
 
         group.MapPost("/read-all", async (ClaimsPrincipal principal, IMediator mediator) =>
@@ -47,7 +47,7 @@ public static class NotificationEndpoints
             var (tenantId, userId) = GetIds(principal);
             if (tenantId is null || userId is null) return Results.Unauthorized();
             var result = await mediator.Send(new UpdateNotificationPreferencesCommand(tenantId.Value, userId.Value, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         });
     }
 

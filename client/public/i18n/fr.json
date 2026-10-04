@@ -255,9 +255,6 @@
     "optional": "optionnel",
     "generic_error": "Une erreur est survenue. Veuillez réessayer."
   },
-  "errors": {
-    "generic": "Une erreur est survenue. Veuillez réessayer."
-  },
   "profile": {
     "title": "Mon profil",
     "subtitle": "Gérez vos informations personnelles et vos préférences de notification",
@@ -328,7 +325,162 @@
     "forbidden": "Vous n'avez pas les droits nécessaires pour cette action.",
     "not_found": "Ressource introuvable.",
     "save_error": "Erreur lors de l'enregistrement",
-    "load_error": "Erreur lors du chargement des données"
+    "load_error": "Erreur lors du chargement des données",
+    "timeout": "La requête a expiré. Veuillez réessayer.",
+    "server": "Une erreur serveur est survenue. Veuillez réessayer.",
+    "generic": "Une erreur est survenue. Veuillez réessayer.",
+    "common": {
+      "invalid_id": "Identifiant invalide.",
+      "invalid_date": "Date invalide."
+    },
+    "user": {
+      "not_found": "Utilisateur introuvable.",
+      "email_exists": "Un utilisateur avec cet email existe déjà."
+    },
+    "auth": {
+      "invalid_credentials": "Email ou mot de passe incorrect.",
+      "account_suspended": "Ce compte est suspendu.",
+      "tenant_disabled": "Cette association est désactivée. Contactez votre administrateur.",
+      "tenant_not_found": "Communauté introuvable ou inactive.",
+      "invalid_refresh_token": "Session expirée. Veuillez vous reconnecter.",
+      "slug_taken": "Ce slug est déjà utilisé.",
+      "email_exists": "Cet email est déjà enregistré.",
+      "wrong_password": "Mot de passe actuel incorrect.",
+      "same_password": "Le nouveau mot de passe doit être différent de l'actuel.",
+      "invalid_reset_link": "Lien de réinitialisation invalide ou déjà utilisé.",
+      "reset_link_expired": "Ce lien a expiré. Veuillez faire une nouvelle demande.",
+      "invalid_activation_link": "Lien d'activation invalide ou déjà utilisé.",
+      "activation_link_expired": "Ce lien a expiré. Demandez un nouvel email d'activation."
+    },
+    "member": {
+      "not_found": "Membre introuvable.",
+      "email_exists": "Un membre avec cet email existe déjà.",
+      "invalid_status": "Statut invalide.",
+      "no_user_account": "Aucun compte utilisateur associé à ce membre.",
+      "already_active": "Ce compte est déjà activé.",
+      "no_email": "Ce membre n'a pas d'adresse email de contact renseignée."
+    },
+    "category": {
+      "not_found": "Catégorie introuvable.",
+      "in_use": "Cette catégorie est utilisée par des membres actifs."
+    },
+    "charge": {
+      "not_found": "Cotisation introuvable.",
+      "waived": "Cette cotisation est exonérée.",
+      "already_paid": "Cette cotisation est déjà payée."
+    },
+    "contribution_type": {
+      "not_found": "Plan de cotisation introuvable.",
+      "has_active_charges": "Ce plan a des cotisations actives non soldées. Clôturez-les avant de supprimer."
+    },
+    "payment": {
+      "not_found": "Paiement introuvable.",
+      "invalid_method": "Méthode de paiement invalide.",
+      "amount_exceeds_balance": "Le montant dépasse le solde restant.",
+      "already_confirmed": "Ce paiement est déjà confirmé.",
+      "cancelled": "Ce paiement a été annulé.",
+      "already_reversed": "Ce paiement est déjà annulé."
+    },
+    "event": {
+      "not_found": "Événement introuvable.",
+      "invalid_dates": "La date de fin doit être postérieure à la date de début.",
+      "cannot_edit": "Impossible de modifier un événement terminé ou annulé.",
+      "not_open": "L'événement n'est pas ouvert aux inscriptions.",
+      "already_registered": "Ce membre est déjà inscrit.",
+      "invalid_status_transition": "Cette action n'est pas autorisée pour le statut actuel de l'événement."
+    },
+    "registration": {
+      "not_found": "Inscription introuvable.",
+      "already_cancelled": "Inscription déjà annulée."
+    },
+    "welfare": {
+      "not_found": "Demande de solidarité introuvable.",
+      "invalid_status": "Cette action n'est pas autorisée pour le statut actuel de la demande."
+    },
+    "election": {
+      "not_found": "Élection introuvable.",
+      "not_open": "L'élection n'est pas ouverte au vote.",
+      "not_authorized": "Seuls les membres actifs du bureau exécutif peuvent voter.",
+      "already_voted": "Vous avez déjà voté pour cette élection.",
+      "cannot_edit": "Impossible de modifier une élection ouverte ou clôturée.",
+      "invalid_status": "Cette action n'est pas autorisée à ce stade de l'élection.",
+      "invalid_status_transition": "Cette transition n'est pas autorisée pour le statut actuel de l'élection.",
+      "no_candidates": "L'élection doit avoir au moins un candidat."
+    },
+    "candidate": {
+      "not_found": "Candidat introuvable.",
+      "already_exists": "Ce membre est déjà candidat."
+    },
+    "vote": {
+      "no_candidates": "Aucun candidat sélectionné.",
+      "too_many_choices": "Vous ne pouvez voter que pour le nombre autorisé de candidats.",
+      "invalid_candidates": "Un ou plusieurs candidats sont invalides."
+    },
+    "role": {
+      "not_found": "Rôle introuvable.",
+      "name_taken": "Un rôle avec ce nom existe déjà.",
+      "in_use": "Ce rôle est utilisé par des membres actifs du bureau.",
+      "no_defaults": "Aucune configuration par défaut pour ce rôle.",
+      "unknown_permissions": "Permissions inconnues fournies."
+    },
+    "board_role": {
+      "not_found": "Rôle de bureau introuvable."
+    },
+    "board_member": {
+      "not_found": "Membre du bureau introuvable."
+    },
+    "resolution": {
+      "not_found": "Résolution introuvable."
+    },
+    "document": {
+      "not_found": "Document introuvable."
+    },
+    "meeting": {
+      "not_found": "Réunion introuvable.",
+      "cannot_edit": "Impossible de modifier une réunion terminée ou annulée.",
+      "cancelled": "Cette réunion a été annulée.",
+      "invalid_status_transition": "Cette transition n'est pas autorisée pour le statut actuel de la réunion."
+    },
+    "action_item": {
+      "not_found": "Point d'action introuvable."
+    },
+    "minutes": {
+      "not_found": "Compte-rendu introuvable.",
+      "already_approved": "Ce compte-rendu est déjà approuvé."
+    },
+    "communication": {
+      "not_found": "Communication introuvable.",
+      "already_sent": "Cette communication a déjà été envoyée.",
+      "recipient_not_found": "Destinataire introuvable."
+    },
+    "notification": {
+      "not_found": "Notification introuvable."
+    },
+    "community": {
+      "not_member": "Vous devez être membre pour publier une expérience."
+    },
+    "post": {
+      "not_found": "Publication introuvable.",
+      "not_owner": "Vous ne pouvez modifier que vos propres publications.",
+      "cannot_edit": "Une publication publiée ne peut pas être modifiée.",
+      "not_authorized": "Action non autorisée.",
+      "already_published": "Déjà publiée."
+    },
+    "comment": {
+      "not_found": "Commentaire introuvable.",
+      "not_authorized": "Vous n'êtes pas autorisé à supprimer ce commentaire."
+    },
+    "attachment": {
+      "not_found": "Pièce jointe introuvable."
+    },
+    "expense": {
+      "not_found": "Dépense introuvable.",
+      "cannot_edit": "Impossible de modifier une dépense validée.",
+      "invalid_status": "Seules les dépenses en attente peuvent être validées."
+    },
+    "tenant": {
+      "not_found": "Association introuvable."
+    }
   },
   "dashboard": {
     "greeting": "Bonjour, {{name}} 👋",

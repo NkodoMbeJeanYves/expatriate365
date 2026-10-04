@@ -16,7 +16,7 @@ public class MarkAttendanceCommandHandler(AppDbContext db, ILogger<MarkAttendanc
     public async Task<ServiceResult<int>> Handle(MarkAttendanceCommand request, CancellationToken ct)
     {
         var ev = await db.Events.FirstOrDefaultAsync(e => e.Id == request.EventId && e.TenantId == request.TenantId, ct);
-        if (ev is null) return ServiceResult<int>.Failure("Événement introuvable.");
+        if (ev is null) return ServiceResult<int>.Failure("Événement introuvable.", "errors.event.not_found");
 
         var regIds = request.Dto.Entries.Select(e => Guid.Parse(e.RegistrationId)).ToList();
         var registrations = await db.EventRegistrations

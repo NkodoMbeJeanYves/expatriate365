@@ -33,18 +33,18 @@ public class CreateContributionChargeCommandHandler(
         var dto = request.Dto;
 
         if (!Guid.TryParse(dto.MemberId, out var memberId))
-            return ServiceResult<ContributionChargeDto>.Failure("MemberId invalide.");
+            return ServiceResult<ContributionChargeDto>.Failure("MemberId invalide.", "errors.common.invalid_id");
         if (!Guid.TryParse(dto.ContributionTypeId, out var typeId))
-            return ServiceResult<ContributionChargeDto>.Failure("ContributionTypeId invalide.");
+            return ServiceResult<ContributionChargeDto>.Failure("ContributionTypeId invalide.", "errors.common.invalid_id");
 
         var member = await db.Members
             .Include(m => m.User)
             .FirstOrDefaultAsync(m => m.Id == memberId && m.TenantId == request.TenantId, ct);
-        if (member is null) return ServiceResult<ContributionChargeDto>.Failure("Membre introuvable.");
+        if (member is null) return ServiceResult<ContributionChargeDto>.Failure("Membre introuvable.", "errors.member.not_found");
 
         var type = await db.ContributionTypes
             .FirstOrDefaultAsync(t => t.Id == typeId && t.TenantId == request.TenantId, ct);
-        if (type is null) return ServiceResult<ContributionChargeDto>.Failure("Plan de cotisation introuvable.");
+        if (type is null) return ServiceResult<ContributionChargeDto>.Failure("Plan de cotisation introuvable.", "errors.contribution_type.not_found");
 
         var dueDate = DateOnly.Parse(dto.DueDate);
         var amount = dto.AmountOverride ?? type.BaseAmount;

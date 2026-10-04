@@ -16,9 +16,9 @@ public class UpdateElectionCommandHandler(AppDbContext db, ILogger<UpdateElectio
     {
         var e = await db.Elections.Include(x => x.Candidates).Include(x => x.Votes)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
-        if (e is null) return ServiceResult<ElectionDto>.Failure("Élection introuvable.");
+        if (e is null) return ServiceResult<ElectionDto>.Failure("Élection introuvable.", "errors.election.not_found");
         if (e.Status is "open" or "closed" or "results_published")
-            return ServiceResult<ElectionDto>.Failure("Impossible de modifier une élection ouverte ou clôturée.");
+            return ServiceResult<ElectionDto>.Failure("Impossible de modifier une élection ouverte ou clôturée.", "errors.election.cannot_edit");
 
         e.Title = request.Dto.Title;
         e.Description = request.Dto.Description;

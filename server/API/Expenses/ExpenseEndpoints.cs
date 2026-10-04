@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using server.Application.Common;
 using server.Application.Expenses;
@@ -36,7 +36,7 @@ public static class ExpenseEndpoints
             var result = await mediator.Send(new CreateExpenseCommand(tenantId.Value, dto));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/expenses/{result.Data!.Id}", result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ReportsFinancial);
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateExpenseRequest dto, ClaimsPrincipal principal, IMediator mediator) =>
@@ -44,7 +44,7 @@ public static class ExpenseEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new UpdateExpenseCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ReportsFinancial);
 
         group.MapPost("/{id:guid}/validate", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -53,7 +53,7 @@ public static class ExpenseEndpoints
             var userId   = GetUserId(principal);
             if (tenantId is null || userId is null) return Results.Unauthorized();
             var result = await mediator.Send(new ValidateExpenseCommand(tenantId.Value, id, userId.Value, true));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ReportsFinancial);
 
         group.MapPost("/{id:guid}/reject", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -62,7 +62,7 @@ public static class ExpenseEndpoints
             var userId   = GetUserId(principal);
             if (tenantId is null || userId is null) return Results.Unauthorized();
             var result = await mediator.Send(new ValidateExpenseCommand(tenantId.Value, id, userId.Value, false));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ReportsFinancial);
 
         group.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -70,7 +70,7 @@ public static class ExpenseEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new DeleteExpenseCommand(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(new { deleted = true }) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(new { deleted = true }) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ReportsFinancial);
     }
 

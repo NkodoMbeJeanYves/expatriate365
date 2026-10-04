@@ -53,7 +53,7 @@ public class UpdateDocumentCommandHandler(AppDbContext db)
             .Include(d => d.Uploader)
             .FirstOrDefaultAsync(d => d.Id == request.Id && d.TenantId == request.TenantId, ct);
 
-        if (doc is null) return ServiceResult<DocumentDto>.Failure("Document introuvable.");
+        if (doc is null) return ServiceResult<DocumentDto>.Failure("Document introuvable.", "errors.document.not_found");
 
         var req = request.Request;
         doc.Title = req.Title;
@@ -78,7 +78,7 @@ public class DeleteDocumentCommandHandler(AppDbContext db)
         var doc = await db.Documents
             .FirstOrDefaultAsync(d => d.Id == request.Id && d.TenantId == request.TenantId, ct);
 
-        if (doc is null) return ServiceResult<bool>.Failure("Document introuvable.");
+        if (doc is null) return ServiceResult<bool>.Failure("Document introuvable.", "errors.document.not_found");
         doc.IsActive = false;
         await db.SaveChangesAsync(ct);
         return ServiceResult<bool>.Success(true);

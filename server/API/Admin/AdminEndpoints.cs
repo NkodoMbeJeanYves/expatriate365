@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using server.Application.Admin.Commands;
 using server.Application.Admin.DTOs;
@@ -36,7 +36,7 @@ public static class AdminEndpoints
             var result = await mediator.Send(new InviteUserCommand(tenantId.Value, request, lang));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/admin/users/{result.Data!.Id}", result.Data)
-                : Results.Conflict(new { error = result.ErrorMessage });
+                : Results.Conflict(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.UsersCreate);
 
         group.MapPut("/users/{id:guid}/role", async (Guid id, ChangeRoleRequest request,
@@ -47,7 +47,7 @@ public static class AdminEndpoints
             var result = await mediator.Send(new ChangeUserRoleCommand(tenantId.Value, id, request));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.NotFound(new { error = result.ErrorMessage });
+                : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesAssign);
 
         group.MapPost("/users/{id:guid}/activate", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -55,7 +55,7 @@ public static class AdminEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new ToggleUserStatusCommand(tenantId.Value, id, true));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.UsersUpdate);
 
         group.MapPost("/users/{id:guid}/deactivate", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -63,7 +63,7 @@ public static class AdminEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new ToggleUserStatusCommand(tenantId.Value, id, false));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.UsersUpdate);
     }
 

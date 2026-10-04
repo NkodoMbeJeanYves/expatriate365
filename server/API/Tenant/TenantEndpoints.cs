@@ -1,4 +1,4 @@
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using server.Application.Common;
@@ -42,7 +42,7 @@ public static class TenantEndpoints
             var result = await mediator.Send(new UpdateTenantSettingsCommand(tenantId, body));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         })
         .RequireAuthorization(Permissions.SettingsUpdate)
         .WithName("UpdateTenantSettings")

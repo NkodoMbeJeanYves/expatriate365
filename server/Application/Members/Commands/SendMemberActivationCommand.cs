@@ -24,13 +24,13 @@ public class SendMemberActivationHandler(
             .FirstOrDefaultAsync(m => m.Id == request.MemberId && m.TenantId == request.TenantId, ct);
 
         if (member is null)
-            return ServiceResult<bool>.Failure("Membre introuvable.");
+            return ServiceResult<bool>.Failure("Membre introuvable.", "errors.member.not_found");
         if (member.User is null)
-            return ServiceResult<bool>.Failure("Aucun compte utilisateur associé à ce membre.");
+            return ServiceResult<bool>.Failure("Aucun compte utilisateur associé à ce membre.", "errors.member.no_user_account");
         if (member.User.EmailVerifiedAt.HasValue)
-            return ServiceResult<bool>.Failure("Ce compte est déjà activé.");
+            return ServiceResult<bool>.Failure("Ce compte est déjà activé.", "errors.member.already_active");
         if (string.IsNullOrWhiteSpace(member.User.ContactEmail))
-            return ServiceResult<bool>.Failure("Ce membre n'a pas d'adresse email de contact renseignée.");
+            return ServiceResult<bool>.Failure("Ce membre n'a pas d'adresse email de contact renseignée.", "errors.member.no_email");
 
         var memberName = $"{member.User.FirstName} {member.User.LastName}";
         var (plainToken, tokenHash) = server.Application.Common.TokenGenerator.Generate();

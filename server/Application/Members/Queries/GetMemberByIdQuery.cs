@@ -18,7 +18,7 @@ public class GetMemberByIdQueryHandler(AppDbContext db)
             .Include(x => x.Category)
             .FirstOrDefaultAsync(x => x.Id == q.MemberId && x.TenantId == q.TenantId, ct);
 
-        if (m is null) return ServiceResult<MemberDto>.Failure("Membre introuvable.");
+        if (m is null) return ServiceResult<MemberDto>.Failure("Membre introuvable.", "errors.member.not_found");
 
         return ServiceResult<MemberDto>.Success(new MemberDto(
             m.Id.ToString(), m.TenantId.ToString(), m.UserId.ToString(),

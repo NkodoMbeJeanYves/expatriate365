@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using server.Application.Common;
@@ -35,7 +35,7 @@ public static class GovernanceEndpoints
             var result = await m.Send(new CreateBoardRoleCommand(tid.Value, req));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/governance/board-roles/{result.Data!.Id}", result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesAssign);
 
         grp.MapPut("/board-roles/{id:guid}", async (Guid id, UpdateBoardRoleRequest req, ClaimsPrincipal p, IMediator m) =>
@@ -44,7 +44,7 @@ public static class GovernanceEndpoints
             var result = await m.Send(new UpdateBoardRoleCommand(tid.Value, id, req));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesAssign);
 
         grp.MapDelete("/board-roles/{id:guid}", async (Guid id, ClaimsPrincipal p, IMediator m) =>
@@ -53,7 +53,7 @@ public static class GovernanceEndpoints
             var result = await m.Send(new DeleteBoardRoleCommand(tid.Value, id));
             return result.IsSuccess
                 ? Results.NoContent()
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesAssign);
 
         // ── Mandate Alerts ───────────────────────────────────────────────────
@@ -78,7 +78,7 @@ public static class GovernanceEndpoints
             var result = await m.Send(new CreateBoardMemberCommand(tid.Value, req));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/governance/board/{result.Data!.Id}", result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesAssign);
 
         grp.MapGet("/board/me", async (ClaimsPrincipal p, AppDbContext db) =>
@@ -98,14 +98,14 @@ public static class GovernanceEndpoints
             var result = await m.Send(new UpdateBoardMemberCommand(tid.Value, id, req));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesAssign);
 
         grp.MapDelete("/board/{id:guid}", async (Guid id, ClaimsPrincipal p, IMediator m) =>
         {
             var tid = GetTenantId(p); if (tid is null) return Results.Unauthorized();
             var result = await m.Send(new DeleteBoardMemberCommand(tid.Value, id));
-            return result.IsSuccess ? Results.NoContent() : Results.NotFound(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.NoContent() : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesDelete);
 
         // ── Resolutions ──────────────────────────────────────────────────────
@@ -123,21 +123,21 @@ public static class GovernanceEndpoints
             var result = await m.Send(new CreateResolutionCommand(tid.Value, req));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/governance/resolutions/{result.Data!.Id}", result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesUpdate);
 
         grp.MapPost("/resolutions/{id:guid}/adopt", async (Guid id, AdoptResolutionRequest req, ClaimsPrincipal p, IMediator m) =>
         {
             var tid = GetTenantId(p); if (tid is null) return Results.Unauthorized();
             var result = await m.Send(new AdoptResolutionCommand(tid.Value, id, req));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesUpdate);
 
         grp.MapDelete("/resolutions/{id:guid}", async (Guid id, ClaimsPrincipal p, IMediator m) =>
         {
             var tid = GetTenantId(p); if (tid is null) return Results.Unauthorized();
             var result = await m.Send(new DeleteResolutionCommand(tid.Value, id));
-            return result.IsSuccess ? Results.NoContent() : Results.NotFound(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.NoContent() : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.RolesDelete);
     }
 

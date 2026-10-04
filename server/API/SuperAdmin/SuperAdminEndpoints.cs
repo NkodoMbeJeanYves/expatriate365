@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO.Compression;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +19,7 @@ public static class SuperAdminEndpoints
         {
             if (!IsSuperAdmin(ctx)) return Results.Forbid();
             var result = await mediator.Send(new ListTenantsQuery());
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         })
         .WithName("ListTenants")
         .WithSummary("List all associations (super_admin only)");
@@ -28,7 +28,7 @@ public static class SuperAdminEndpoints
         {
             if (!IsSuperAdmin(ctx)) return Results.Forbid();
             var result = await mediator.Send(new CreateTenantCommand(dto));
-            return result.IsSuccess ? Results.Created($"/api/v1/superadmin/tenants", result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Created($"/api/v1/superadmin/tenants", result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         })
         .WithName("CreateTenant")
         .WithSummary("Create a new association with its org_admin (super_admin only)");
@@ -37,7 +37,7 @@ public static class SuperAdminEndpoints
         {
             if (!IsSuperAdmin(ctx)) return Results.Forbid();
             var result = await mediator.Send(new ToggleTenantActiveCommand(id));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         })
         .WithName("ToggleTenantActive")
         .WithSummary("Activate or deactivate an association (super_admin only)");

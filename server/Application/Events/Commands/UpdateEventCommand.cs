@@ -16,14 +16,14 @@ public class UpdateEventCommandHandler(AppDbContext db, ILogger<UpdateEventComma
     {
         var ev = await db.Events.Include(e => e.Registrations)
             .FirstOrDefaultAsync(e => e.Id == request.Id && e.TenantId == request.TenantId, ct);
-        if (ev is null) return ServiceResult<EventDto>.Failure("Événement introuvable.");
+        if (ev is null) return ServiceResult<EventDto>.Failure("Événement introuvable.", "errors.event.not_found");
         if (ev.Status == "completed" || ev.Status == "cancelled")
-            return ServiceResult<EventDto>.Failure("Impossible de modifier un événement terminé ou annulé.");
+            return ServiceResult<EventDto>.Failure("Impossible de modifier un événement terminé ou annulé.", "errors.event.cannot_edit");
 
         var dto = request.Dto;
         var start = DateTime.Parse(dto.StartDate);
         var end = DateTime.Parse(dto.EndDate);
-        if (end <= start) return ServiceResult<EventDto>.Failure("La date de fin doit être postérieure à la date de début.");
+        if (end <= start) return ServiceResult<EventDto>.Failure("La date de fin doit être postérieure à la date de début.", "errors.event.invalid_dates");
 
         ev.Title = dto.Title;
         ev.Description = dto.Description;

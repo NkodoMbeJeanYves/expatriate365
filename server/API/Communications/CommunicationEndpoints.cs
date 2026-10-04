@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using server.Application.Common;
 using server.Application.Communications.Commands;
@@ -35,7 +35,7 @@ public static class CommunicationEndpoints
             var result = await mediator.Send(new GetCommunicationByIdQuery(tenantId.Value, id));
             return result.IsSuccess
                 ? Results.Ok(new { communication = result.Data.Communication, recipients = result.Data.Recipients })
-                : Results.NotFound(new { error = result.ErrorMessage });
+                : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.AnnouncementsRead);
 
         group.MapPost("/", async (CreateCommunicationRequest request, ClaimsPrincipal principal, IMediator mediator) =>
@@ -45,7 +45,7 @@ public static class CommunicationEndpoints
             var result = await mediator.Send(new CreateCommunicationCommand(tenantId.Value, request));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/communications/{result.Data!.Id}", result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.AnnouncementsCreate);
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateCommunicationRequest request,
@@ -56,7 +56,7 @@ public static class CommunicationEndpoints
             var result = await mediator.Send(new UpdateCommunicationCommand(tenantId.Value, id, request));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.AnnouncementsUpdate);
 
         group.MapPost("/{id:guid}/send", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -66,7 +66,7 @@ public static class CommunicationEndpoints
             var result = await mediator.Send(new SendCommunicationCommand(tenantId.Value, id));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.AnnouncementsPublish);
 
         group.MapPost("/{id:guid}/read", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -77,7 +77,7 @@ public static class CommunicationEndpoints
             var result = await mediator.Send(new MarkReadCommand(tenantId.Value, id, memberId.Value));
             return result.IsSuccess
                 ? Results.Ok()
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         });
     }
 

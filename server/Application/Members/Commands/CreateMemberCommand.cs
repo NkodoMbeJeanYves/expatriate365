@@ -46,7 +46,7 @@ public class CreateMemberCommandHandler(
         if (existingUser is not null)
         {
             if (await db.Members.AnyAsync(m => m.UserId == existingUser.Id && m.TenantId == tenantId, ct))
-                return ServiceResult<MemberDto>.Failure("Cet email est déjà enregistré comme membre.");
+                return ServiceResult<MemberDto>.Failure("Cet email est déjà enregistré comme membre.", "errors.member.email_exists");
             user = existingUser;
         }
         else

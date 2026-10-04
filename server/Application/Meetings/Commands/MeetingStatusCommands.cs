@@ -18,8 +18,8 @@ public class StartMeetingCommandHandler(AppDbContext db, ILogger<StartMeetingCom
     {
         var m = await db.Meetings.Include(x => x.Attendances).Include(x => x.Minute)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
-        if (m is null) return ServiceResult<MeetingDto>.Failure("Réunion introuvable.");
-        if (m.Status != "scheduled") return ServiceResult<MeetingDto>.Failure("Seules les réunions planifiées peuvent démarrer.");
+        if (m is null) return ServiceResult<MeetingDto>.Failure("Réunion introuvable.", "errors.meeting.not_found");
+        if (m.Status != "scheduled") return ServiceResult<MeetingDto>.Failure("Seules les réunions planifiées peuvent démarrer.", "errors.meeting.invalid_status_transition");
         m.Status = "in_progress";
         m.StartedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);

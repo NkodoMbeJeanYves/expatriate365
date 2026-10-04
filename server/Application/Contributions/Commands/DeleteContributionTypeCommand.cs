@@ -16,13 +16,13 @@ public class DeleteContributionTypeCommandHandler(AppDbContext db, ILogger<Delet
             .FirstOrDefaultAsync(t => t.Id == request.Id && t.TenantId == request.TenantId, ct);
 
         if (type is null)
-            return ServiceResult<bool>.Failure("Plan de cotisation introuvable.");
+            return ServiceResult<bool>.Failure("Plan de cotisation introuvable.", "errors.contribution_type.not_found");
 
         var hasActiveCharges = await db.ContributionCharges
             .AnyAsync(c => c.ContributionTypeId == request.Id && c.IsActive && c.Status != "paid" && c.Status != "waived", ct);
 
         if (hasActiveCharges)
-            return ServiceResult<bool>.Failure("Ce plan a des cotisations actives non soldées. Clôturez-les avant de supprimer.");
+            return ServiceResult<bool>.Failure("Ce plan a des cotisations actives non soldées. Clôturez-les avant de supprimer.", "errors.contribution_type.has_active_charges");
 
         type.IsActive = false;
         type.UpdatedAt = DateTime.UtcNow;

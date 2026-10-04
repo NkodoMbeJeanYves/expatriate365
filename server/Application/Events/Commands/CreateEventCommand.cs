@@ -36,7 +36,7 @@ public class CreateEventCommandHandler(
         var end   = DateTime.Parse(dto.EndDate);
 
         if (end <= start)
-            return ServiceResult<EventDto>.Failure("La date de fin doit être postérieure à la date de début.");
+            return ServiceResult<EventDto>.Failure("La date de fin doit être postérieure à la date de début.", "errors.event.invalid_dates");
 
         var ev = new Event
         {

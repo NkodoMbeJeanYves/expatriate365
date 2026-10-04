@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using server.Application.Auth.Commands;
@@ -22,7 +22,7 @@ public static class AuthEndpoints
             var result = await mediator.Send(new RegisterCommand(dto));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.Conflict(new { error = result.ErrorMessage });
+                : Results.Conflict(new { error = result.ErrorCode ?? result.ErrorMessage });
         });
 
         group.MapPost("/login", async (
@@ -63,7 +63,7 @@ public static class AuthEndpoints
             var result = await mediator.Send(new GetMeQuery(userId));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.NotFound(new { error = result.ErrorMessage });
+                : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization();
 
         group.MapPatch("/language", async (
@@ -101,7 +101,7 @@ public static class AuthEndpoints
             var result = await mediator.Send(new server.Application.Auth.Commands.UpdateProfileCommand(userId, dto));
             return result.IsSuccess
                 ? Results.NoContent()
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization();
 
         group.MapPost("/set-password", async (
@@ -111,7 +111,7 @@ public static class AuthEndpoints
             var result = await mediator.Send(new server.Application.Auth.Commands.SetPasswordCommand(dto));
             return result.IsSuccess
                 ? Results.NoContent()
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         });
 
         group.MapPost("/forgot-password", async (
@@ -129,7 +129,7 @@ public static class AuthEndpoints
             var result = await mediator.Send(new server.Application.Auth.Commands.ResetPasswordCommand(dto));
             return result.IsSuccess
                 ? Results.NoContent()
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         });
 
         group.MapPost("/change-password", async (
@@ -145,7 +145,7 @@ public static class AuthEndpoints
             var result = await mediator.Send(new server.Application.Auth.Commands.ChangePasswordCommand(userId, dto));
             return result.IsSuccess
                 ? Results.NoContent()
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization();
 
         group.MapPost("/select-tenant", async (
@@ -171,7 +171,7 @@ public static class AuthEndpoints
             var result = await mediator.Send(new SelectTenantCommand(userId, tenantId));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization();
     }
 }

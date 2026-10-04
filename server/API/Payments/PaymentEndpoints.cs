@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using server.Application.Common;
@@ -42,7 +42,7 @@ public static class PaymentEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new GetPaymentByIdQuery(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.PaymentsRead);
 
         group.MapPost("/", async (ClaimsPrincipal principal, IMediator mediator, RecordPaymentRequest dto) =>
@@ -50,7 +50,7 @@ public static class PaymentEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new RecordPaymentCommand(tenantId.Value, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.PaymentsCreate);
 
         group.MapPost("/{id:guid}/confirm", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -59,7 +59,7 @@ public static class PaymentEndpoints
             if (tenantId is null) return Results.Unauthorized();
             var userId = GetUserId(principal);
             var result = await mediator.Send(new ConfirmPaymentCommand(tenantId.Value, id, userId ?? Guid.Empty));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.PaymentsValidate);
 
         group.MapPost("/{id:guid}/reverse", async (Guid id, ClaimsPrincipal principal, IMediator mediator, ReversePaymentRequest dto) =>
@@ -68,7 +68,7 @@ public static class PaymentEndpoints
             if (tenantId is null) return Results.Unauthorized();
             var userId = GetUserId(principal);
             var result = await mediator.Send(new ReversePaymentCommand(tenantId.Value, id, userId ?? Guid.Empty, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.PaymentsRefund);
 
         group.MapGet("/{id:guid}/receipt", async (

@@ -21,7 +21,7 @@ public class GetMeetingByIdQueryHandler(AppDbContext db)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
 
         if (m is null)
-            return ServiceResult<(MeetingDto, List<MeetingAttendanceDto>, MeetingMinuteDto?)>.Failure("Réunion introuvable.");
+            return ServiceResult<(MeetingDto, List<MeetingAttendanceDto>, MeetingMinuteDto?)>.Failure("Réunion introuvable.", "errors.meeting.not_found");
 
         var attendances = m.Attendances.Where(a => a.IsActive).Select(a => new MeetingAttendanceDto(
             a.Id.ToString(), a.MeetingId.ToString(), a.MemberId.ToString(),
