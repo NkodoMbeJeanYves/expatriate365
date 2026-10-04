@@ -3,7 +3,7 @@ import {
   inject, OnInit, signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ProgressSpinner } from 'primeng/progressspinner';
@@ -12,6 +12,8 @@ import { PermissionDomain, TenantRoleDto } from '@models/admin.model';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { RolesApiService } from '@service/roles-api.service';
 import { ToastService } from '@service/toast.service';
+import { AuthStore } from '@core/auth/auth.store';
+import { ROLES } from '@core/auth/models/role.model';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -68,6 +70,11 @@ import { forkJoin } from 'rxjs';
                     @if (role.description) {
                       <p class="text-sm text-gray-500">{{ role.description }}</p>
                     }
+                    @if (isReadOnly()) {
+                      <span class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full mt-1">
+                        <i class="pi pi-lock text-xs"></i> {{ 'roles.read_only' | translate }}
+                      </span>
+                    }
                   </div>
                   <span class="text-xs text-gray-400">{{ selectedCount() }} / {{ totalCount() }}</span>
                 </div>
@@ -101,19 +108,22 @@ import { forkJoin } from 'rxjs';
                         <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           {{ ('roles.domain_' + domain.domain) | translate }}
                         </h3>
-                        <button
-                          type="button"
-                          class="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 transition-colors"
-                          (click)="toggleDomain(domain)">
-                          {{ domainAllSelected(domain) ? ('roles.deselect_all' | translate) : ('roles.select_all' | translate) }}
-                        </button>
+                        @if (!isReadOnly()) {
+                          <button
+                            type="button"
+                            class="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 transition-colors"
+                            (click)="toggleDomain(domain)">
+                            {{ domainAllSelected(domain) ? ('roles.deselect_all' | translate) : ('roles.select_all' | translate) }}
+                          </button>
+                        }
                       </div>
 
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         @for (perm of domain.permissions; track perm) {
                           <button
                             type="button"
-                            (click)="toggle(perm)"
+                            (click)="isReadOnly() ? null : toggle(perm)"
+                            [disabled]="isReadOnly()"
                             [class]="isChecked(perm)
                               ? 'flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left text-sm font-medium transition-all border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300'
                               : 'flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left text-sm transition-all border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'">
@@ -134,28 +144,30 @@ import { forkJoin } from 'rxjs';
                 </div>
 
                 <!-- Save bar -->
-                <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex-shrink-0">
-                  <div class="flex items-center gap-2">
-                    @if (role.is_customized) {
-                      <span class="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full">
-                        <i class="pi pi-pencil text-xs"></i> {{ 'roles.customized' | translate }}
-                      </span>
-                      <p-button
-                        [label]="'roles.reset_defaults' | translate"
-                        icon="pi pi-refresh"
-                        severity="secondary"
-                        [text]="true"
-                        size="small"
-                        [loading]="resetting()"
-                        (onClick)="resetDefaults()" />
-                    }
+                @if (!isReadOnly()) {
+                  <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex-shrink-0">
+                    <div class="flex items-center gap-2">
+                      @if (role.is_customized) {
+                        <span class="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full">
+                          <i class="pi pi-pencil text-xs"></i> {{ 'roles.customized' | translate }}
+                        </span>
+                        <p-button
+                          [label]="'roles.reset_defaults' | translate"
+                          icon="pi pi-refresh"
+                          severity="secondary"
+                          [text]="true"
+                          size="small"
+                          [loading]="resetting()"
+                          (onClick)="resetDefaults()" />
+                      }
+                    </div>
+                    <p-button
+                      label="{{ 'common.save' | translate }}"
+                      icon="pi pi-check"
+                      [loading]="saving()"
+                      (onClick)="save()" />
                   </div>
-                  <p-button
-                    label="{{ 'common.save' | translate }}"
-                    icon="pi pi-check"
-                    [loading]="saving()"
-                    (onClick)="save()" />
-                </div>
+                }
 
               </div>
             } @else {
@@ -175,8 +187,12 @@ import { forkJoin } from 'rxjs';
   `,
 })
 export class AdminRolesPage implements OnInit {
-  private readonly api   = inject(RolesApiService);
-  private readonly toast = inject(ToastService);
+  private readonly api       = inject(RolesApiService);
+  private readonly toast     = inject(ToastService);
+  private readonly translate = inject(TranslateService);
+  private readonly auth      = inject(AuthStore);
+
+  private readonly isSuperAdmin = this.auth.hasRole(ROLES.SUPER_ADMIN);
 
   readonly loading   = signal(true);
   readonly saving    = signal(false);
@@ -194,19 +210,34 @@ export class AdminRolesPage implements OnInit {
     this.domains().reduce((n, d) => n + d.permissions.length, 0)
   );
 
+  /** True when the selected role must not be editable by the current user */
+  readonly isReadOnly = computed(() => {
+    const role = this.selectedRole();
+    if (!role) return false;
+    // super_admin permissions are always read-only
+    if (role.name === ROLES.SUPER_ADMIN) return true;
+    // org_admin cannot edit their own role (privilege escalation guard)
+    if (!this.isSuperAdmin && role.name === ROLES.ORG_ADMIN) return true;
+    return false;
+  });
+
   ngOnInit(): void {
     forkJoin({
       roles:   this.api.listTenant(),
       domains: this.api.listPermissions(),
     }).subscribe({
       next: ({ roles, domains }) => {
-        this.roles.set(roles);
+        // org_admin cannot see or edit super_admin permissions
+        const visible = this.isSuperAdmin
+          ? roles
+          : roles.filter(r => r.name !== ROLES.SUPER_ADMIN);
+        this.roles.set(visible);
         this.domains.set(domains);
-        if (roles.length) this.selectRole(roles[0]);
+        if (visible.length) this.selectRole(visible[0]);
         this.loading.set(false);
       },
       error: () => {
-        this.toast.error('Erreur lors du chargement des rôles.');
+        this.toast.error(this.translate.instant('roles.load_error'));
         this.loading.set(false);
       },
     });
@@ -268,28 +299,31 @@ export class AdminRolesPage implements OnInit {
 
   resetDefaults(): void {
     const role = this.selectedRole();
-    if (!role) return;
+    if (!role || this.isReadOnly()) return;
     this.resetting.set(true);
     this.api.resetTenantPermissions(role.id).subscribe({
       next: () => {
         this.api.listTenant().subscribe(roles => {
-          this.roles.set(roles);
-          const refreshed = roles.find(r => r.id === role.id);
+          const visible = this.isSuperAdmin
+            ? roles
+            : roles.filter(r => r.name !== ROLES.SUPER_ADMIN);
+          this.roles.set(visible);
+          const refreshed = visible.find(r => r.id === role.id);
           if (refreshed) this.selectRole(refreshed);
         });
         this.resetting.set(false);
-        this.toast.success('Permissions réinitialisées aux valeurs par défaut.');
+        this.toast.success(this.translate.instant('roles.reset_success'));
       },
       error: () => {
         this.resetting.set(false);
-        this.toast.error('Erreur lors de la réinitialisation.');
+        this.toast.error(this.translate.instant('roles.reset_error'));
       },
     });
   }
 
   save(): void {
     const role = this.selectedRole();
-    if (!role) return;
+    if (!role || this.isReadOnly()) return;
 
     this.saving.set(true);
     const permissions = [...this._checked()];
@@ -301,11 +335,11 @@ export class AdminRolesPage implements OnInit {
         );
         this.selectedRole.set({ ...role, permissions, is_customized: true });
         this.saving.set(false);
-        this.toast.success('Permissions enregistrées.');
+        this.toast.success(this.translate.instant('roles.save_success'));
       },
       error: () => {
         this.saving.set(false);
-        this.toast.error('Erreur lors de la sauvegarde.');
+        this.toast.error(this.translate.instant('roles.save_error'));
       },
     });
   }

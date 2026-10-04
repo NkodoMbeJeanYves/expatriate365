@@ -156,7 +156,13 @@
     "perm_write": "Écrire",
     "perm_moderate": "Modérer",
     "domain_community": "Communauté",
-    "label_org_admin": "Administrateur de l'association"
+    "label_org_admin": "Administrateur de l'association",
+    "read_only": "Lecture seule",
+    "load_error": "Erreur lors du chargement des rôles",
+    "save_success": "Permissions enregistrées",
+    "save_error": "Erreur lors de la sauvegarde des permissions",
+    "reset_success": "Permissions réinitialisées aux valeurs par défaut",
+    "reset_error": "Erreur lors de la réinitialisation des permissions"
   },
   "auth": {
     "login": "Connexion",
