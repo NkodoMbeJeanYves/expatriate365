@@ -21,11 +21,11 @@ public class UpdateTenantRolePermissionsCommandHandler(AppDbContext db, ILogger<
             .FirstOrDefaultAsync(tr => tr.Id == request.TenantRoleId && tr.TenantId == request.TenantId, ct);
 
         if (tenantRole is null)
-            return ServiceResult<bool>.Failure("Rôle introuvable pour cette association.");
+            return ServiceResult<bool>.Failure("Rôle introuvable pour cette association.", "errors.role.not_found");
 
         var invalid = request.Dto.Permissions.Where(p => !ValidPermissions.Contains(p)).ToList();
         if (invalid.Count > 0)
-            return ServiceResult<bool>.Failure($"Permissions inconnues : {string.Join(", ", invalid)}");
+            return ServiceResult<bool>.Failure($"Permissions inconnues : {string.Join(", ", invalid)}", "errors.role.unknown_permissions");
 
         tenantRole.Permissions = JsonSerializer.Serialize(request.Dto.Permissions.Distinct().ToArray());
         tenantRole.IsCustomized = true;

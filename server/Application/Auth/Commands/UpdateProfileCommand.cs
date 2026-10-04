@@ -33,7 +33,7 @@ public class UpdateProfileCommandHandler(AppDbContext db, ILogger<UpdateProfileC
     {
         var user = await db.Users.FindAsync([request.UserId], ct);
         if (user is null)
-            return ServiceResult<bool>.Failure("Utilisateur introuvable.");
+            return ServiceResult<bool>.Failure("Utilisateur introuvable.", "errors.user.not_found");
 
         user.FirstName    = request.Dto.FirstName;
         user.LastName     = request.Dto.LastName;

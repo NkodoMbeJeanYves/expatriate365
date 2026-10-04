@@ -17,8 +17,8 @@ public class CastVoteCommandHandler(AppDbContext db, ILogger<CastVoteCommandHand
     {
         var election = await db.Elections.Include(e => e.Candidates.Where(c => c.IsActive))
             .FirstOrDefaultAsync(e => e.Id == request.ElectionId && e.TenantId == request.TenantId, ct);
-        if (election is null) return ServiceResult<bool>.Failure("Élection introuvable.");
-        if (election.Status != "open") return ServiceResult<bool>.Failure("L'élection n'est pas ouverte au vote.");
+        if (election is null) return ServiceResult<bool>.Failure("Élection introuvable.", "errors.election.not_found");
+        if (election.Status != "open") return ServiceResult<bool>.Failure("L'élection n'est pas ouverte au vote.", "errors.election.not_open");
 
         if (election.Type == "board")
         {
@@ -27,24 +27,24 @@ public class CastVoteCommandHandler(AppDbContext db, ILogger<CastVoteCommandHand
             var isBoardMember = member is not null && await db.BoardMembers.AnyAsync(
                 b => b.MemberId == member.Id && b.IsActive && b.StartDate <= today && (b.EndDate == null || b.EndDate >= today), ct);
             if (!isBoardMember)
-                return ServiceResult<bool>.Failure("Seuls les membres actifs du bureau exécutif peuvent voter pour cette élection.");
+                return ServiceResult<bool>.Failure("Seuls les membres actifs du bureau exécutif peuvent voter pour cette élection.", "errors.election.not_authorized");
         }
 
         var alreadyVoted = await db.ElectionVotes.AnyAsync(
             v => v.ElectionId == request.ElectionId && v.VoterId == request.VoterId && v.IsActive, ct);
-        if (alreadyVoted) return ServiceResult<bool>.Failure("Vous avez déjà voté pour cette élection.");
+        if (alreadyVoted) return ServiceResult<bool>.Failure("Vous avez déjà voté pour cette élection.", "errors.election.already_voted");
 
         var candidateIds = request.Dto.CandidateIds
             .Select(id => Guid.TryParse(id, out var g) ? g : (Guid?)null)
             .Where(g => g.HasValue).Select(g => g!.Value).ToList();
 
-        if (candidateIds.Count == 0) return ServiceResult<bool>.Failure("Aucun candidat sélectionné.");
+        if (candidateIds.Count == 0) return ServiceResult<bool>.Failure("Aucun candidat sélectionné.", "errors.vote.no_candidates");
         if (candidateIds.Count > election.MaxChoices)
-            return ServiceResult<bool>.Failure($"Vous ne pouvez voter que pour {election.MaxChoices} candidat(s).");
+            return ServiceResult<bool>.Failure($"Vous ne pouvez voter que pour {election.MaxChoices} candidat(s).", "errors.vote.too_many_choices");
 
         var validIds = election.Candidates.Select(c => c.Id).ToHashSet();
         if (candidateIds.Any(id => !validIds.Contains(id)))
-            return ServiceResult<bool>.Failure("Un ou plusieurs candidats sont invalides.");
+            return ServiceResult<bool>.Failure("Un ou plusieurs candidats sont invalides.", "errors.vote.invalid_candidates");
 
         // Record that voter voted (not for whom)
         db.ElectionVotes.Add(new ElectionVote

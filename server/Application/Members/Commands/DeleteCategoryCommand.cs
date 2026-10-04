@@ -16,10 +16,10 @@ public class DeleteCategoryCommandHandler(AppDbContext db)
         var cat = await db.MembershipCategories
             .FirstOrDefaultAsync(c => c.Id == request.CategoryId && c.TenantId == request.TenantId, ct);
 
-        if (cat is null) return ServiceResult<bool>.Failure("Catégorie introuvable.");
+        if (cat is null) return ServiceResult<bool>.Failure("Catégorie introuvable.", "errors.category.not_found");
 
         var hasMembers = await db.Members.AnyAsync(m => m.CategoryId == request.CategoryId && m.IsActive, ct);
-        if (hasMembers) return ServiceResult<bool>.Failure("Cette catégorie est utilisée par des membres actifs.");
+        if (hasMembers) return ServiceResult<bool>.Failure("Cette catégorie est utilisée par des membres actifs.", "errors.category.in_use");
 
         cat.IsActive = false;
         cat.UpdatedAt = DateTime.UtcNow;

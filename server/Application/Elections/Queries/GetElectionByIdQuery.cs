@@ -22,7 +22,7 @@ public class GetElectionByIdQueryHandler(AppDbContext db)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
 
         if (e is null)
-            return ServiceResult<(ElectionDto, List<ElectionCandidateDto>, List<ElectionResultDto>)>.Failure("Élection introuvable.");
+            return ServiceResult<(ElectionDto, List<ElectionCandidateDto>, List<ElectionResultDto>)>.Failure("Élection introuvable.", "errors.election.not_found");
 
         var hasVoted = request.VoterId.HasValue &&
             e.Votes.Any(v => v.VoterId == request.VoterId.Value && v.IsActive);

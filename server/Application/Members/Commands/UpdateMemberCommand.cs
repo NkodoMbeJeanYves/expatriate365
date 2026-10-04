@@ -32,7 +32,7 @@ public class UpdateMemberCommandHandler(AppDbContext db, IWebHostEnvironment env
             .Include(m => m.Category)
             .FirstOrDefaultAsync(m => m.Id == request.MemberId && m.TenantId == request.TenantId, ct);
 
-        if (member is null) return ServiceResult<MemberDto>.Failure("Membre introuvable.");
+        if (member is null) return ServiceResult<MemberDto>.Failure("Membre introuvable.", "errors.member.not_found");
 
         var dto = request.Dto;
         member.User.FirstName = dto.FirstName;

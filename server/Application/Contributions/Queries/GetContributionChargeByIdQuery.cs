@@ -20,7 +20,7 @@ public class GetContributionChargeByIdQueryHandler(AppDbContext db)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
 
         if (c is null)
-            return ServiceResult<ContributionChargeDto>.Failure("Cotisation introuvable.");
+            return ServiceResult<ContributionChargeDto>.Failure("Cotisation introuvable.", "errors.charge.not_found");
 
         return ServiceResult<ContributionChargeDto>.Success(new ContributionChargeDto(
             c.Id.ToString(), c.TenantId.ToString(), c.MemberId.ToString(),

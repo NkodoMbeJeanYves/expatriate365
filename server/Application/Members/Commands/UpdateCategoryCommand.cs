@@ -27,7 +27,7 @@ public class UpdateCategoryCommandHandler(AppDbContext db)
         var cat = await db.MembershipCategories
             .FirstOrDefaultAsync(c => c.Id == request.CategoryId && c.TenantId == request.TenantId, ct);
 
-        if (cat is null) return ServiceResult<MembershipCategoryDto>.Failure("Catégorie introuvable.");
+        if (cat is null) return ServiceResult<MembershipCategoryDto>.Failure("Catégorie introuvable.", "errors.category.not_found");
 
         cat.Name = request.Dto.Name;
         cat.Description = request.Dto.Description;

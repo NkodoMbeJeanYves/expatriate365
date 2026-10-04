@@ -29,8 +29,8 @@ public class RejectWelfareRequestCommandHandler(AppDbContext db, ILogger<RejectW
             .Include(w => w.Member).ThenInclude(m => m.User)
             .FirstOrDefaultAsync(w => w.Id == request.Id && w.TenantId == request.TenantId, ct);
 
-        if (welfare is null) return ServiceResult<WelfareRequestDto>.Failure("Demande introuvable.");
-        if (welfare.Status != "pending") return ServiceResult<WelfareRequestDto>.Failure("Seules les demandes en attente peuvent être rejetées.");
+        if (welfare is null) return ServiceResult<WelfareRequestDto>.Failure("Demande introuvable.", "errors.welfare.not_found");
+        if (welfare.Status != "pending") return ServiceResult<WelfareRequestDto>.Failure("Seules les demandes en attente peuvent être rejetées.", "errors.welfare.invalid_status");
 
         welfare.Status = "rejected";
         welfare.RejectionReason = request.Dto.Reason;

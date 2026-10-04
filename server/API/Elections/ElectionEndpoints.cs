@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using server.Application.Common;
 using server.Application.Elections.Commands;
@@ -34,7 +34,7 @@ public static class ElectionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new CreateElectionCommand(tenantId.Value, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesCreate);
 
         group.MapGet("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -45,7 +45,7 @@ public static class ElectionEndpoints
             var result = await mediator.Send(new GetElectionByIdQuery(tenantId.Value, id, voterId));
             return result.IsSuccess
                 ? Results.Ok(new { election = result.Data.Election, candidates = result.Data.Candidates, results = result.Data.Results })
-                : Results.NotFound(new { error = result.ErrorMessage });
+                : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesRead);
 
         group.MapPut("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator, UpdateElectionRequest dto) =>
@@ -53,7 +53,7 @@ public static class ElectionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new UpdateElectionCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesManage);
 
         group.MapPost("/{id:guid}/open", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -61,7 +61,7 @@ public static class ElectionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new OpenElectionCommand(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesManage);
 
         group.MapPost("/{id:guid}/close", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -69,7 +69,7 @@ public static class ElectionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new CloseElectionCommand(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesManage);
 
         group.MapPost("/{id:guid}/publish-results", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -77,7 +77,7 @@ public static class ElectionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new PublishResultsCommand(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesResults);
 
         group.MapPost("/{id:guid}/candidates", async (Guid id, ClaimsPrincipal principal, IMediator mediator, AddCandidateRequest dto) =>
@@ -85,7 +85,7 @@ public static class ElectionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new AddCandidateCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesManage);
 
         group.MapDelete("/{id:guid}/candidates/{candidateId:guid}", async (Guid id, Guid candidateId, ClaimsPrincipal principal, IMediator mediator) =>
@@ -93,7 +93,7 @@ public static class ElectionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new RemoveCandidateCommand(tenantId.Value, id, candidateId));
-            return result.IsSuccess ? Results.Ok() : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok() : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesDelete);
 
         group.MapPost("/{id:guid}/vote", async (Guid id, ClaimsPrincipal principal, IMediator mediator, CastVoteRequest dto) =>
@@ -102,7 +102,7 @@ public static class ElectionEndpoints
             var voterId = GetUserId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new CastVoteCommand(tenantId.Value, id, voterId, dto));
-            return result.IsSuccess ? Results.Ok(new { voted = true }) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(new { voted = true }) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesCast);
     }
 

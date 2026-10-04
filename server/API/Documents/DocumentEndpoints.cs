@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using server.Application.Common;
 using server.Application.Documents.Commands;
@@ -37,7 +37,7 @@ public static class DocumentEndpoints
             var result = await mediator.Send(new CreateDocumentCommand(tenantId.Value, userId.Value, request));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/documents/{result.Data!.Id}", result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.DocumentsUpload);
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateDocumentRequest request,
@@ -48,7 +48,7 @@ public static class DocumentEndpoints
             var result = await mediator.Send(new UpdateDocumentCommand(tenantId.Value, id, request));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.DocumentsManage);
 
         group.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -58,7 +58,7 @@ public static class DocumentEndpoints
             var result = await mediator.Send(new DeleteDocumentCommand(tenantId.Value, id));
             return result.IsSuccess
                 ? Results.NoContent()
-                : Results.NotFound(new { error = result.ErrorMessage });
+                : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.DocumentsManage);
     }
 

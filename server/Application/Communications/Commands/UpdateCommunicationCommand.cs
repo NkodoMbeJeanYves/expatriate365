@@ -20,10 +20,10 @@ public class UpdateCommunicationCommandHandler(AppDbContext db)
             .FirstOrDefaultAsync(c => c.Id == request.Id && c.TenantId == request.TenantId, ct);
 
         if (comm is null)
-            return ServiceResult<CommunicationDto>.Failure("Communication introuvable.");
+            return ServiceResult<CommunicationDto>.Failure("Communication introuvable.", "errors.communication.not_found");
 
         if (comm.Status == "sent")
-            return ServiceResult<CommunicationDto>.Failure("Une communication déjà envoyée ne peut pas être modifiée.");
+            return ServiceResult<CommunicationDto>.Failure("Une communication déjà envoyée ne peut pas être modifiée.", "errors.communication.already_sent");
 
         var req = request.Request;
         comm.Title = req.Title;

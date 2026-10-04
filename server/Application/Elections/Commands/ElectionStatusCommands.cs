@@ -20,10 +20,10 @@ public class OpenElectionCommandHandler(AppDbContext db, ILogger<OpenElectionCom
     {
         var e = await db.Elections.Include(x => x.Candidates).Include(x => x.Votes)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
-        if (e is null) return ServiceResult<ElectionDto>.Failure("Élection introuvable.");
-        if (e.Status != "draft") return ServiceResult<ElectionDto>.Failure("Seuls les brouillons peuvent être ouverts.");
+        if (e is null) return ServiceResult<ElectionDto>.Failure("Élection introuvable.", "errors.election.not_found");
+        if (e.Status != "draft") return ServiceResult<ElectionDto>.Failure("Seuls les brouillons peuvent être ouverts.", "errors.election.invalid_status_transition");
         if (!e.Candidates.Any(c => c.IsActive))
-            return ServiceResult<ElectionDto>.Failure("L'élection doit avoir au moins un candidat.");
+            return ServiceResult<ElectionDto>.Failure("L'élection doit avoir au moins un candidat.", "errors.election.no_candidates");
 
         e.Status = "open";
         await db.SaveChangesAsync(ct);
@@ -70,8 +70,8 @@ public class CloseElectionCommandHandler(AppDbContext db, ILogger<CloseElectionC
     {
         var e = await db.Elections.Include(x => x.Candidates).Include(x => x.Votes)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
-        if (e is null) return ServiceResult<ElectionDto>.Failure("Élection introuvable.");
-        if (e.Status != "open") return ServiceResult<ElectionDto>.Failure("Seules les élections ouvertes peuvent être clôturées.");
+        if (e is null) return ServiceResult<ElectionDto>.Failure("Élection introuvable.", "errors.election.not_found");
+        if (e.Status != "open") return ServiceResult<ElectionDto>.Failure("Seules les élections ouvertes peuvent être clôturées.", "errors.election.invalid_status_transition");
 
         e.Status = "closed";
         await db.SaveChangesAsync(ct);
@@ -90,8 +90,8 @@ public class PublishResultsCommandHandler(AppDbContext db, ILogger<PublishResult
             .Include(x => x.Votes.Where(v => v.IsActive))
             .Include(x => x.Ballots)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
-        if (e is null) return ServiceResult<ElectionDto>.Failure("Élection introuvable.");
-        if (e.Status != "closed") return ServiceResult<ElectionDto>.Failure("L'élection doit être clôturée avant de publier les résultats.");
+        if (e is null) return ServiceResult<ElectionDto>.Failure("Élection introuvable.", "errors.election.not_found");
+        if (e.Status != "closed") return ServiceResult<ElectionDto>.Failure("L'élection doit être clôturée avant de publier les résultats.", "errors.election.invalid_status_transition");
 
         // Load encrypted vote choices from a shadow table (VoteCandidateChoices)
         // Since we preserve anonymity, we store choices separately in election_vote_choices

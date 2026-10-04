@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using server.Application.Common;
 using server.Application.Community.Commands;
@@ -58,7 +58,7 @@ public static class CommunityEndpoints
             var result = await mediator.Send(new CreatePostCommand(tenantId.Value, memberId ?? userId.Value, userId.Value, request));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/posts/{result.Data!.Id}", result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityWrite);
 
         // Update draft
@@ -72,7 +72,7 @@ public static class CommunityEndpoints
             var result = await mediator.Send(new UpdatePostCommand(tenantId.Value, id, memberId.Value, request));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityWrite);
 
         // Soft-delete
@@ -86,7 +86,7 @@ public static class CommunityEndpoints
             var result = await mediator.Send(new DeletePostCommand(tenantId.Value, id, memberId.Value, isStaff));
             return result.IsSuccess
                 ? Results.NoContent()
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityWrite);
 
         // Publish (staff only)
@@ -99,7 +99,7 @@ public static class CommunityEndpoints
             var result = await mediator.Send(new PublishPostCommand(tenantId.Value, id, userId.Value));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityModerate);
 
         // Reject (staff only)
@@ -112,7 +112,7 @@ public static class CommunityEndpoints
             var result = await mediator.Send(new RejectPostCommand(tenantId.Value, id, userId.Value));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityModerate);
 
         // Add attachment
@@ -126,7 +126,7 @@ public static class CommunityEndpoints
             var result = await mediator.Send(new AddAttachmentCommand(tenantId.Value, id, memberId.Value, request));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/posts/{id}/attachments/{result.Data!.Id}", result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityWrite);
 
         // Delete attachment
@@ -140,7 +140,7 @@ public static class CommunityEndpoints
             var result = await mediator.Send(new DeleteAttachmentCommand(tenantId.Value, id, attachmentId, memberId.Value));
             return result.IsSuccess
                 ? Results.NoContent()
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityWrite);
 
         // ── Comments ──────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ public static class CommunityEndpoints
             var result = await mediator.Send(new AddCommentCommand(tenantId.Value, id, memberId.Value, request.Content));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/posts/{id}/comments/{result.Data!.Id}", result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityWrite);
 
         group.MapDelete("/comments/{commentId:guid}", async (Guid commentId,
@@ -173,7 +173,7 @@ public static class CommunityEndpoints
             if (tenantId is null || memberId is null) return Results.Unauthorized();
             var isStaff = IsStaff(principal);
             var result = await mediator.Send(new DeleteCommentCommand(tenantId.Value, commentId, memberId.Value, isStaff));
-            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityRead);
 
         // ── Reactions ─────────────────────────────────────────────────────────
@@ -193,7 +193,7 @@ public static class CommunityEndpoints
             var memberId = GetMemberId(principal);
             if (tenantId is null || memberId is null) return Results.Unauthorized();
             var result = await mediator.Send(new ToggleReactionCommand(tenantId.Value, id, memberId.Value, request.ReactionType));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CommunityWrite);
     }
 

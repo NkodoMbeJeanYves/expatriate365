@@ -23,23 +23,23 @@ public class RegisterToEventCommandHandler(AppDbContext db, ILogger<RegisterToEv
     public async Task<ServiceResult<EventRegistrationDto>> Handle(RegisterToEventCommand request, CancellationToken ct)
     {
         if (!Guid.TryParse(request.Dto.MemberId, out var memberId))
-            return ServiceResult<EventRegistrationDto>.Failure("MemberId invalide.");
+            return ServiceResult<EventRegistrationDto>.Failure("MemberId invalide.", "errors.common.invalid_id");
 
         var ev = await db.Events.Include(e => e.Registrations)
             .FirstOrDefaultAsync(e => e.Id == request.EventId && e.TenantId == request.TenantId, ct);
-        if (ev is null) return ServiceResult<EventRegistrationDto>.Failure("Événement introuvable.");
-        if (ev.Status != "published") return ServiceResult<EventRegistrationDto>.Failure("L'événement n'est pas ouvert aux inscriptions.");
+        if (ev is null) return ServiceResult<EventRegistrationDto>.Failure("Événement introuvable.", "errors.event.not_found");
+        if (ev.Status != "published") return ServiceResult<EventRegistrationDto>.Failure("L'événement n'est pas ouvert aux inscriptions.", "errors.event.not_open");
 
         var activeCount = ev.Registrations.Count(r => r.Status is "registered" or "attended" && r.IsActive);
         var isFull = ev.MaxCapacity.HasValue && activeCount >= ev.MaxCapacity.Value;
 
         var existing = ev.Registrations.FirstOrDefault(r => r.MemberId == memberId && r.IsActive);
         if (existing is not null && existing.Status is "registered" or "waitlisted" or "attended")
-            return ServiceResult<EventRegistrationDto>.Failure("Ce membre est déjà inscrit.");
+            return ServiceResult<EventRegistrationDto>.Failure("Ce membre est déjà inscrit.", "errors.event.already_registered");
 
         var member = await db.Members.Include(m => m.User)
             .FirstOrDefaultAsync(m => m.Id == memberId && m.TenantId == request.TenantId, ct);
-        if (member is null) return ServiceResult<EventRegistrationDto>.Failure("Membre introuvable.");
+        if (member is null) return ServiceResult<EventRegistrationDto>.Failure("Membre introuvable.", "errors.member.not_found");
 
         var status = isFull ? "waitlisted" : "registered";
         var reg = new EventRegistration
@@ -71,8 +71,8 @@ public class CancelRegistrationCommandHandler(AppDbContext db, ILogger<CancelReg
             .Include(r => r.Member).ThenInclude(m => m.User)
             .FirstOrDefaultAsync(r => r.Id == request.RegistrationId && r.EventId == request.EventId && r.TenantId == request.TenantId, ct);
 
-        if (reg is null) return ServiceResult<EventRegistrationDto>.Failure("Inscription introuvable.");
-        if (reg.Status == "cancelled") return ServiceResult<EventRegistrationDto>.Failure("Inscription déjà annulée.");
+        if (reg is null) return ServiceResult<EventRegistrationDto>.Failure("Inscription introuvable.", "errors.registration.not_found");
+        if (reg.Status == "cancelled") return ServiceResult<EventRegistrationDto>.Failure("Inscription déjà annulée.", "errors.registration.already_cancelled");
 
         reg.Status = "cancelled";
         reg.UpdatedAt = DateTime.UtcNow;

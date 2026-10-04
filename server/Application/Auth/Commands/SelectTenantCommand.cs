@@ -16,11 +16,11 @@ public class SelectTenantCommandHandler(AppDbContext db, JwtService jwt, ILogger
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == request.UserId && u.IsActive, ct);
         if (user is null)
-            return ServiceResult<LoginResponse>.Failure("Utilisateur introuvable.");
+            return ServiceResult<LoginResponse>.Failure("Utilisateur introuvable.", "errors.user.not_found");
 
         var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == request.TenantId && t.IsActive, ct);
         if (tenant is null)
-            return ServiceResult<LoginResponse>.Failure("Communauté introuvable ou inactive.");
+            return ServiceResult<LoginResponse>.Failure("Communauté introuvable ou inactive.", "errors.auth.tenant_not_found");
 
         var (plain, hash) = jwt.GenerateRefreshToken();
         user.RefreshTokenHash = hash;

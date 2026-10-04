@@ -40,10 +40,10 @@ public class CreateTenantCommandHandler(
         log.LogInformation("SuperAdmin creating tenant: {Slug}", dto.Slug);
 
         if (await db.Tenants.AnyAsync(t => t.Slug == dto.Slug, ct))
-            return ServiceResult<TenantSummaryDto>.Failure("Ce slug est déjà utilisé.");
+            return ServiceResult<TenantSummaryDto>.Failure("Ce slug est déjà utilisé.", "errors.auth.slug_taken");
 
         if (await db.Users.AnyAsync(u => u.Email == dto.AdminEmail, ct))
-            return ServiceResult<TenantSummaryDto>.Failure("Cet email est déjà enregistré.");
+            return ServiceResult<TenantSummaryDto>.Failure("Cet email est déjà enregistré.", "errors.auth.email_exists");
 
         var tenant = new Tenant
         {
@@ -115,7 +115,7 @@ public class ToggleTenantActiveCommandHandler(AppDbContext db, ILogger<ToggleTen
     {
         var tenant = await db.Tenants.FindAsync([request.TenantId], ct);
         if (tenant is null)
-            return ServiceResult<TenantSummaryDto>.Failure("Association introuvable.");
+            return ServiceResult<TenantSummaryDto>.Failure("Association introuvable.", "errors.tenant.not_found");
 
         tenant.IsActive  = !tenant.IsActive;
         tenant.UpdatedAt = DateTime.UtcNow;

@@ -18,8 +18,8 @@ public class PublishEventCommandHandler(AppDbContext db, ILogger<PublishEventCom
     {
         var ev = await db.Events.Include(e => e.Registrations)
             .FirstOrDefaultAsync(e => e.Id == request.Id && e.TenantId == request.TenantId, ct);
-        if (ev is null) return ServiceResult<EventDto>.Failure("Événement introuvable.");
-        if (ev.Status != "draft") return ServiceResult<EventDto>.Failure("Seuls les brouillons peuvent être publiés.");
+        if (ev is null) return ServiceResult<EventDto>.Failure("Événement introuvable.", "errors.event.not_found");
+        if (ev.Status != "draft") return ServiceResult<EventDto>.Failure("Seuls les brouillons peuvent être publiés.", "errors.event.invalid_status_transition");
         ev.Status = "published";
         await db.SaveChangesAsync(ct);
         log.LogInformation("Event {Id} published", ev.Id);
@@ -34,9 +34,9 @@ public class CompleteEventCommandHandler(AppDbContext db, ILogger<CompleteEventC
     {
         var ev = await db.Events.Include(e => e.Registrations)
             .FirstOrDefaultAsync(e => e.Id == request.Id && e.TenantId == request.TenantId, ct);
-        if (ev is null) return ServiceResult<EventDto>.Failure("Événement introuvable.");
+        if (ev is null) return ServiceResult<EventDto>.Failure("Événement introuvable.", "errors.event.not_found");
         if (ev.Status == "completed" || ev.Status == "cancelled")
-            return ServiceResult<EventDto>.Failure("Événement déjà terminé ou annulé.");
+            return ServiceResult<EventDto>.Failure("Événement déjà terminé ou annulé.", "errors.event.invalid_status_transition");
         ev.Status = "completed";
         await db.SaveChangesAsync(ct);
         log.LogInformation("Event {Id} completed", ev.Id);
@@ -51,8 +51,8 @@ public class CancelEventCommandHandler(AppDbContext db, ILogger<CancelEventComma
     {
         var ev = await db.Events.Include(e => e.Registrations)
             .FirstOrDefaultAsync(e => e.Id == request.Id && e.TenantId == request.TenantId, ct);
-        if (ev is null) return ServiceResult<EventDto>.Failure("Événement introuvable.");
-        if (ev.Status == "completed") return ServiceResult<EventDto>.Failure("Impossible d'annuler un événement terminé.");
+        if (ev is null) return ServiceResult<EventDto>.Failure("Événement introuvable.", "errors.event.not_found");
+        if (ev.Status == "completed") return ServiceResult<EventDto>.Failure("Impossible d'annuler un événement terminé.", "errors.event.invalid_status_transition");
         ev.Status = "cancelled";
         await db.SaveChangesAsync(ct);
         log.LogInformation("Event {Id} cancelled", ev.Id);

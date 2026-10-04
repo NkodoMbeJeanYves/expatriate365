@@ -27,7 +27,7 @@ public class GetMeQueryHandler(AppDbContext db) : IRequestHandler<GetMeQuery, Se
     public async Task<ServiceResult<MeResponse>> Handle(GetMeQuery request, CancellationToken ct)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == request.UserId && u.IsActive, ct);
-        if (user is null) return ServiceResult<MeResponse>.Failure("Utilisateur introuvable.");
+        if (user is null) return ServiceResult<MeResponse>.Failure("Utilisateur introuvable.", "errors.user.not_found");
 
         var perms = RolePermissions.TryGetValue(user.Role, out var p) ? p : [];
         return ServiceResult<MeResponse>.Success(new MeResponse(

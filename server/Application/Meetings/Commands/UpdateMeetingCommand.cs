@@ -16,9 +16,9 @@ public class UpdateMeetingCommandHandler(AppDbContext db, ILogger<UpdateMeetingC
     {
         var m = await db.Meetings.Include(x => x.Attendances).Include(x => x.Minute)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
-        if (m is null) return ServiceResult<MeetingDto>.Failure("Réunion introuvable.");
+        if (m is null) return ServiceResult<MeetingDto>.Failure("Réunion introuvable.", "errors.meeting.not_found");
         if (m.Status is "completed" or "cancelled")
-            return ServiceResult<MeetingDto>.Failure("Impossible de modifier une réunion terminée ou annulée.");
+            return ServiceResult<MeetingDto>.Failure("Impossible de modifier une réunion terminée ou annulée.", "errors.meeting.cannot_edit");
 
         m.Title = request.Dto.Title;
         m.Type = request.Dto.Type;

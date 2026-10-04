@@ -33,11 +33,11 @@ public class BulkGenerateChargesCommandHandler(
         var dto = request.Dto;
 
         if (!Guid.TryParse(dto.ContributionTypeId, out var typeId))
-            return ServiceResult<int>.Failure("ContributionTypeId invalide.");
+            return ServiceResult<int>.Failure("ContributionTypeId invalide.", "errors.common.invalid_id");
 
         var type = await db.ContributionTypes
             .FirstOrDefaultAsync(t => t.Id == typeId && t.TenantId == request.TenantId, ct);
-        if (type is null) return ServiceResult<int>.Failure("Plan de cotisation introuvable.");
+        if (type is null) return ServiceResult<int>.Failure("Plan de cotisation introuvable.", "errors.contribution_type.not_found");
 
         var dueDate = DateOnly.Parse(dto.DueDate);
 

@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using server.Application.Common;
@@ -51,7 +51,7 @@ public static class MemberEndpoints
             if (memberId is null) return Results.NotFound(new { error = "No member record linked to this account." });
 
             var result = await mediator.Send(new GetMemberByIdQuery(tenantId.Value, memberId.Value));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.MembersReadOwn);
 
         group.MapGet("/categories", async (ClaimsPrincipal principal, IMediator mediator) =>
@@ -67,7 +67,7 @@ public static class MemberEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new CreateCategoryCommand(tenantId.Value, dto));
-            return result.IsSuccess ? Results.Created($"/api/v1/members/categories", result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Created($"/api/v1/members/categories", result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CategoriesCreate);
 
         group.MapPut("/categories/{id:guid}", async (
@@ -76,7 +76,7 @@ public static class MemberEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new UpdateCategoryCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CategoriesUpdate);
 
         group.MapDelete("/categories/{id:guid}", async (
@@ -85,7 +85,7 @@ public static class MemberEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new DeleteCategoryCommand(tenantId.Value, id));
-            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.CategoriesDelete);
 
         group.MapGet("/export", async (
@@ -103,7 +103,7 @@ public static class MemberEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new GetMemberByIdQuery(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.MembersReadOwn);
 
         group.MapPost("/", async (
@@ -115,7 +115,7 @@ public static class MemberEndpoints
             var result = await mediator.Send(new CreateMemberCommand(tenantId.Value, dto, lang));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/members/{result.Data!.Id}", result.Data)
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.MembersCreate);
 
         group.MapPut("/{id:guid}", async (
@@ -124,7 +124,7 @@ public static class MemberEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new UpdateMemberCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.MembersUpdate);
 
         group.MapPatch("/{id:guid}/status", async (
@@ -133,7 +133,7 @@ public static class MemberEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new PatchMemberStatusCommand(tenantId.Value, id, dto.Status));
-            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.MembersUpdate);
 
         group.MapPost("/{id:guid}/send-activation", async (
@@ -143,7 +143,7 @@ public static class MemberEndpoints
             if (tenantId is null) return Results.Unauthorized();
             var lang = principal.FindFirstValue("preferred_language") ?? "fr";
             var result = await mediator.Send(new SendMemberActivationCommand(tenantId.Value, id, lang));
-            return result.IsSuccess ? Results.Ok(new { message = "Activation envoyée." }) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(new { message = "Activation envoyée." }) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.MembersSendActivation);
 
         group.MapPost("/bulk-import", async (
@@ -155,7 +155,7 @@ public static class MemberEndpoints
             if (rows is null || rows.Count == 0) return Results.BadRequest(new { error = "No rows provided." });
             if (rows.Count > 500) return Results.BadRequest(new { error = "Maximum 500 rows per import." });
             var result = await mediator.Send(new BulkImportMembersCommand(tenantId.Value, rows));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.MembersCreate);
     }
 

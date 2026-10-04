@@ -40,10 +40,10 @@ public class RegisterCommandHandler(
         log.LogInformation("Register attempt: {Email}", dto.Email);
 
         if (await db.Tenants.AnyAsync(t => t.Slug == dto.Slug, ct))
-            return ServiceResult<LoginResponse>.Failure("Ce slug est déjà utilisé.");
+            return ServiceResult<LoginResponse>.Failure("Ce slug est déjà utilisé.", "errors.auth.slug_taken");
 
         if (await db.Users.AnyAsync(u => u.Email == dto.Email, ct))
-            return ServiceResult<LoginResponse>.Failure("Cet email est déjà enregistré.");
+            return ServiceResult<LoginResponse>.Failure("Cet email est déjà enregistré.", "errors.auth.email_exists");
 
         var tenant = new Tenant
         {

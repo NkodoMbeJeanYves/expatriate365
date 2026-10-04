@@ -22,9 +22,9 @@ public class SendCommunicationCommandHandler(AppDbContext db, INotificationServi
             .FirstOrDefaultAsync(c => c.Id == request.Id && c.TenantId == request.TenantId, ct);
 
         if (comm is null)
-            return ServiceResult<CommunicationDto>.Failure("Communication introuvable.");
+            return ServiceResult<CommunicationDto>.Failure("Communication introuvable.", "errors.communication.not_found");
         if (comm.Status == "sent")
-            return ServiceResult<CommunicationDto>.Failure("Communication déjà envoyée.");
+            return ServiceResult<CommunicationDto>.Failure("Communication déjà envoyée.", "errors.communication.already_sent");
 
         var memberIds = await ResolveRecipientsAsync(comm, request.TenantId, ct);
 

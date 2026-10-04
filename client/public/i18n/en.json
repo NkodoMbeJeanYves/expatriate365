@@ -255,9 +255,6 @@
     "optional": "optional",
     "generic_error": "An error occurred. Please try again."
   },
-  "errors": {
-    "generic": "An error occurred. Please try again."
-  },
   "profile": {
     "title": "My profile",
     "subtitle": "Manage your personal information and notification preferences",
@@ -328,7 +325,162 @@
     "forbidden": "You do not have permission to perform this action.",
     "not_found": "Resource not found.",
     "save_error": "Error while saving",
-    "load_error": "Error while loading data"
+    "load_error": "Error while loading data",
+    "timeout": "Request timed out. Please try again.",
+    "server": "A server error occurred. Please try again.",
+    "generic": "An error occurred. Please try again.",
+    "common": {
+      "invalid_id": "Invalid identifier.",
+      "invalid_date": "Invalid date."
+    },
+    "user": {
+      "not_found": "User not found.",
+      "email_exists": "A user with this email already exists."
+    },
+    "auth": {
+      "invalid_credentials": "Incorrect email or password.",
+      "account_suspended": "This account has been suspended.",
+      "tenant_disabled": "This association is disabled. Please contact your administrator.",
+      "tenant_not_found": "Community not found or inactive.",
+      "invalid_refresh_token": "Session expired. Please log in again.",
+      "slug_taken": "This slug is already in use.",
+      "email_exists": "This email is already registered.",
+      "wrong_password": "Current password is incorrect.",
+      "same_password": "New password must be different from the current one.",
+      "invalid_reset_link": "Invalid or already used password reset link.",
+      "reset_link_expired": "This link has expired. Please request a new one.",
+      "invalid_activation_link": "Invalid or already used activation link.",
+      "activation_link_expired": "This link has expired. Please request a new activation email."
+    },
+    "member": {
+      "not_found": "Member not found.",
+      "email_exists": "A member with this email already exists.",
+      "invalid_status": "Invalid status.",
+      "no_user_account": "No user account linked to this member.",
+      "already_active": "This account is already active.",
+      "no_email": "This member has no contact email address."
+    },
+    "category": {
+      "not_found": "Category not found.",
+      "in_use": "This category is used by active members."
+    },
+    "charge": {
+      "not_found": "Charge not found.",
+      "waived": "This charge has been waived.",
+      "already_paid": "This charge is already paid."
+    },
+    "contribution_type": {
+      "not_found": "Contribution type not found.",
+      "has_active_charges": "This plan has active unpaid charges. Close them before deleting."
+    },
+    "payment": {
+      "not_found": "Payment not found.",
+      "invalid_method": "Invalid payment method.",
+      "amount_exceeds_balance": "Amount exceeds the remaining balance.",
+      "already_confirmed": "This payment is already confirmed.",
+      "cancelled": "This payment has been cancelled.",
+      "already_reversed": "This payment is already reversed."
+    },
+    "event": {
+      "not_found": "Event not found.",
+      "invalid_dates": "End date must be after start date.",
+      "cannot_edit": "Cannot edit a completed or cancelled event.",
+      "not_open": "This event is not open for registration.",
+      "already_registered": "You are already registered for this event.",
+      "invalid_status_transition": "This action is not allowed for the current event status."
+    },
+    "registration": {
+      "not_found": "Registration not found.",
+      "already_cancelled": "Registration already cancelled."
+    },
+    "welfare": {
+      "not_found": "Welfare request not found.",
+      "invalid_status": "This action is not allowed for the current request status."
+    },
+    "election": {
+      "not_found": "Election not found.",
+      "not_open": "This election is not open for voting.",
+      "not_authorized": "Only active board members can vote in this election.",
+      "already_voted": "You have already voted in this election.",
+      "cannot_edit": "Cannot edit an open or closed election.",
+      "invalid_status": "This action is not allowed at this stage of the election.",
+      "invalid_status_transition": "This transition is not allowed for the current election status.",
+      "no_candidates": "The election must have at least one candidate."
+    },
+    "candidate": {
+      "not_found": "Candidate not found.",
+      "already_exists": "This member is already a candidate."
+    },
+    "vote": {
+      "no_candidates": "No candidate selected.",
+      "too_many_choices": "You can only vote for the allowed number of candidates.",
+      "invalid_candidates": "One or more candidates are invalid."
+    },
+    "role": {
+      "not_found": "Role not found.",
+      "name_taken": "A role with this name already exists.",
+      "in_use": "This role is assigned to active board members.",
+      "no_defaults": "No default configuration for this role.",
+      "unknown_permissions": "Unknown permissions provided."
+    },
+    "board_role": {
+      "not_found": "Board role not found."
+    },
+    "board_member": {
+      "not_found": "Board member not found."
+    },
+    "resolution": {
+      "not_found": "Resolution not found."
+    },
+    "document": {
+      "not_found": "Document not found."
+    },
+    "meeting": {
+      "not_found": "Meeting not found.",
+      "cannot_edit": "Cannot edit a completed or cancelled meeting.",
+      "cancelled": "This meeting has been cancelled.",
+      "invalid_status_transition": "This transition is not allowed for the current meeting status."
+    },
+    "action_item": {
+      "not_found": "Action item not found."
+    },
+    "minutes": {
+      "not_found": "Minutes not found.",
+      "already_approved": "These minutes are already approved."
+    },
+    "communication": {
+      "not_found": "Communication not found.",
+      "already_sent": "This communication has already been sent.",
+      "recipient_not_found": "Recipient not found."
+    },
+    "notification": {
+      "not_found": "Notification not found."
+    },
+    "community": {
+      "not_member": "You must be a member to share an experience."
+    },
+    "post": {
+      "not_found": "Publication not found.",
+      "not_owner": "You can only edit your own publications.",
+      "cannot_edit": "A published post cannot be edited.",
+      "not_authorized": "Action not authorized.",
+      "already_published": "Already published."
+    },
+    "comment": {
+      "not_found": "Comment not found.",
+      "not_authorized": "Not authorized to delete this comment."
+    },
+    "attachment": {
+      "not_found": "Attachment not found."
+    },
+    "expense": {
+      "not_found": "Expense not found.",
+      "cannot_edit": "Cannot edit a validated expense.",
+      "invalid_status": "Only pending expenses can be validated."
+    },
+    "tenant": {
+      "not_found": "Association not found."
+    }
   },
   "dashboard": {
     "greeting": "Hello, {{name}} 👋",

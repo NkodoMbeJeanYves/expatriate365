@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using server.Application.Common;
 using server.Application.Contributions.Commands;
@@ -29,7 +29,7 @@ public static class ContributionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new CreateContributionTypeCommand(tenantId.Value, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsCreate);
 
         plans.MapPut("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator, UpdateContributionTypeRequest dto) =>
@@ -37,7 +37,7 @@ public static class ContributionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new UpdateContributionTypeCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsUpdate);
 
         plans.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -45,7 +45,7 @@ public static class ContributionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new DeleteContributionTypeCommand(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(new { deleted = true }) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(new { deleted = true }) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsDelete);
 
         // --- Charges (ContributionCharge) ---
@@ -75,7 +75,7 @@ public static class ContributionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new GetContributionChargeByIdQuery(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsRead);
 
         charges.MapPost("/", async (ClaimsPrincipal principal, IMediator mediator, CreateContributionChargeRequest dto) =>
@@ -83,7 +83,7 @@ public static class ContributionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new CreateContributionChargeCommand(tenantId.Value, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsCreate);
 
         charges.MapPost("/{id:guid}/pay", async (Guid id, ClaimsPrincipal principal, IMediator mediator, MarkChargePaidRequest dto) =>
@@ -91,7 +91,7 @@ public static class ContributionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new MarkChargePaidCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsValidate);
 
         charges.MapPost("/{id:guid}/waive", async (Guid id, ClaimsPrincipal principal, IMediator mediator, WaiveChargeRequest dto) =>
@@ -99,7 +99,7 @@ public static class ContributionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new WaiveChargeCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsValidate);
 
         charges.MapPost("/bulk-generate", async (ClaimsPrincipal principal, IMediator mediator, BulkGenerateRequest dto) =>
@@ -107,7 +107,7 @@ public static class ContributionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new BulkGenerateChargesCommand(tenantId.Value, dto));
-            return result.IsSuccess ? Results.Ok(new { generated = result.Data }) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(new { generated = result.Data }) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsCreate);
 
         charges.MapPost("/send-reminders", async (ClaimsPrincipal principal, IMediator mediator) =>
@@ -117,7 +117,7 @@ public static class ContributionEndpoints
             var result = await mediator.Send(new SendPaymentRemindersCommand(tenantId.Value));
             return result.IsSuccess
                 ? Results.Ok(new { sent = result.Data })
-                : Results.BadRequest(new { error = result.ErrorMessage });
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsValidate);
     }
 

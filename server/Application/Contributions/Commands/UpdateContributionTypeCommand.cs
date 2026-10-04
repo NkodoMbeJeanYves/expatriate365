@@ -18,7 +18,7 @@ public class UpdateContributionTypeCommandHandler(AppDbContext db, ILogger<Updat
             .FirstOrDefaultAsync(t => t.Id == request.Id && t.TenantId == request.TenantId, ct);
 
         if (type is null)
-            return ServiceResult<ContributionTypeDto>.Failure("Plan de cotisation introuvable.");
+            return ServiceResult<ContributionTypeDto>.Failure("Plan de cotisation introuvable.", "errors.contribution_type.not_found");
 
         var dto = request.Dto;
         type.Name = dto.Name;

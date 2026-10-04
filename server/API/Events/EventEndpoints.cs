@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MediatR;
 using server.Application.Common;
 using server.Application.Events.Commands;
@@ -35,7 +35,7 @@ public static class EventEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new CreateEventCommand(tenantId.Value, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsCreate);
 
         group.MapGet("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -45,7 +45,7 @@ public static class EventEndpoints
             var result = await mediator.Send(new GetEventByIdQuery(tenantId.Value, id));
             return result.IsSuccess
                 ? Results.Ok(new { @event = result.Data.Event, registrations = result.Data.Registrations })
-                : Results.NotFound(new { error = result.ErrorMessage });
+                : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsRead);
 
         group.MapPut("/{id:guid}", async (Guid id, ClaimsPrincipal principal, IMediator mediator, UpdateEventRequest dto) =>
@@ -53,7 +53,7 @@ public static class EventEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new UpdateEventCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsUpdate);
 
         group.MapPost("/{id:guid}/publish", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -61,7 +61,7 @@ public static class EventEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new PublishEventCommand(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsUpdate);
 
         group.MapPost("/{id:guid}/complete", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -69,7 +69,7 @@ public static class EventEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new CompleteEventCommand(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsUpdate);
 
         group.MapPost("/{id:guid}/cancel-event", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -77,7 +77,7 @@ public static class EventEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new CancelEventCommand(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsDelete);
 
         group.MapGet("/{id:guid}/registrations", async (Guid id, ClaimsPrincipal principal, IMediator mediator) =>
@@ -85,7 +85,7 @@ public static class EventEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new GetEventByIdQuery(tenantId.Value, id));
-            return result.IsSuccess ? Results.Ok(result.Data.Registrations) : Results.NotFound(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data.Registrations) : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsRead);
 
         group.MapPost("/{id:guid}/registrations", async (Guid id, ClaimsPrincipal principal, IMediator mediator, RegisterToEventRequest dto) =>
@@ -93,7 +93,7 @@ public static class EventEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new RegisterToEventCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsManageAttendees);
 
         group.MapDelete("/{id:guid}/registrations/{regId:guid}", async (Guid id, Guid regId, ClaimsPrincipal principal, IMediator mediator) =>
@@ -101,7 +101,7 @@ public static class EventEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new CancelRegistrationCommand(tenantId.Value, id, regId));
-            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(result.Data) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsManageAttendees);
 
         group.MapPost("/{id:guid}/attendance", async (Guid id, ClaimsPrincipal principal, IMediator mediator, MarkAttendanceRequest dto) =>
@@ -109,7 +109,7 @@ public static class EventEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var result = await mediator.Send(new MarkAttendanceCommand(tenantId.Value, id, dto));
-            return result.IsSuccess ? Results.Ok(new { updated = result.Data }) : Results.BadRequest(new { error = result.ErrorMessage });
+            return result.IsSuccess ? Results.Ok(new { updated = result.Data }) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsManageAttendees);
     }
 

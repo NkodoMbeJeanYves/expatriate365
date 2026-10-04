@@ -27,13 +27,13 @@ public class ChangePasswordCommandHandler(AppDbContext db, ILogger<ChangePasswor
     {
         var user = await db.Users.FindAsync([request.UserId], ct);
         if (user is null)
-            return ServiceResult<bool>.Failure("Utilisateur introuvable.");
+            return ServiceResult<bool>.Failure("Utilisateur introuvable.", "errors.user.not_found");
 
         if (!BCrypt.Net.BCrypt.Verify(request.Dto.CurrentPassword, user.PasswordHash))
-            return ServiceResult<bool>.Failure("Mot de passe actuel incorrect.");
+            return ServiceResult<bool>.Failure("Mot de passe actuel incorrect.", "errors.auth.wrong_password");
 
         if (BCrypt.Net.BCrypt.Verify(request.Dto.NewPassword, user.PasswordHash))
-            return ServiceResult<bool>.Failure("Le nouveau mot de passe doit être différent de l'actuel.");
+            return ServiceResult<bool>.Failure("Le nouveau mot de passe doit être différent de l'actuel.", "errors.auth.same_password");
 
         user.PasswordHash         = BCrypt.Net.BCrypt.HashPassword(request.Dto.NewPassword);
         user.RefreshTokenHash     = null;

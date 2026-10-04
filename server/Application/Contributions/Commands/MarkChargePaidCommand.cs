@@ -28,8 +28,8 @@ public class MarkChargePaidCommandHandler(AppDbContext db, ILogger<MarkChargePai
             .Include(c => c.ContributionType)
             .FirstOrDefaultAsync(c => c.Id == request.ChargeId && c.TenantId == request.TenantId, ct);
 
-        if (charge is null) return ServiceResult<ContributionChargeDto>.Failure("Cotisation introuvable.");
-        if (charge.Status == "waived") return ServiceResult<ContributionChargeDto>.Failure("Cette cotisation est exonérée.");
+        if (charge is null) return ServiceResult<ContributionChargeDto>.Failure("Cotisation introuvable.", "errors.charge.not_found");
+        if (charge.Status == "waived") return ServiceResult<ContributionChargeDto>.Failure("Cette cotisation est exonérée.", "errors.charge.waived");
 
         charge.AmountPaid += request.Dto.AmountPaid;
         charge.Status = charge.AmountPaid >= charge.TotalDue ? "paid" : "pending";

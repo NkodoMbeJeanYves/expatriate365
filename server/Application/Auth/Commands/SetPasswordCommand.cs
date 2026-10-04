@@ -26,16 +26,16 @@ public class SetPasswordCommandHandler(AppDbContext db, ILogger<SetPasswordComma
     {
         var tokenHash = TokenGenerator.Hash(request.Dto.Token);
         if (tokenHash is null)
-            return ServiceResult<bool>.Failure("Lien d'activation invalide.");
+            return ServiceResult<bool>.Failure("Lien d'activation invalide.", "errors.auth.invalid_activation_link");
 
         var user = await db.Users
             .FirstOrDefaultAsync(u => u.ActivationTokenHash == tokenHash && u.IsActive, ct);
 
         if (user is null)
-            return ServiceResult<bool>.Failure("Lien d'activation invalide ou déjà utilisé.");
+            return ServiceResult<bool>.Failure("Lien d'activation invalide ou déjà utilisé.", "errors.auth.invalid_activation_link");
 
         if (user.ActivationTokenExpiresAt is null || user.ActivationTokenExpiresAt < DateTime.UtcNow)
-            return ServiceResult<bool>.Failure("Ce lien a expiré. Demandez un nouvel email d'activation.");
+            return ServiceResult<bool>.Failure("Ce lien a expiré. Demandez un nouvel email d'activation.", "errors.auth.activation_link_expired");
 
         user.PasswordHash           = BCrypt.Net.BCrypt.HashPassword(request.Dto.NewPassword);
         user.EmailVerifiedAt        = DateTime.UtcNow;
