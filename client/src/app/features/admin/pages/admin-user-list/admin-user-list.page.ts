@@ -151,7 +151,7 @@ import { AdminApiService } from '../../services/admin-api.service';
             </div>
             <div class="flex flex-col gap-1">
               <label class="text-sm font-medium">{{ 'admin.user_role' | translate }}</label>
-              <p-select formControlName="role" [options]="roleOptions" optionLabel="label" optionValue="value" appendTo="body" />
+              <p-select formControlName="role" [options]="assignableRoleOptions" optionLabel="label" optionValue="value" appendTo="body" />
             </div>
             <p class="text-xs text-gray-400">
               L'utilisateur recevra ses identifiants pour se connecter.
@@ -180,7 +180,7 @@ import { AdminApiService } from '../../services/admin-api.service';
       <div class="flex flex-col h-full">
         <div class="flex-1 overflow-y-auto">
           <div class="flex flex-col gap-4 p-2">
-            <p-select [options]="roleOptions" [(ngModel)]="selectedRole"
+            <p-select [options]="assignableRoleOptions" [(ngModel)]="selectedRole"
               optionLabel="label" optionValue="value" placeholder="Choisir un rôle" appendTo="body" />
           </div>
         </div>
@@ -226,6 +226,15 @@ export class AdminUserListPage implements OnInit {
       label: this.translate.instant('roles.label_' + r),
       value: r,
     }));
+  }
+
+  get assignableRoleOptions() {
+    return Object.values(ROLES)
+      .filter(r => r !== ROLES.SUPER_ADMIN)
+      .map(r => ({
+        label: this.translate.instant('roles.label_' + r),
+        value: r,
+      }));
   }
   get statusOptions() {
     return [
