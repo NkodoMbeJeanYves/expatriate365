@@ -33,7 +33,8 @@ public static class AdminEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var lang = principal.FindFirstValue("preferred_language") ?? "fr";
-            var result = await mediator.Send(new InviteUserCommand(tenantId.Value, request, lang));
+            var callerRole = principal.FindFirstValue("role") ?? "";
+            var result = await mediator.Send(new InviteUserCommand(tenantId.Value, request, callerRole, lang));
             return result.IsSuccess
                 ? Results.Created($"/api/v1/admin/users/{result.Data!.Id}", result.Data)
                 : Results.Conflict(new { error = result.ErrorCode ?? result.ErrorMessage });
@@ -44,7 +45,8 @@ public static class AdminEndpoints
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
-            var result = await mediator.Send(new ChangeUserRoleCommand(tenantId.Value, id, request));
+            var callerRole = principal.FindFirstValue("role") ?? "";
+            var result = await mediator.Send(new ChangeUserRoleCommand(tenantId.Value, id, request, callerRole));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
                 : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });

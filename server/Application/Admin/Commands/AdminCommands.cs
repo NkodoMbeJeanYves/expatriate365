@@ -9,7 +9,7 @@ using server.Infrastructure.Services;
 
 namespace server.Application.Admin.Commands;
 
-public record InviteUserCommand(Guid TenantId, InviteUserRequest Request, string Lang = "fr")
+public record InviteUserCommand(Guid TenantId, InviteUserRequest Request, string CallerRole, string Lang = "fr")
     : IRequest<ServiceResult<AdminUserDto>>;
 
 public class InviteUserCommandHandler(
@@ -19,10 +19,17 @@ public class InviteUserCommandHandler(
     ILogger<InviteUserCommandHandler> log)
     : IRequestHandler<InviteUserCommand, ServiceResult<AdminUserDto>>
 {
+    private static readonly string[] SuperAdminOnlyRoles = ["super_admin"];
+
     public async Task<ServiceResult<AdminUserDto>> Handle(InviteUserCommand request, CancellationToken ct)
     {
         var req = request.Request;
         var email = req.Email.ToLowerInvariant();
+
+        if (SuperAdminOnlyRoles.Contains(req.Role) && request.CallerRole != "super_admin")
+            return ServiceResult<AdminUserDto>.Failure(
+                "Vous n'êtes pas autorisé à attribuer ce rôle.",
+                "errors.auth.forbidden");
 
         var existing = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
         if (existing is not null)
@@ -69,14 +76,21 @@ public class InviteUserCommandHandler(
     }
 }
 
-public record ChangeUserRoleCommand(Guid TenantId, Guid UserId, ChangeRoleRequest Request)
+public record ChangeUserRoleCommand(Guid TenantId, Guid UserId, ChangeRoleRequest Request, string CallerRole)
     : IRequest<ServiceResult<AdminUserDto>>;
 
 public class ChangeUserRoleCommandHandler(AppDbContext db)
     : IRequestHandler<ChangeUserRoleCommand, ServiceResult<AdminUserDto>>
 {
+    private static readonly string[] SuperAdminOnlyRoles = ["super_admin"];
+
     public async Task<ServiceResult<AdminUserDto>> Handle(ChangeUserRoleCommand request, CancellationToken ct)
     {
+        if (SuperAdminOnlyRoles.Contains(request.Request.Role) && request.CallerRole != "super_admin")
+            return ServiceResult<AdminUserDto>.Failure(
+                "Vous n'êtes pas autorisé à attribuer ce rôle.",
+                "errors.auth.forbidden");
+
         var user = await db.Users.FirstOrDefaultAsync(
             u => u.Id == request.UserId && u.TenantId == request.TenantId, ct);
         if (user is null) return ServiceResult<AdminUserDto>.Failure("Utilisateur introuvable.", "errors.user.not_found");
