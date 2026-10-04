@@ -18,11 +18,11 @@ public class AddCommentHandler(AppDbContext db, ILogger<AddCommentHandler> log)
     public async Task<ServiceResult<PostCommentDto>> Handle(AddCommentCommand request, CancellationToken ct)
     {
         var post = await db.Posts.FirstOrDefaultAsync(p => p.Id == request.PostId && p.TenantId == request.TenantId && p.IsActive, ct);
-        if (post is null) return ServiceResult<PostCommentDto>.Failure("Post not found.");
+        if (post is null) return ServiceResult<PostCommentDto>.Failure("Post not found.", "errors.post.not_found");
 
         var author = await db.Members.Include(m => m.User)
             .FirstOrDefaultAsync(m => m.Id == request.AuthorMemberId && m.TenantId == request.TenantId && m.IsActive, ct);
-        if (author is null) return ServiceResult<PostCommentDto>.Failure("Member not found.");
+        if (author is null) return ServiceResult<PostCommentDto>.Failure("Member not found.", "errors.member.not_found");
 
         var comment = new PostComment
         {
@@ -57,10 +57,10 @@ public class DeleteCommentHandler(AppDbContext db, ILogger<DeleteCommentHandler>
     {
         var comment = await db.PostComments.FirstOrDefaultAsync(
             c => c.Id == request.CommentId && c.TenantId == request.TenantId && c.IsActive, ct);
-        if (comment is null) return ServiceResult<bool>.Failure("Comment not found.");
+        if (comment is null) return ServiceResult<bool>.Failure("Comment not found.", "errors.comment.not_found");
 
         if (!request.IsStaff && comment.AuthorMemberId != request.RequesterId)
-            return ServiceResult<bool>.Failure("Not authorized to delete this comment.");
+            return ServiceResult<bool>.Failure("Not authorized to delete this comment.", "errors.comment.not_authorized");
 
         comment.IsActive = false;
         comment.UpdatedAt = DateTime.UtcNow;

@@ -20,7 +20,7 @@ public class SaveMinutesCommandHandler(AppDbContext db, ILogger<SaveMinutesComma
     {
         var meeting = await db.Meetings.Include(m => m.Minute)
             .FirstOrDefaultAsync(m => m.Id == request.MeetingId && m.TenantId == request.TenantId, ct);
-        if (meeting is null) return ServiceResult<MeetingMinuteDto>.Failure("Réunion introuvable.");
+        if (meeting is null) return ServiceResult<MeetingMinuteDto>.Failure("Réunion introuvable.", "errors.meeting.not_found");
 
         if (meeting.Minute is not null)
         {
@@ -63,8 +63,8 @@ public class ApproveMinutesCommandHandler(AppDbContext db, ILogger<ApproveMinute
     {
         var minute = await db.MeetingMinutes
             .FirstOrDefaultAsync(m => m.MeetingId == request.MeetingId && m.TenantId == request.TenantId, ct);
-        if (minute is null) return ServiceResult<MeetingMinuteDto>.Failure("Compte-rendu introuvable.");
-        if (minute.IsApproved) return ServiceResult<MeetingMinuteDto>.Failure("Compte-rendu déjà approuvé.");
+        if (minute is null) return ServiceResult<MeetingMinuteDto>.Failure("Compte-rendu introuvable.", "errors.minutes.not_found");
+        if (minute.IsApproved) return ServiceResult<MeetingMinuteDto>.Failure("Compte-rendu déjà approuvé.", "errors.minutes.already_approved");
 
         minute.IsApproved = true;
         minute.ApprovedAt = DateTime.UtcNow;

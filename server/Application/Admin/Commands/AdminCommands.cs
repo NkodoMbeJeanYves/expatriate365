@@ -79,7 +79,7 @@ public class ChangeUserRoleCommandHandler(AppDbContext db)
     {
         var user = await db.Users.FirstOrDefaultAsync(
             u => u.Id == request.UserId && u.TenantId == request.TenantId, ct);
-        if (user is null) return ServiceResult<AdminUserDto>.Failure("Utilisateur introuvable.");
+        if (user is null) return ServiceResult<AdminUserDto>.Failure("Utilisateur introuvable.", "errors.user.not_found");
 
         user.Role = request.Request.Role;
         await db.SaveChangesAsync(ct);
@@ -97,7 +97,7 @@ public class ToggleUserStatusCommandHandler(AppDbContext db)
     {
         var user = await db.Users.FirstOrDefaultAsync(
             u => u.Id == request.UserId && u.TenantId == request.TenantId, ct);
-        if (user is null) return ServiceResult<AdminUserDto>.Failure("Utilisateur introuvable.");
+        if (user is null) return ServiceResult<AdminUserDto>.Failure("Utilisateur introuvable.", "errors.user.not_found");
 
         user.Status = request.Activate ? "active" : "suspended";
         user.IsActive = request.Activate;

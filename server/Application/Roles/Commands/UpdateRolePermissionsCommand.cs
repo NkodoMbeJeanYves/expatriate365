@@ -21,11 +21,11 @@ public class UpdateRolePermissionsCommandHandler(AppDbContext db, ILogger<Update
     {
         var role = await db.Roles.FirstOrDefaultAsync(r => r.Id == request.RoleId, ct);
         if (role is null)
-            return ServiceResult<bool>.Failure("Rôle introuvable.");
+            return ServiceResult<bool>.Failure("Rôle introuvable.", "errors.role.not_found");
 
         var invalid = request.Dto.Permissions.Where(p => !ValidPermissions.Contains(p)).ToList();
         if (invalid.Count > 0)
-            return ServiceResult<bool>.Failure($"Permissions inconnues : {string.Join(", ", invalid)}");
+            return ServiceResult<bool>.Failure($"Permissions inconnues : {string.Join(", ", invalid)}", "errors.role.unknown_permissions");
 
         role.Permissions  = JsonSerializer.Serialize(request.Dto.Permissions.Distinct().ToArray());
         role.IsCustomized = true;

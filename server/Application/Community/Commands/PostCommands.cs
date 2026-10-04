@@ -28,7 +28,7 @@ public class CreatePostCommandHandler(AppDbContext db, AuditService audit)
             var member = await db.Members.FirstOrDefaultAsync(
                 m => m.UserId == request.UserId && m.TenantId == request.TenantId && m.IsActive, ct);
             if (member is null)
-                return ServiceResult<PostDto>.Failure("Vous devez être membre pour publier une expérience.");
+                return ServiceResult<PostDto>.Failure("Vous devez être membre pour publier une expérience.", "errors.community.not_member");
             memberId = member.Id;
         }
 
@@ -62,11 +62,11 @@ public class UpdatePostCommandHandler(AppDbContext db)
             .Include(p => p.Attachments)
             .FirstOrDefaultAsync(p => p.Id == request.PostId && p.TenantId == request.TenantId, ct);
 
-        if (post is null) return ServiceResult<PostDto>.Failure("Publication introuvable.");
+        if (post is null) return ServiceResult<PostDto>.Failure("Publication introuvable.", "errors.post.not_found");
         if (post.AuthorId != request.RequesterId)
-            return ServiceResult<PostDto>.Failure("Vous ne pouvez modifier que vos propres publications.");
+            return ServiceResult<PostDto>.Failure("Vous ne pouvez modifier que vos propres publications.", "errors.post.not_owner");
         if (post.Status == "published")
-            return ServiceResult<PostDto>.Failure("Une publication publiée ne peut pas être modifiée.");
+            return ServiceResult<PostDto>.Failure("Une publication publiée ne peut pas être modifiée.", "errors.post.cannot_edit");
 
         post.Title   = request.Request.Title;
         post.Content = request.Request.Content;
@@ -86,9 +86,9 @@ public class DeletePostCommandHandler(AppDbContext db)
         var post = await db.Posts
             .FirstOrDefaultAsync(p => p.Id == request.PostId && p.TenantId == request.TenantId, ct);
 
-        if (post is null) return ServiceResult<bool>.Failure("Publication introuvable.");
+        if (post is null) return ServiceResult<bool>.Failure("Publication introuvable.", "errors.post.not_found");
         if (!request.IsStaff && post.AuthorId != request.RequesterId)
-            return ServiceResult<bool>.Failure("Action non autorisée.");
+            return ServiceResult<bool>.Failure("Action non autorisée.", "errors.post.not_authorized");
 
         post.IsActive = false;
         await db.SaveChangesAsync(ct);
@@ -108,8 +108,8 @@ public class PublishPostCommandHandler(AppDbContext db, AuditService audit)
             .Include(p => p.Attachments)
             .FirstOrDefaultAsync(p => p.Id == request.PostId && p.TenantId == request.TenantId, ct);
 
-        if (post is null) return ServiceResult<PostDto>.Failure("Publication introuvable.");
-        if (post.Status == "published") return ServiceResult<PostDto>.Failure("Déjà publiée.");
+        if (post is null) return ServiceResult<PostDto>.Failure("Publication introuvable.", "errors.post.not_found");
+        if (post.Status == "published") return ServiceResult<PostDto>.Failure("Déjà publiée.", "errors.post.already_published");
 
         post.Status      = "published";
         post.PublishedAt = DateTime.UtcNow;
@@ -131,7 +131,7 @@ public class RejectPostCommandHandler(AppDbContext db, AuditService audit)
             .Include(p => p.Attachments)
             .FirstOrDefaultAsync(p => p.Id == request.PostId && p.TenantId == request.TenantId, ct);
 
-        if (post is null) return ServiceResult<PostDto>.Failure("Publication introuvable.");
+        if (post is null) return ServiceResult<PostDto>.Failure("Publication introuvable.", "errors.post.not_found");
 
         post.Status = "rejected";
         audit.Log("post.reject", request.UserId, request.TenantId, "post", post.Id.ToString());
@@ -151,9 +151,9 @@ public class AddAttachmentCommandHandler(AppDbContext db)
         var post = await db.Posts
             .FirstOrDefaultAsync(p => p.Id == request.PostId && p.TenantId == request.TenantId, ct);
 
-        if (post is null) return ServiceResult<PostAttachmentDto>.Failure("Publication introuvable.");
+        if (post is null) return ServiceResult<PostAttachmentDto>.Failure("Publication introuvable.", "errors.post.not_found");
         if (post.AuthorId != request.RequesterId)
-            return ServiceResult<PostAttachmentDto>.Failure("Action non autorisée.");
+            return ServiceResult<PostAttachmentDto>.Failure("Action non autorisée.", "errors.post.not_authorized");
 
         var att = new PostAttachment
         {
@@ -187,14 +187,14 @@ public class DeleteAttachmentCommandHandler(AppDbContext db)
         var post = await db.Posts
             .FirstOrDefaultAsync(p => p.Id == request.PostId && p.TenantId == request.TenantId, ct);
 
-        if (post is null) return ServiceResult<bool>.Failure("Publication introuvable.");
+        if (post is null) return ServiceResult<bool>.Failure("Publication introuvable.", "errors.post.not_found");
         if (post.AuthorId != request.RequesterId)
-            return ServiceResult<bool>.Failure("Action non autorisée.");
+            return ServiceResult<bool>.Failure("Action non autorisée.", "errors.post.not_authorized");
 
         var att = await db.PostAttachments
             .FirstOrDefaultAsync(a => a.Id == request.AttachmentId && a.PostId == request.PostId, ct);
 
-        if (att is null) return ServiceResult<bool>.Failure("Pièce jointe introuvable.");
+        if (att is null) return ServiceResult<bool>.Failure("Pièce jointe introuvable.", "errors.attachment.not_found");
         db.PostAttachments.Remove(att);
         await db.SaveChangesAsync(ct);
         return ServiceResult<bool>.Success(true);

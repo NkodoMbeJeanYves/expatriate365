@@ -19,8 +19,8 @@ public class WaiveChargeCommandHandler(AppDbContext db, ILogger<WaiveChargeComma
             .Include(c => c.ContributionType)
             .FirstOrDefaultAsync(c => c.Id == request.ChargeId && c.TenantId == request.TenantId, ct);
 
-        if (charge is null) return ServiceResult<ContributionChargeDto>.Failure("Cotisation introuvable.");
-        if (charge.Status == "paid") return ServiceResult<ContributionChargeDto>.Failure("Cette cotisation est déjà payée.");
+        if (charge is null) return ServiceResult<ContributionChargeDto>.Failure("Cotisation introuvable.", "errors.charge.not_found");
+        if (charge.Status == "paid") return ServiceResult<ContributionChargeDto>.Failure("Cette cotisation est déjà payée.", "errors.charge.already_paid");
 
         charge.WaiverAmount = request.Dto.WaiverAmount ?? charge.Balance;
         charge.Status = "waived";

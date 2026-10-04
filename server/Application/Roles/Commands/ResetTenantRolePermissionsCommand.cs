@@ -17,7 +17,7 @@ public class ResetTenantRolePermissionsCommandHandler(AppDbContext db, ILogger<R
             .FirstOrDefaultAsync(tr => tr.Id == request.TenantRoleId && tr.TenantId == request.TenantId, ct);
 
         if (tenantRole is null)
-            return ServiceResult<bool>.Failure("Rôle introuvable pour cette association.");
+            return ServiceResult<bool>.Failure("Rôle introuvable pour cette association.", "errors.role.not_found");
 
         // Restore global template permissions
         tenantRole.Permissions = tenantRole.Role.Permissions;

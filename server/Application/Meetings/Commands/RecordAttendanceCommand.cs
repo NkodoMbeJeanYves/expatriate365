@@ -19,8 +19,8 @@ public class RecordAttendanceCommandHandler(AppDbContext db, ILogger<RecordAtten
     {
         var meeting = await db.Meetings.Include(m => m.Attendances)
             .FirstOrDefaultAsync(m => m.Id == request.MeetingId && m.TenantId == request.TenantId, ct);
-        if (meeting is null) return ServiceResult<int>.Failure("Réunion introuvable.");
-        if (meeting.Status is "cancelled") return ServiceResult<int>.Failure("Réunion annulée.");
+        if (meeting is null) return ServiceResult<int>.Failure("Réunion introuvable.", "errors.meeting.not_found");
+        if (meeting.Status is "cancelled") return ServiceResult<int>.Failure("Réunion annulée.", "errors.meeting.cancelled");
 
         int updated = 0;
         foreach (var entry in request.Dto.Entries)

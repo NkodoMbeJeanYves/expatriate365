@@ -21,7 +21,7 @@ public class GetCommunicationByIdQueryHandler(AppDbContext db)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
 
         if (c is null)
-            return ServiceResult<(CommunicationDto, List<RecipientDto>)>.Failure("Communication introuvable.");
+            return ServiceResult<(CommunicationDto, List<RecipientDto>)>.Failure("Communication introuvable.", "errors.communication.not_found");
 
         var recipients = c.Recipients.Select(r => new RecipientDto(
             r.Id.ToString(), r.MemberId.ToString(),

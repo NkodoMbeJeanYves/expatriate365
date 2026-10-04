@@ -14,11 +14,11 @@ public class ResetRolePermissionsCommandHandler(AppDbContext db, ILogger<ResetRo
     {
         var role = await db.Roles.FirstOrDefaultAsync(r => r.Id == request.RoleId, ct);
         if (role is null)
-            return ServiceResult<bool>.Failure("Rôle introuvable.");
+            return ServiceResult<bool>.Failure("Rôle introuvable.", "errors.role.not_found");
 
         var defaults = RoleSeeder.GetDefaultPermissions(role.Name);
         if (defaults is null)
-            return ServiceResult<bool>.Failure("Aucune configuration par défaut pour ce rôle.");
+            return ServiceResult<bool>.Failure("Aucune configuration par défaut pour ce rôle.", "errors.role.no_defaults");
 
         role.Permissions  = defaults;
         role.IsCustomized = false;

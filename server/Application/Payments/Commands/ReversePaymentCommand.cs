@@ -29,8 +29,8 @@ public class ReversePaymentCommandHandler(AppDbContext db, ILogger<ReversePaymen
             .Include(p => p.Charge).ThenInclude(c => c.ContributionType)
             .FirstOrDefaultAsync(p => p.Id == request.PaymentId && p.TenantId == request.TenantId, ct);
 
-        if (payment is null) return ServiceResult<PaymentDto>.Failure("Paiement introuvable.");
-        if (payment.Status == "reversed") return ServiceResult<PaymentDto>.Failure("Ce paiement est déjà annulé.");
+        if (payment is null) return ServiceResult<PaymentDto>.Failure("Paiement introuvable.", "errors.payment.not_found");
+        if (payment.Status == "reversed") return ServiceResult<PaymentDto>.Failure("Ce paiement est déjà annulé.", "errors.payment.already_reversed");
 
         // Roll back charge amount
         var charge = payment.Charge;

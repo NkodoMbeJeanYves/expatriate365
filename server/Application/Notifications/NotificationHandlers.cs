@@ -70,7 +70,7 @@ public class MarkNotificationReadCommandHandler(AppDbContext db)
     {
         var n = await db.Notifications.FirstOrDefaultAsync(
             x => x.Id == request.NotificationId && x.UserId == request.UserId && x.TenantId == request.TenantId, ct);
-        if (n is null) return ServiceResult<bool>.Failure("Notification introuvable.");
+        if (n is null) return ServiceResult<bool>.Failure("Notification introuvable.", "errors.notification.not_found");
 
         n.IsRead = true;
         n.ReadAt = DateTime.UtcNow;

@@ -33,21 +33,21 @@ public class RecordPaymentCommandHandler(AppDbContext db, ILogger<RecordPaymentC
         var dto = request.Dto;
 
         if (!Guid.TryParse(dto.ChargeId, out var chargeId))
-            return ServiceResult<PaymentDto>.Failure("ChargeId invalide.");
+            return ServiceResult<PaymentDto>.Failure("ChargeId invalide.", "errors.common.invalid_id");
 
         if (!ValidMethods.Contains(dto.PaymentMethod))
-            return ServiceResult<PaymentDto>.Failure("Méthode de paiement invalide.");
+            return ServiceResult<PaymentDto>.Failure("Méthode de paiement invalide.", "errors.payment.invalid_method");
 
         var charge = await db.ContributionCharges
             .Include(c => c.Member).ThenInclude(m => m.User)
             .Include(c => c.ContributionType)
             .FirstOrDefaultAsync(c => c.Id == chargeId && c.TenantId == request.TenantId, ct);
 
-        if (charge is null) return ServiceResult<PaymentDto>.Failure("Cotisation introuvable.");
-        if (charge.Status == "waived") return ServiceResult<PaymentDto>.Failure("Cette cotisation est exonérée.");
-        if (charge.Balance <= 0) return ServiceResult<PaymentDto>.Failure("Cette cotisation est déjà soldée.");
+        if (charge is null) return ServiceResult<PaymentDto>.Failure("Cotisation introuvable.", "errors.charge.not_found");
+        if (charge.Status == "waived") return ServiceResult<PaymentDto>.Failure("Cette cotisation est exonérée.", "errors.charge.waived");
+        if (charge.Balance <= 0) return ServiceResult<PaymentDto>.Failure("Cette cotisation est déjà soldée.", "errors.charge.already_paid");
         if (dto.Amount > charge.Balance)
-            return ServiceResult<PaymentDto>.Failure($"Le montant ({dto.Amount}) dépasse le solde restant ({charge.Balance}).");
+            return ServiceResult<PaymentDto>.Failure($"Le montant ({dto.Amount}) dépasse le solde restant ({charge.Balance}).", "errors.payment.amount_exceeds_balance");
 
         var sequence = await db.Payments.CountAsync(p => p.TenantId == request.TenantId, ct) + 1;
         var receiptNumber = $"REC-{sequence:D5}";

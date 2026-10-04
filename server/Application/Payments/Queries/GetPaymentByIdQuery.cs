@@ -19,7 +19,7 @@ public class GetPaymentByIdQueryHandler(AppDbContext db)
             .FirstOrDefaultAsync(p => p.Id == request.Id && p.TenantId == request.TenantId, ct);
 
         if (payment is null)
-            return ServiceResult<PaymentDto>.Failure("Paiement introuvable.");
+            return ServiceResult<PaymentDto>.Failure("Paiement introuvable.", "errors.payment.not_found");
 
         return ServiceResult<PaymentDto>.Success(ListPaymentsQueryHandler.ToDto(payment));
     }

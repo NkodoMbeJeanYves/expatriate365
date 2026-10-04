@@ -26,7 +26,7 @@ public class UpdateTenantSettingsHandler(AppDbContext db, IWebHostEnvironment en
     {
         Log.Information("UpdateTenantSettings TenantId={TenantId}", req.TenantId);
         var tenant = await db.Tenants.FirstOrDefaultAsync(x => x.Id == req.TenantId, ct);
-        if (tenant is null) return ServiceResult<TenantSettingsDto>.Failure("Tenant not found");
+        if (tenant is null) return ServiceResult<TenantSettingsDto>.Failure("Tenant not found", "errors.tenant.not_found");
 
         if (req.Body.Name is not null)           tenant.Name           = req.Body.Name;
         if (req.Body.BaseCurrency is not null)   tenant.BaseCurrency   = req.Body.BaseCurrency;

@@ -124,7 +124,7 @@ public class CreateExpenseCommandHandler(AppDbContext db, ILogger<CreateExpenseC
     {
         var dto = request.Dto;
         if (!DateTime.TryParse(dto.Date, out var date))
-            return ServiceResult<ExpenseDto>.Failure("Date invalide.");
+            return ServiceResult<ExpenseDto>.Failure("Date invalide.", "errors.common.invalid_date");
 
         var expense = new Expense
         {
@@ -155,13 +155,13 @@ public class UpdateExpenseCommandHandler(AppDbContext db, ILogger<UpdateExpenseC
     {
         var expense = await db.Expenses.Include(e => e.Validator)
             .FirstOrDefaultAsync(e => e.Id == request.Id && e.TenantId == request.TenantId, ct);
-        if (expense is null) return ServiceResult<ExpenseDto>.Failure("Dépense introuvable.");
+        if (expense is null) return ServiceResult<ExpenseDto>.Failure("Dépense introuvable.", "errors.expense.not_found");
         if (expense.Status == "validated")
-            return ServiceResult<ExpenseDto>.Failure("Impossible de modifier une dépense validée.");
+            return ServiceResult<ExpenseDto>.Failure("Impossible de modifier une dépense validée.", "errors.expense.cannot_edit");
 
         var dto = request.Dto;
         if (!DateTime.TryParse(dto.Date, out var date))
-            return ServiceResult<ExpenseDto>.Failure("Date invalide.");
+            return ServiceResult<ExpenseDto>.Failure("Date invalide.", "errors.common.invalid_date");
 
         expense.Label = dto.Label;
         expense.Description = dto.Description;
@@ -185,9 +185,9 @@ public class ValidateExpenseCommandHandler(AppDbContext db, ILogger<ValidateExpe
     {
         var expense = await db.Expenses.Include(e => e.Validator)
             .FirstOrDefaultAsync(e => e.Id == request.Id && e.TenantId == request.TenantId, ct);
-        if (expense is null) return ServiceResult<ExpenseDto>.Failure("Dépense introuvable.");
+        if (expense is null) return ServiceResult<ExpenseDto>.Failure("Dépense introuvable.", "errors.expense.not_found");
         if (expense.Status != "pending")
-            return ServiceResult<ExpenseDto>.Failure("Seules les dépenses en attente peuvent être validées.");
+            return ServiceResult<ExpenseDto>.Failure("Seules les dépenses en attente peuvent être validées.", "errors.expense.invalid_status");
 
         expense.Status = request.Approve ? "validated" : "rejected";
         expense.ValidatedBy = request.ValidatorId;
@@ -208,9 +208,9 @@ public class DeleteExpenseCommandHandler(AppDbContext db, ILogger<DeleteExpenseC
     {
         var expense = await db.Expenses.FirstOrDefaultAsync(
             e => e.Id == request.Id && e.TenantId == request.TenantId, ct);
-        if (expense is null) return ServiceResult<bool>.Failure("Dépense introuvable.");
+        if (expense is null) return ServiceResult<bool>.Failure("Dépense introuvable.", "errors.expense.not_found");
         if (expense.Status == "validated")
-            return ServiceResult<bool>.Failure("Impossible de supprimer une dépense validée.");
+            return ServiceResult<bool>.Failure("Impossible de supprimer une dépense validée.", "errors.expense.cannot_edit");
 
         expense.IsActive = false;
         await db.SaveChangesAsync(ct);

@@ -25,9 +25,9 @@ public class ConfirmPaymentCommandHandler(
             .Include(p => p.Charge).ThenInclude(c => c.ContributionType)
             .FirstOrDefaultAsync(p => p.Id == request.PaymentId && p.TenantId == request.TenantId, ct);
 
-        if (payment is null) return ServiceResult<PaymentDto>.Failure("Paiement introuvable.");
-        if (payment.Status == "confirmed") return ServiceResult<PaymentDto>.Failure("Ce paiement est déjà confirmé.");
-        if (payment.Status == "reversed") return ServiceResult<PaymentDto>.Failure("Ce paiement a été annulé.");
+        if (payment is null) return ServiceResult<PaymentDto>.Failure("Paiement introuvable.", "errors.payment.not_found");
+        if (payment.Status == "confirmed") return ServiceResult<PaymentDto>.Failure("Ce paiement est déjà confirmé.", "errors.payment.already_confirmed");
+        if (payment.Status == "reversed") return ServiceResult<PaymentDto>.Failure("Ce paiement a été annulé.", "errors.payment.cancelled");
 
         payment.Status = "confirmed";
         payment.ConfirmedAt = DateTime.UtcNow;

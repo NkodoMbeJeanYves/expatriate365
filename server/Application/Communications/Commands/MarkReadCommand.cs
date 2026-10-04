@@ -20,7 +20,7 @@ public class MarkReadCommandHandler(AppDbContext db)
                 r.TenantId == request.TenantId, ct);
 
         if (recipient is null)
-            return ServiceResult<bool>.Failure("Destinataire introuvable.");
+            return ServiceResult<bool>.Failure("Destinataire introuvable.", "errors.communication.recipient_not_found");
 
         if (recipient.Status == "read")
             return ServiceResult<bool>.Success(true);

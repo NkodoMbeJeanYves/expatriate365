@@ -35,8 +35,8 @@ public class CloseMeetingCommandHandler(AppDbContext db, ILogger<CloseMeetingCom
     {
         var m = await db.Meetings.Include(x => x.Attendances).Include(x => x.Minute)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
-        if (m is null) return ServiceResult<MeetingDto>.Failure("Réunion introuvable.");
-        if (m.Status != "in_progress") return ServiceResult<MeetingDto>.Failure("Seules les réunions en cours peuvent être clôturées.");
+        if (m is null) return ServiceResult<MeetingDto>.Failure("Réunion introuvable.", "errors.meeting.not_found");
+        if (m.Status != "in_progress") return ServiceResult<MeetingDto>.Failure("Seules les réunions en cours peuvent être clôturées.", "errors.meeting.invalid_status_transition");
         m.Status = "completed";
         m.EndedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
@@ -52,8 +52,8 @@ public class CancelMeetingCommandHandler(AppDbContext db, ILogger<CancelMeetingC
     {
         var m = await db.Meetings.Include(x => x.Attendances).Include(x => x.Minute)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
-        if (m is null) return ServiceResult<MeetingDto>.Failure("Réunion introuvable.");
-        if (m.Status == "completed") return ServiceResult<MeetingDto>.Failure("Impossible d'annuler une réunion terminée.");
+        if (m is null) return ServiceResult<MeetingDto>.Failure("Réunion introuvable.", "errors.meeting.not_found");
+        if (m.Status == "completed") return ServiceResult<MeetingDto>.Failure("Impossible d'annuler une réunion terminée.", "errors.meeting.invalid_status_transition");
         m.Status = "cancelled";
         await db.SaveChangesAsync(ct);
         log.LogInformation("Meeting {Id} cancelled", m.Id);
