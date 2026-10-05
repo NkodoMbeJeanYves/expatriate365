@@ -259,7 +259,8 @@
     "email": "Email de connexion",
     "password": "Mot de passe",
     "optional": "optionnel",
-    "generic_error": "Une erreur est survenue. Veuillez réessayer."
+    "generic_error": "Une erreur est survenue. Veuillez réessayer.",
+    "load_more": "Charger plus"
   },
   "profile": {
     "title": "Mon profil",
