@@ -259,7 +259,8 @@
     "email": "Login email",
     "password": "Password",
     "optional": "optional",
-    "generic_error": "An error occurred. Please try again."
+    "generic_error": "An error occurred. Please try again.",
+    "load_more": "Load more"
   },
   "profile": {
     "title": "My profile",
