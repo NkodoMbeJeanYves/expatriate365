@@ -156,7 +156,13 @@
     "perm_write": "Write",
     "perm_moderate": "Moderate",
     "domain_community": "Community",
-    "label_org_admin": "Association Administrator"
+    "label_org_admin": "Association Administrator",
+    "read_only": "Read-only",
+    "load_error": "Error loading roles",
+    "save_success": "Permissions saved",
+    "save_error": "Error saving permissions",
+    "reset_success": "Permissions reset to defaults",
+    "reset_error": "Error resetting permissions"
   },
   "auth": {
     "login": "Login",

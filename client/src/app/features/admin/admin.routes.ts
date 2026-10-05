@@ -12,6 +12,11 @@ export const ADMIN_ROUTES: Routes = [
       import('./pages/admin-user-list/admin-user-list.page').then(m => m.AdminUserListPage),
   },
   {
+    path: 'roles',
+    loadComponent: () =>
+      import('./pages/admin-roles/admin-roles.page').then(m => m.AdminRolesPage),
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./pages/admin-settings/admin-settings.page').then(m => m.AdminSettingsPage),

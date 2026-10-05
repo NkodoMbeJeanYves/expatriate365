@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { of } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthStore } from './auth.store';
@@ -93,8 +94,11 @@ export class AuthService {
           this.translate.use(lang);
         }
       }),
-      switchMap(() => this.tenantApi.getSettings()),
-      tap((settings) => this.tenantStore.set(settings)),
+      switchMap((user) =>
+        user.tenant_id
+          ? this.tenantApi.getSettings().pipe(tap(s => this.tenantStore.set(s)))
+          : of(null)
+      ),
     );
   }
 

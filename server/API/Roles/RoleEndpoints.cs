@@ -46,7 +46,8 @@ public static class RoleEndpoints
             {
                 var tenantId = GetTenantId(principal);
                 if (tenantId is null) return Results.Unauthorized();
-                var result = await mediator.Send(new UpdateTenantRolePermissionsCommand(tenantId.Value, id, dto));
+                var callerRole = principal.FindFirstValue("role") ?? "";
+                var result = await mediator.Send(new UpdateTenantRolePermissionsCommand(tenantId.Value, id, dto, callerRole));
                 return result.IsSuccess
                     ? Results.NoContent()
                     : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
