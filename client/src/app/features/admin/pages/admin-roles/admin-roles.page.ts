@@ -8,7 +8,9 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
-import { PermissionDomain, TenantRoleDto } from '@models/admin.model';
+import { PermissionDomain, RoleDto, TenantRoleDto } from '@models/admin.model';
+
+type AnyRoleDto = RoleDto | TenantRoleDto;
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { RolesApiService } from '@service/roles-api.service';
 import { ToastService } from '@service/toast.service';
@@ -31,6 +33,13 @@ import { forkJoin } from 'rxjs';
       <app-page-header
         [title]="'roles.title' | translate"
         [subtitle]="'roles.subtitle' | translate" />
+
+      @if (isSuperAdmin) {
+        <div class="mb-4 flex items-center gap-2 px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-sm">
+          <i class="pi pi-info-circle"></i>
+          {{ 'roles.super_admin_readonly_notice' | translate }}
+        </div>
+      }
 
       @if (loading()) {
         <div class="flex justify-center py-20">
@@ -207,10 +216,10 @@ export class AdminRolesPage implements OnInit {
   readonly loading   = signal(true);
   readonly saving    = signal(false);
   readonly resetting = signal(false);
-  readonly roles   = signal<TenantRoleDto[]>([]);
+  readonly roles   = signal<AnyRoleDto[]>([]);
   readonly domains = signal<PermissionDomain[]>([]);
 
-  readonly selectedRole   = signal<TenantRoleDto | null>(null);
+  readonly selectedRole   = signal<AnyRoleDto | null>(null);
   readonly selectedDomain = signal<PermissionDomain | null>(null);
 
   private readonly _checked = signal<Set<string>>(new Set());
@@ -222,33 +231,31 @@ export class AdminRolesPage implements OnInit {
 
   private static readonly RESTRICTED_DOMAINS = ['roles', 'users'];
 
-  /** True when the entire selected role is read-only (no editing at all) */
+  /** True when the entire selected role is read-only */
   readonly isReadOnly = computed(() => {
+    // super_admin always sees a read-only global overview
+    if (this.isSuperAdmin) return true;
     const role = this.selectedRole();
     if (!role) return false;
-    // super_admin permissions are always read-only for everyone
     if (role.name === ROLES.SUPER_ADMIN) return true;
-    // org_admin cannot edit their own role (privilege escalation guard)
-    if (!this.isSuperAdmin && role.name === ROLES.ORG_ADMIN) return true;
+    if (role.name === ROLES.ORG_ADMIN) return true;
     return false;
   });
 
   /** True when a specific domain is locked for the current user */
   isDomainReadOnly(domain: PermissionDomain): boolean {
-    if (this.isSuperAdmin) return false;
+    if (this.isSuperAdmin) return true; // everything read-only for super_admin
     return AdminRolesPage.RESTRICTED_DOMAINS.includes(domain.domain);
   }
 
   ngOnInit(): void {
-    forkJoin({
-      roles:   this.api.listTenant(),
-      domains: this.api.listPermissions(),
-    }).subscribe({
+    // super_admin has no tenant_id → use global role list; org_admin uses tenant-scoped list
+    const roles$ = this.isSuperAdmin ? this.api.list() : this.api.listTenant();
+    forkJoin({ roles: roles$, domains: this.api.listPermissions() }).subscribe({
       next: ({ roles, domains }) => {
-        // org_admin cannot see or edit super_admin permissions
         const visible = this.isSuperAdmin
           ? roles
-          : roles.filter(r => r.name !== ROLES.SUPER_ADMIN);
+          : (roles as TenantRoleDto[]).filter(r => r.name !== ROLES.SUPER_ADMIN);
         this.roles.set(visible);
         this.domains.set(domains);
         if (visible.length) this.selectRole(visible[0]);
@@ -261,7 +268,7 @@ export class AdminRolesPage implements OnInit {
     });
   }
 
-  selectRole(role: TenantRoleDto): void {
+  selectRole(role: AnyRoleDto): void {
     this.selectedRole.set(role);
     this._checked.set(new Set(
       Array.isArray(role.permissions)
@@ -280,7 +287,7 @@ export class AdminRolesPage implements OnInit {
     try { return JSON.parse(raw) as string[]; } catch { return []; }
   }
 
-  permCount(role: TenantRoleDto): number {
+  permCount(role: AnyRoleDto): number {
     if (Array.isArray(role.permissions)) return role.permissions.length;
     return this.parsePermissions(role.permissions as unknown as string).length;
   }

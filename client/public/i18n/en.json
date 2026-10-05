@@ -162,7 +162,8 @@
     "save_success": "Permissions saved",
     "save_error": "Error saving permissions",
     "reset_success": "Permissions reset to defaults",
-    "reset_error": "Error resetting permissions"
+    "reset_error": "Error resetting permissions",
+    "super_admin_readonly_notice": "You are viewing the global role configuration. This view is read-only — permissions are managed at the association level by each administrator."
   },
   "auth": {
     "login": "Login",
