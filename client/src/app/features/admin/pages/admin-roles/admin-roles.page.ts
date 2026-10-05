@@ -211,7 +211,7 @@ export class AdminRolesPage implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly auth      = inject(AuthStore);
 
-  private readonly isSuperAdmin = this.auth.hasRole(ROLES.SUPER_ADMIN);
+  readonly isSuperAdmin = this.auth.hasRole(ROLES.SUPER_ADMIN);
 
   readonly loading   = signal(true);
   readonly saving    = signal(false);
