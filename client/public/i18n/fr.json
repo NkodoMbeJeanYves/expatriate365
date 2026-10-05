@@ -162,7 +162,8 @@
     "save_success": "Permissions enregistrées",
     "save_error": "Erreur lors de la sauvegarde des permissions",
     "reset_success": "Permissions réinitialisées aux valeurs par défaut",
-    "reset_error": "Erreur lors de la réinitialisation des permissions"
+    "reset_error": "Erreur lors de la réinitialisation des permissions",
+    "super_admin_readonly_notice": "Vous consultez la configuration globale des rôles. Cette vue est en lecture seule — les permissions sont gérées au niveau de chaque association par son administrateur."
   },
   "auth": {
     "login": "Connexion",
