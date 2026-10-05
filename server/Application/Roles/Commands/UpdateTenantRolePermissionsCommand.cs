@@ -6,13 +6,14 @@ using server.Infrastructure.Persistence;
 
 namespace server.Application.Roles.Commands;
 
-public record UpdateTenantRolePermissionsCommand(Guid TenantId, Guid TenantRoleId, UpdateRolePermissionsRequest Dto)
+public record UpdateTenantRolePermissionsCommand(Guid TenantId, Guid TenantRoleId, UpdateRolePermissionsRequest Dto, string CallerRole = "")
     : IRequest<ServiceResult<bool>>;
 
 public class UpdateTenantRolePermissionsCommandHandler(AppDbContext db, ILogger<UpdateTenantRolePermissionsCommandHandler> log)
     : IRequestHandler<UpdateTenantRolePermissionsCommand, ServiceResult<bool>>
 {
     private static readonly HashSet<string> ValidPermissions = new(Permissions.All);
+    private static readonly string[] RestrictedPrefixes = ["roles.", "users."];
 
     public async Task<ServiceResult<bool>> Handle(UpdateTenantRolePermissionsCommand request, CancellationToken ct)
     {
@@ -22,6 +23,17 @@ public class UpdateTenantRolePermissionsCommandHandler(AppDbContext db, ILogger<
 
         if (tenantRole is null)
             return ServiceResult<bool>.Failure("Rôle introuvable pour cette association.", "errors.role.not_found");
+
+        if (request.CallerRole != "super_admin")
+        {
+            var forbidden = request.Dto.Permissions
+                .Where(p => RestrictedPrefixes.Any(prefix => p.StartsWith(prefix)))
+                .ToList();
+            if (forbidden.Count > 0)
+                return ServiceResult<bool>.Failure(
+                    "Les permissions Rôles et Utilisateurs ne peuvent être modifiées que par un super administrateur.",
+                    "errors.auth.forbidden");
+        }
 
         var invalid = request.Dto.Permissions.Where(p => !ValidPermissions.Contains(p)).ToList();
         if (invalid.Count > 0)

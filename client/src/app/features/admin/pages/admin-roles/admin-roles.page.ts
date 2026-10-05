@@ -91,7 +91,12 @@ import { forkJoin } from 'rxjs';
                         [class]="selectedDomain()?.domain === domain.domain
                           ? 'w-full text-left flex items-center justify-between px-3 py-2 mx-1 rounded-lg text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
                           : 'w-full text-left flex items-center justify-between px-3 py-2 mx-1 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'">
-                        <span>{{ ('roles.domain_' + domain.domain) | translate }}</span>
+                        <span class="flex items-center gap-1">
+                          @if (isDomainReadOnly(domain)) {
+                            <i class="pi pi-lock text-[9px] text-gray-400"></i>
+                          }
+                          {{ ('roles.domain_' + domain.domain) | translate }}
+                        </span>
                         <span [class]="selectedDomain()?.domain === domain.domain
                           ? 'text-[10px] bg-emerald-100 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-full px-1.5 py-0.5 font-medium'
                           : 'text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full px-1.5 py-0.5'">
@@ -108,7 +113,7 @@ import { forkJoin } from 'rxjs';
                         <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           {{ ('roles.domain_' + domain.domain) | translate }}
                         </h3>
-                        @if (!isReadOnly()) {
+                        @if (!isReadOnly() && !isDomainReadOnly(domain)) {
                           <button
                             type="button"
                             class="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 transition-colors"
@@ -116,14 +121,19 @@ import { forkJoin } from 'rxjs';
                             {{ domainAllSelected(domain) ? ('roles.deselect_all' | translate) : ('roles.select_all' | translate) }}
                           </button>
                         }
+                        @if (isDomainReadOnly(domain)) {
+                          <span class="text-xs text-gray-400 flex items-center gap-1">
+                            <i class="pi pi-lock text-[10px]"></i>{{ 'roles.read_only' | translate }}
+                          </span>
+                        }
                       </div>
 
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         @for (perm of domain.permissions; track perm) {
                           <button
                             type="button"
-                            (click)="isReadOnly() ? null : toggle(perm)"
-                            [disabled]="isReadOnly()"
+                            (click)="isReadOnly() || isDomainReadOnly(domain) ? null : toggle(perm)"
+                            [disabled]="isReadOnly() || isDomainReadOnly(domain)"
                             [class]="isChecked(perm)
                               ? 'flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left text-sm font-medium transition-all border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300'
                               : 'flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left text-sm transition-all border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'">
@@ -210,16 +220,24 @@ export class AdminRolesPage implements OnInit {
     this.domains().reduce((n, d) => n + d.permissions.length, 0)
   );
 
-  /** True when the selected role must not be editable by the current user */
+  private static readonly RESTRICTED_DOMAINS = ['roles', 'users'];
+
+  /** True when the entire selected role is read-only (no editing at all) */
   readonly isReadOnly = computed(() => {
     const role = this.selectedRole();
     if (!role) return false;
-    // super_admin permissions are always read-only
+    // super_admin permissions are always read-only for everyone
     if (role.name === ROLES.SUPER_ADMIN) return true;
     // org_admin cannot edit their own role (privilege escalation guard)
     if (!this.isSuperAdmin && role.name === ROLES.ORG_ADMIN) return true;
     return false;
   });
+
+  /** True when a specific domain is locked for the current user */
+  isDomainReadOnly(domain: PermissionDomain): boolean {
+    if (this.isSuperAdmin) return false;
+    return AdminRolesPage.RESTRICTED_DOMAINS.includes(domain.domain);
+  }
 
   ngOnInit(): void {
     forkJoin({
@@ -326,7 +344,12 @@ export class AdminRolesPage implements OnInit {
     if (!role || this.isReadOnly()) return;
 
     this.saving.set(true);
-    const permissions = [...this._checked()];
+    const lockedPerms = new Set(
+      this.domains()
+        .filter(d => this.isDomainReadOnly(d))
+        .flatMap(d => d.permissions)
+    );
+    const permissions = [...this._checked()].filter(p => !lockedPerms.has(p));
 
     this.api.updateTenantPermissions(role.id, { permissions }).subscribe({
       next: () => {
