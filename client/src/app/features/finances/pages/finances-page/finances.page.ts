@@ -195,7 +195,7 @@ export class FinancesPage implements OnInit {
   ngOnInit(): void { this.loadAll(); }
 
   loadAll(): void {
-    this.api.summary().subscribe(s => this.summary.set(s));
+    this.api.summary().subscribe({ next: s => this.summary.set(s), error: () => {} });
     this.loadTransactions();
   }
 
@@ -230,21 +230,13 @@ export class FinancesPage implements OnInit {
 
   exportCsv(): void {
     this.exporting.set(true);
-    this.api.transactions({
-      page: 1, limit: 10000,
+    this.api.exportTransactions({
       type: this.filterType ?? undefined,
       status: this.filterStatus ?? undefined,
       from: this.filterFrom || undefined,
       to: this.filterTo || undefined,
     }).subscribe({
-      next: (res) => {
-        const header = ['Member', 'Membership #', 'Type', 'Description', 'Date', 'Amount', 'Currency', 'Status'];
-        const rows = res.data.map(tx => [
-          tx.member_name, tx.membership_number, tx.type, tx.description ?? '',
-          tx.date.slice(0, 10), tx.amount, tx.currency, tx.status,
-        ]);
-        const csv = [header, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

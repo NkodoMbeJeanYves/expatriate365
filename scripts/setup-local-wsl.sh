@@ -220,7 +220,7 @@ fi
 # 5. ARBORESCENCE
 # =============================================================================
 section "5. Arborescence /var/www/$APP_NAME"
-mkdir -p "/var/www/${APP_NAME}/api/downloads/{attachments,branding,avatars,docs}"
+mkdir -p "/var/www/${APP_NAME}/api/downloads"
 mkdir -p "/var/www/${APP_NAME}/api/logs"
 mkdir -p "/var/www/${APP_NAME}/frontend"
 
@@ -343,19 +343,12 @@ server {
         proxy_read_timeout 86400s;
     }
 
-    # ── Fichiers uploadés ─────────────────────────────────────────────────────
-    location ^~ /downloads/avatars/ {
-        alias /var/www/${APP_NAME}/api/downloads/avatars/;
-    }
-    location ^~ /downloads/branding/ {
-        alias /var/www/${APP_NAME}/api/downloads/branding/;
-    }
-    location ^~ /downloads/attachments/ {
-        alias /var/www/${APP_NAME}/api/downloads/attachments/;
-    }
-    location ^~ /downloads/docs/ {
-        alias /var/www/${APP_NAME}/api/downloads/docs/;
-        add_header Content-Disposition "attachment";
+    # ── Fichiers uploadés — structure : /downloads/{tenant_id}/{folder}/uuid.ext
+    location ^~ /downloads/ {
+        alias /var/www/${APP_NAME}/api/downloads/;
+        expires 7d;
+        add_header Cache-Control "public";
+        add_header X-Content-Type-Options nosniff;
     }
 
     # ── Scalar ────────────────────────────────────────────────────────────────
@@ -405,14 +398,11 @@ unzip -o "$API_ZIP" -d "$EXTRACT_DIR"
 
 info "Déploiement vers $API_DEPLOY_DIR..."
 rsync -av \
-    --exclude='downloads/attachments' \
-    --exclude='downloads/branding' \
-    --exclude='downloads/avatars' \
-    --exclude='downloads/docs' \
+    --exclude='downloads' \
     --exclude='logs' \
     "$EXTRACT_DIR/" "$API_DEPLOY_DIR/"
 
-mkdir -p "${API_DEPLOY_DIR}/downloads/{attachments,branding,avatars,docs}"
+mkdir -p "${API_DEPLOY_DIR}/downloads"
 mkdir -p "${API_DEPLOY_DIR}/logs"
 
 chown -R "${APP_NAME}:${APP_NAME}" "$API_DEPLOY_DIR"

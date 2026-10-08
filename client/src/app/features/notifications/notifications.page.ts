@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal, WritableSignal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ToastService } from '@service/toast.service';
 import { ButtonModule } from 'primeng/button';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { NotificationsStore } from '@core/stores/notifications.store';
@@ -78,9 +79,11 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
   `,
 })
 export class NotificationsPage implements OnInit {
-  private readonly api    = inject(NotificationsApiService);
-  private readonly store  = inject(NotificationsStore);
-  private readonly router = inject(Router);
+  private readonly api       = inject(NotificationsApiService);
+  private readonly store     = inject(NotificationsStore);
+  private readonly router    = inject(Router);
+  private readonly toast     = inject(ToastService);
+  private readonly translate = inject(TranslateService);
 
   readonly notifications = signal<AppNotification[]>([]);
   readonly total         = signal(0);
@@ -145,7 +148,10 @@ export class NotificationsPage implements OnInit {
   }
 
   savePreferences(): void {
-    this.api.updatePreferences(this.preferences()).subscribe();
+    this.api.updatePreferences(this.preferences()).subscribe({
+      next: () => this.toast.success(this.translate.instant('notifications.preferences_saved')),
+      error: () => this.toast.error(this.translate.instant('common.generic_error')),
+    });
   }
 
   icon(type: string): string {

@@ -8,7 +8,7 @@ import { Payment, PAYMENT_METHODS } from '@models/payment.model';
 import { PaymentsApiService } from '../../services/payments-api.service';
 import { ContributionsApiService } from '@contributions/services/contributions-api.service';
 import { ContributionCharge } from '@models/contribution.model';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthStore } from '@core/auth/auth.store';
 import { ToastService } from '@service/toast.service';
 
@@ -87,7 +87,8 @@ export class PaymentFormDrawerComponent {
   private readonly api = inject(PaymentsApiService);
   private readonly contributionsApi = inject(ContributionsApiService);
   private readonly authStore = inject(AuthStore);
-  private readonly toast = inject(ToastService);
+  private readonly toast     = inject(ToastService);
+  private readonly translate = inject(TranslateService);
   protected readonly drawerRef = viewChild<Drawer>('drawerEl');
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -148,13 +149,13 @@ export class PaymentFormDrawerComponent {
     this.api.record(this.form).subscribe({
       next: (payment) => {
         this.saving.set(false);
-        this.toast.success('Paiement enregistré.');
+        this.toast.success(this.translate.instant('payments.payment_saved'));
         this.drawerRef()?.close(new MouseEvent('click'));
         this.saved.emit(payment);
       },
       error: (err) => {
         this.saving.set(false);
-        this.toast.error('Erreur lors de l\'enregistrement.');
+        this.toast.error(this.translate.instant('payments.payment_error'));
         this.error.set(err?.error?.error ?? 'Une erreur est survenue.');
       },
     });

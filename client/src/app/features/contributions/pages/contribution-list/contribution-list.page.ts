@@ -7,6 +7,8 @@ import { PERMISSIONS } from '@core/auth/models/permission.model';
 import { ButtonModule } from 'primeng/button';
 import { TabsModule } from 'primeng/tabs';
 import { SelectModule } from 'primeng/select';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ContributionsStore } from '../../store/contributions.store';
 import { ContributionsApiService } from '../../services/contributions-api.service';
 import { ContributionStatusBadgeComponent } from '../../components/contribution-status-badge/contribution-status-badge.component';
@@ -35,8 +37,11 @@ import { PageChangeEvent } from '@shared/components/paginator/app-paginator.comp
     PaymentFormDrawerComponent,
     AppPaginatorComponent,
     TranslatePipe,
+    ConfirmDialog,
   ],
+  providers: [ConfirmationService],
   template: `
+    <p-confirmdialog />
     <div class="min-h-full bg-gray-50 p-4 md:p-8 space-y-6">
 
       <!-- Header -->
@@ -342,6 +347,7 @@ export class ContributionListPageComponent implements OnInit {
   private readonly api = inject(ContributionsApiService);
   private readonly tenant = inject(TenantStore);
   private readonly authStore = inject(AuthStore);
+  private readonly confirm = inject(ConfirmationService);
 
   readonly isStaff = computed(() => this.authStore.hasPermission(PERMISSIONS.CONTRIBUTIONS_READ));
   private get memberEntityId(): string | undefined {
@@ -591,10 +597,24 @@ ${stats ? `
   }
 
   deletePlan(plan: ContributionType) {
-    if (!confirm(`Désactiver le plan "${plan.name}" ?`)) return;
-    this.api.deleteType(plan.id).subscribe({
-      next: () => this.store.loadTypes(),
-      error: (err) => alert(err?.error?.error ?? 'Erreur lors de la suppression.'),
+    this.confirm.confirm({
+      message: this.translate.instant('contributions.confirm_delete_plan', { name: plan.name }),
+      header: this.translate.instant('common.confirm_delete'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: this.translate.instant('common.yes'),
+      rejectLabel: this.translate.instant('common.no'),
+      accept: () => {
+        this.api.deleteType(plan.id).subscribe({
+          next: () => this.store.loadTypes(),
+          error: (err) => this.confirm.confirm({
+            message: err?.error?.error ?? this.translate.instant('common.generic_error'),
+            header: this.translate.instant('common.error'),
+            icon: 'pi pi-times',
+            rejectVisible: false,
+            acceptLabel: this.translate.instant('common.close'),
+          }),
+        });
+      },
     });
   }
 
@@ -625,24 +645,17 @@ ${stats ? `
 
   exportCsv() {
     this.exporting.set(true);
-    this.api.getCharges(1, 10000).subscribe({
-      next: (res) => { this.downloadCsv(res.data); this.exporting.set(false); },
+    this.api.exportCharges().subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cotisations_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting.set(false);
+      },
       error: () => this.exporting.set(false),
     });
-  }
-
-  private downloadCsv(charges: ContributionCharge[]) {
-    const headers = ['Membre', 'N° adhérent', 'Plan', 'Échéance', 'Montant dû', 'Payé', 'Solde', 'Statut'];
-    const rows = charges.map(c => [
-      c.member_name, c.membership_number, c.contribution_type_name, c.due_date,
-      c.total_due, c.amount_paid, c.balance, c.status,
-    ]);
-    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
-    const bom = '﻿';
-    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `cotisations_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
   }
 }

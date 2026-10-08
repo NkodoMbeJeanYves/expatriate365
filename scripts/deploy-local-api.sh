@@ -68,7 +68,7 @@ rsync -a \
     --exclude='logs/' \
     "$EXTRACT/" "$DEPLOY_DIR/"
 
-mkdir -p "${DEPLOY_DIR}/downloads/{attachments,branding,avatars,docs}"
+mkdir -p "${DEPLOY_DIR}/downloads"
 mkdir -p "${DEPLOY_DIR}/logs"
 chown -R "${APP_NAME}:${APP_NAME}" "$DEPLOY_DIR"
 chown -R "${APP_NAME}:www-data" "${DEPLOY_DIR}/downloads"

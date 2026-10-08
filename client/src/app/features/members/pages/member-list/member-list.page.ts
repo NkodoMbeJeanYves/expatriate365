@@ -21,6 +21,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthStore } from '@core/auth/auth.store';
 import { PERMISSIONS } from '@core/auth/models/permission.model';
 import { ToastService } from '@service/toast.service';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialog } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-member-list',
@@ -31,8 +33,11 @@ import { ToastService } from '@service/toast.service';
     ButtonModule, InputTextModule, SelectModule, AppPaginatorComponent, TagModule,
     SkeletonModule, TooltipModule, AvatarModule,
     MemberFormDrawerComponent, MemberStatusBadgeComponent, TranslatePipe,
+    ConfirmDialog,
   ],
+  providers: [ConfirmationService],
   template: `
+    <p-confirmdialog />
     <div class="flex flex-col gap-4">
 
       <!-- Header -->
@@ -152,6 +157,11 @@ import { ToastService } from '@service/toast.service';
                         <p-button icon="pi pi-pencil" severity="secondary" [text]="true" size="small"
                           (click)="openDrawer(m.id)" [pTooltip]="'common.edit' | translate" />
                       }
+                      @if (canDelete()) {
+                        <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small"
+                          [loading]="deleting() === m.id"
+                          (click)="confirmDelete(m)" [pTooltip]="'common.delete' | translate" />
+                      }
                     </div>
                   </td>
                 </tr>
@@ -183,6 +193,10 @@ import { ToastService } from '@service/toast.service';
                   <p-button icon="pi pi-eye" severity="secondary" [text]="true" size="small" [routerLink]="['/members', m.id]" />
                   @if (isMemberAdmin()) {
                     <p-button icon="pi pi-pencil" severity="secondary" [text]="true" size="small" (click)="openDrawer(m.id)" />
+                  }
+                  @if (canDelete()) {
+                    <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small"
+                      [loading]="deleting() === m.id" (click)="confirmDelete(m)" />
                   }
                 </div>
               </div>
@@ -220,11 +234,14 @@ export class MemberListPageComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly authStore = inject(AuthStore);
   private readonly toast = inject(ToastService);
+  private readonly confirm = inject(ConfirmationService);
 
   readonly isMemberAdmin = computed(() => this.authStore.hasPermission(PERMISSIONS.MEMBERS_CREATE));
   readonly isSuperAdmin  = computed(() => this.authStore.hasPermission(PERMISSIONS.MEMBERS_SEND_ACTIVATION));
+  readonly canDelete     = computed(() => this.authStore.hasPermission(PERMISSIONS.MEMBERS_DELETE));
 
   readonly activating = signal<string | null>(null);
+  readonly deleting   = signal<string | null>(null);
   readonly importing  = signal(false);
 
   drawerVisible = false;
@@ -282,6 +299,32 @@ export class MemberListPageComponent implements OnInit {
   onSaved(): void {
     this.drawerVisible = false;
     this.store.loadMembers(this.store.filters());
+  }
+
+  confirmDelete(m: { id: string; first_name: string; last_name: string }): void {
+    this.confirm.confirm({
+      message: this.translate.instant('members.confirm_delete', { name: `${m.first_name} ${m.last_name}` }),
+      header: this.translate.instant('common.confirmation'),
+      icon: 'pi pi-trash',
+      accept: () => {
+        this.deleting.set(m.id);
+        this.api.deleteMember(m.id).subscribe({
+          next: () => {
+            this.deleting.set(null);
+            this.toast.success(this.translate.instant('members.delete_success'));
+            this.store.loadMembers(this.store.filters());
+          },
+          error: (err: any) => {
+            this.deleting.set(null);
+            const code = err?.error?.error;
+            const msg = code === 'errors.member.has_payments'
+              ? this.translate.instant('members.delete_error_has_payments')
+              : this.translate.instant('common.generic_error');
+            this.toast.error(msg);
+          },
+        });
+      },
+    });
   }
 
   exportCsv(): void {
@@ -348,7 +391,7 @@ export class MemberListPageComponent implements OnInit {
     this.api.sendActivation(id).subscribe({
       next: () => {
         this.activating.set(null);
-        this.toast.success('Email d\'activation envoyé.');
+        this.toast.success(this.translate.instant('members.activation_email_sent'));
         this.store.loadMembers(this.store.filters());
       },
       error: () => this.activating.set(null),

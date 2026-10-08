@@ -24,7 +24,8 @@
     "audit": "Audit",
     "tenants": "Associations",
     "profile": "Mon profil",
-    "my_welfare": "Mes demandes welfare"
+    "my_welfare": "Mes demandes welfare",
+    "directory": "Annuaire"
   },
   "tenants": {
     "title": "Gestion des associations",
@@ -266,7 +267,11 @@
     "previous": "Précédent",
     "next": "Suivant",
     "results": "résultats",
-    "export_csv": "Exporter CSV"
+    "export_csv": "Exporter CSV",
+    "confirmation": "Confirmation",
+    "error": "Erreur",
+    "view_list": "Vue liste",
+    "view_calendar": "Vue calendrier"
   },
   "profile": {
     "title": "Mon profil",
@@ -282,7 +287,9 @@
     "password_mismatch": "Les mots de passe ne correspondent pas.",
     "password_wrong_current": "Mot de passe actuel incorrect.",
     "language": "Langue de l'interface",
-    "language_hint": "Cette langue sera aussi utilisée pour les emails qui vous sont envoyés."
+    "language_hint": "Cette langue sera aussi utilisée pour les emails qui vous sont envoyés.",
+    "password_updated": "Mot de passe mis à jour. Reconnectez-vous.",
+    "profile_updated": "Profil mis à jour."
   },
   "community": {
     "title": "Communauté",
@@ -496,7 +503,7 @@
     }
   },
   "dashboard": {
-    "greeting": "Bonjour, {{name}} 👋",
+    "greeting": "Bonjour, {{name}} ðŸ‘‹",
     "auto_refresh": "Actualisation auto toutes les 60 s",
     "active_members": "Membres actifs",
     "new_this_month": "+{{count}} ce mois",
@@ -584,7 +591,16 @@
     "no_categories": "Aucune categorie trouvee",
     "contribution_rate": "Cotisation mensuelle",
     "voting_rights": "Droit de vote",
-    "welfare_eligible": "Eligible solidarite"
+    "welfare_eligible": "Eligible solidarite",
+    "confirm_delete": "Supprimer le membre {{name}} ? Cette action est irréversible.",
+    "delete_success": "Membre supprimé avec succès.",
+    "delete_error_has_payments": "Ce membre a des paiements actifs et ne peut pas être supprimé.",
+    "confirm_delete_category": "Supprimer la catégorie « {{name}} » ? Cette action est irréversible.",
+    "category_deleted": "Catégorie supprimée.",
+    "activation_email_sent": "Email d'activation envoyé.",
+    "category_updated": "Catégorie mise à jour.",
+    "category_created": "Catégorie créée.",
+    "category_save_error": "Une erreur est survenue."
   },
   "member_dashboard": {
     "title": "Mon espace",
@@ -648,7 +664,14 @@
     "waiver": "Remise",
     "total_due": "Total dû",
     "send_reminders": "Envoyer les rappels",
-    "send_reminders_tooltip": "Envoyer des rappels in-app et par email aux membres ayant des cotisations en retard"
+    "send_reminders_tooltip": "Envoyer des rappels in-app et par email aux membres ayant des cotisations en retard",
+    "confirm_delete_plan": "Désactiver le plan « {{name}} » ? Cette action est irréversible.",
+    "plan_updated": "Plan mis à jour.",
+    "plan_created": "Plan créé avec succès.",
+    "plan_save_error": "Erreur lors de l'enregistrement.",
+    "payment_recorded": "Paiement enregistré.",
+    "exemption_applied": "Exonération appliquée.",
+    "action_error": "Erreur lors de l'opération."
   },
   "payments": {
     "title": "Paiements",
@@ -675,7 +698,9 @@
     "download_receipt": "Télécharger le reçu",
     "confirm_payment": "Confirmer le paiement",
     "no_payments": "Aucun paiement trouvé",
-    "currency": "Devise"
+    "currency": "Devise",
+    "payment_saved": "Paiement enregistré.",
+    "payment_error": "Erreur lors de l'enregistrement."
   },
   "welfare": {
     "title": "Solidarité",
@@ -820,7 +845,14 @@
     "candidate_member": "Membre",
     "candidate_statement": "Programme / Présentation",
     "candidate_order": "Ordre d'affichage",
-    "type_president": "Président"
+    "type_president": "Président",
+    "vote_cast": "Votre vote a bien été enregistré.",
+    "vote_opened": "Vote ouvert.",
+    "vote_open_error": "Erreur lors de l'ouverture du vote.",
+    "vote_closed": "Vote clôturé.",
+    "vote_close_error": "Erreur lors de la clôture du vote.",
+    "results_published": "Résultats publiés.",
+    "results_publish_error": "Erreur lors de la publication des résultats."
   },
   "communications": {
     "title": "Communications",
@@ -906,7 +938,7 @@
     "edit_board_member": "Modifier",
     "edit_resolution": "Modifier la résolution",
     "confirm_delete_board": "Retirer ce membre du bureau ?",
-    "confirm_delete_resolution": "Supprimer cette résolution ?",
+    "confirm_delete_resolution": "Supprimer la résolution \"{{title}}\" ?",
     "manage_roles": "Gérer les rôles du bureau",
     "new_role": "Nouveau rôle",
     "edit_role": "Modifier le rôle",
@@ -920,7 +952,9 @@
     "role_vice_president": "Vice-Président(e)",
     "role_secretary": "Secrétaire",
     "role_treasurer": "Trésorier(ère)",
-    "role_auditor": "Commissaire aux comptes"
+    "role_auditor": "Commissaire aux comptes",
+    "confirm_remove_board": "Retirer {{name}} du bureau ?",
+    "confirm_delete_board_role": "Supprimer le rôle \"{{label}}\" ?"
   },
   "analytics": {
     "title": "Analytiques",
@@ -1002,7 +1036,9 @@
     "confirm_activate": "Activer cet utilisateur ?",
     "confirm_suspend": "Suspendre cet utilisateur ?",
     "no_users": "Aucun utilisateur trouvé",
-    "invite_sent": "Invitation envoyée"
+    "invite_sent": "Invitation envoyée",
+    "load_error": "Erreur de chargement.",
+    "tenant_created": "Association « {{name}} » créée."
   },
   "audit": {
     "title": "Audit & Supervision",
@@ -1041,7 +1077,10 @@
     "saved": "Paramètres enregistrés avec succès",
     "logo": "Logo de l'association",
     "upload_logo": "Changer le logo",
-    "logo_hint": "Formats acceptés : JPG, PNG, WebP, SVG — max 5 Mo"
+    "logo_hint": "Formats acceptés : JPG, PNG, WebP, SVG — max 5 Mo",
+    "directory_url": "URL publique de l'annuaire",
+    "copy_link": "Copier le lien",
+    "link_copied": "Lien copié !"
   },
   "landing": {
     "nav_explore": "Explorer",
@@ -1087,7 +1126,7 @@
     "results": "professionnel(s) trouvé(s)"
   },
   "onboarding": {
-    "welcome": "Bienvenue, {{name}} 👋",
+    "welcome": "Bienvenue, {{name}} ðŸ‘‹",
     "step": "Étape",
     "start": "Commencer",
     "skip": "Passer pour l'instant",

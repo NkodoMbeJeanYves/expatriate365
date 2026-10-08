@@ -237,24 +237,24 @@ export class ElectionListPage implements OnInit {
   protected goToPage(event: PageChangeEvent): void { this.store.loadElections({ page: event.page }); }
   protected onSaved(e: ElectionDto): void { this.store.upsertElection(e); this.store.loadStats(); }
   protected refreshElection(): void { this.store.loadElections(this.store.filters()); }
-  protected onVoteCast(): void { this.toast.success('Votre vote a bien été enregistré.'); this.store.loadElections(this.store.filters()); }
+  protected onVoteCast(): void { this.toast.success(this.translate.instant('elections.vote_cast')); this.store.loadElections(this.store.filters()); }
 
   protected openElection(e: ElectionDto): void {
     this.api.open(e.id).subscribe({
-      next: updated => { this.store.upsertElection(updated); this.store.loadStats(); this.toast.success('Vote ouvert.'); },
-      error: () => this.toast.error('Erreur lors de l\'ouverture du vote.'),
+      next: updated => { this.store.upsertElection(updated); this.store.loadStats(); this.toast.success(this.translate.instant('elections.vote_opened')); },
+      error: () => this.toast.error(this.translate.instant('elections.vote_open_error')),
     });
   }
   protected closeElection(e: ElectionDto): void {
     this.api.close(e.id).subscribe({
-      next: updated => { this.store.upsertElection(updated); this.store.loadStats(); this.toast.success('Vote clôturé.'); },
-      error: () => this.toast.error('Erreur lors de la clôture du vote.'),
+      next: updated => { this.store.upsertElection(updated); this.store.loadStats(); this.toast.success(this.translate.instant('elections.vote_closed')); },
+      error: () => this.toast.error(this.translate.instant('elections.vote_close_error')),
     });
   }
   protected publishResults(e: ElectionDto): void {
     this.api.publishResults(e.id).subscribe({
-      next: updated => { this.store.upsertElection(updated); this.store.loadStats(); this.toast.success('Résultats publiés.'); },
-      error: () => this.toast.error('Erreur lors de la publication des résultats.'),
+      next: updated => { this.store.upsertElection(updated); this.store.loadStats(); this.toast.success(this.translate.instant('elections.results_published')); },
+      error: () => this.toast.error(this.translate.instant('elections.results_publish_error')),
     });
   }
 

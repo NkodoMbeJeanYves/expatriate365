@@ -35,6 +35,10 @@ public static class UploadEndpoints
             if (!AllowedMimeTypes.Contains(file.ContentType))
                 return Results.BadRequest(new { error = $"File type '{file.ContentType}' not allowed." });
 
+            var tenantIdClaim = principal.FindFirst("tenant_id")?.Value;
+            if (string.IsNullOrWhiteSpace(tenantIdClaim))
+                return Results.Unauthorized();
+
             // Lecture explicite depuis la query string (multipart/form-data ne bind pas les params automatiquement)
             var folder = request.Query["folder"].FirstOrDefault();
             var allowedFolders = new HashSet<string> { "attachments", "branding", "avatars", "docs" };
@@ -42,22 +46,17 @@ public static class UploadEndpoints
 
             var ext = Path.GetExtension(file.FileName);
             var uniqueName = $"{Guid.NewGuid()}{ext}";
-            var downloadRootPath = "downloads"; // Dossier racine pour les fichiers téléchargés
-            var downloadPath = Path.Combine(env.ContentRootPath, downloadRootPath);
-            var targetDir = Path.Combine(downloadPath, targetFolder);
+            var downloadRootPath = "downloads";
+            var targetDir = Path.Combine(env.ContentRootPath, downloadRootPath, tenantIdClaim, targetFolder);
             Directory.CreateDirectory(targetDir);
 
             var filePath = Path.Combine(targetDir, uniqueName);
             await using var stream = File.Create(filePath);
             await file.CopyToAsync(stream);
 
-            // Use configured public URL prefix (FileStorage__UrlPrefix) so the stored
-            // URL is always the public domain, not the internal Kestrel host.
             var urlPrefix = config["FileStorage:UrlPrefix"]?.TrimEnd('/')
                 ?? $"{request.Scheme}://{request.Host}";
-                Console.WriteLine($"[Upload] Using URL prefix '{urlPrefix}' for file access: '{request.Scheme}://{request.Host}'");
-            var fileUrl = $"{urlPrefix}/{downloadRootPath}/{targetFolder}/{uniqueName}";
-Console.WriteLine($"[Upload] File saved to '{filePath}', accessible at '{fileUrl}'");
+            var fileUrl = $"{urlPrefix}/{downloadRootPath}/{tenantIdClaim}/{targetFolder}/{uniqueName}";
             return Results.Ok(new
             {
                 file_url = fileUrl,

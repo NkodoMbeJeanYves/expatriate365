@@ -596,7 +596,7 @@ fi
 # =============================================================================
 if [[ "$RESUME_FROM_STEP" -le 9 ]]; then
 section "9. Arborescence /var/www/$APP_NAME"
-mkdir -p "/var/www/${APP_NAME}/api/downloads/{attachments,branding,avatars,docs}"
+mkdir -p "/var/www/${APP_NAME}/api/downloads"
 mkdir -p "/var/www/${APP_NAME}/api/logs"
 mkdir -p "/var/www/${APP_NAME}/frontend"
 
@@ -746,26 +746,12 @@ server {
         proxy_read_timeout 86400s;
     }
 
-    location ^~ /downloads/avatars/ {
-        alias /var/www/${APP_NAME}/api/downloads/avatars/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-    location ^~ /downloads/branding/ {
-        alias /var/www/${APP_NAME}/api/downloads/branding/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-    location ^~ /downloads/attachments/ {
-        alias /var/www/${APP_NAME}/api/downloads/attachments/;
-        expires 30d;
-        add_header Cache-Control "public";
-    }
-    location ^~ /downloads/docs/ {
-        alias /var/www/${APP_NAME}/api/downloads/docs/;
+    # Structure : /downloads/{tenant_id}/{folder}/uuid.ext
+    location ^~ /downloads/ {
+        alias /var/www/${APP_NAME}/api/downloads/;
         expires 7d;
         add_header Cache-Control "public";
-        add_header Content-Disposition "attachment";
+        add_header X-Content-Type-Options nosniff;
     }
 
     location /scalar/ {
@@ -955,12 +941,11 @@ echo "→ Décompression…"
 mkdir -p "\${API_DIR}"
 unzip -o "/tmp/\${APP_NAME}-api.zip" -d "/tmp/\${APP_NAME}-api-extract/"
 
-rsync -av --exclude='downloads/attachments' --exclude='downloads/branding' \
-          --exclude='downloads/avatars'     --exclude='downloads/docs' \
+rsync -av --exclude='downloads' \
           --exclude='logs' \
           "/tmp/\${APP_NAME}-api-extract/" "\${API_DIR}/"
 
-mkdir -p "\${API_DIR}/downloads/{attachments,branding,avatars,docs}"
+mkdir -p "\${API_DIR}/downloads"
 mkdir -p "\${API_DIR}/logs"
 
 # ── Permissions ───────────────────────────────────────────────────────────────

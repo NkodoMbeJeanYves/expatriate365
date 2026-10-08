@@ -74,7 +74,8 @@ public static class PaymentEndpoints
         group.MapGet("/{id:guid}/receipt", async (
             Guid id,
             ClaimsPrincipal principal,
-            AppDbContext db) =>
+            AppDbContext db,
+            HttpRequest request) =>
         {
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
@@ -90,11 +91,16 @@ public static class PaymentEndpoints
             var currency = payment.Currency;
             var symbol = tenant?.CurrencySymbol ?? "€";
 
+            var acceptLang = request.Headers["Accept-Language"].FirstOrDefault() ?? "";
+            var lang = acceptLang.Contains("fr", StringComparison.OrdinalIgnoreCase) ? "fr" : "en";
+
+            var t = ReceiptLabels(lang);
+
             var confirmedRow = payment.ConfirmedAt.HasValue
-                ? $"<tr><td>Confirmé le</td><td>{payment.ConfirmedAt.Value:dd/MM/yyyy HH:mm}</td></tr>"
+                ? $"<tr><td>{t["confirmed_at"]}</td><td>{payment.ConfirmedAt.Value:dd/MM/yyyy HH:mm}</td></tr>"
                 : "";
             var notesRow = !string.IsNullOrEmpty(payment.Notes)
-                ? $"<tr><td>Notes</td><td>{payment.Notes}</td></tr>"
+                ? $"<tr><td>{t["notes"]}</td><td>{payment.Notes}</td></tr>"
                 : "";
             var css = """
 body{font-family:Arial,sans-serif;max-width:600px;margin:40px auto;color:#1a1a1a}
@@ -115,44 +121,44 @@ td:last-child{text-align:right;font-weight:500}
 """;
             var html = $"""
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{lang}">
 <head>
   <meta charset="UTF-8" />
-  <title>Reçu {payment.ReceiptNumber}</title>
+  <title>{t["receipt"]} {payment.ReceiptNumber}</title>
   <style>{css}</style>
 </head>
 <body>
   <div class="header">
     <div>
       <div class="org">{tenantName}</div>
-      <div style="color:#6b7280;font-size:13px;margin-top:4px;">Reçu de paiement</div>
+      <div style="color:#6b7280;font-size:13px;margin-top:4px;">{t["payment_receipt"]}</div>
     </div>
     <div style="text-align:right">
-      <div class="receipt-title">N° de reçu</div>
+      <div class="receipt-title">{t["receipt_number"]}</div>
       <div class="receipt-number">{payment.ReceiptNumber}</div>
       <div style="margin-top:6px"><span class="status-badge status-{payment.Status}">{payment.Status}</span></div>
     </div>
   </div>
-  <div class="section-title">Membre</div>
+  <div class="section-title">{t["member"]}</div>
   <table>
-    <tr><td>Nom</td><td>{payment.Member.User.FirstName} {payment.Member.User.LastName}</td></tr>
-    <tr><td>N° adhérent</td><td>{payment.Member.MembershipNumber}</td></tr>
+    <tr><td>{t["name"]}</td><td>{payment.Member.User.FirstName} {payment.Member.User.LastName}</td></tr>
+    <tr><td>{t["membership_number"]}</td><td>{payment.Member.MembershipNumber}</td></tr>
   </table>
-  <div class="section-title">Paiement</div>
+  <div class="section-title">{t["payment"]}</div>
   <table>
-    <tr><td>Type de contribution</td><td>{payment.Charge.ContributionType.Name}</td></tr>
-    <tr><td>Date de paiement</td><td>{payment.PaymentDate:dd/MM/yyyy}</td></tr>
-    <tr><td>Méthode</td><td>{payment.PaymentGateway ?? "—"}</td></tr>
+    <tr><td>{t["contribution_type"]}</td><td>{payment.Charge.ContributionType.Name}</td></tr>
+    <tr><td>{t["payment_date"]}</td><td>{payment.PaymentDate:dd/MM/yyyy}</td></tr>
+    <tr><td>{t["method"]}</td><td>{payment.PaymentGateway ?? "—"}</td></tr>
     {confirmedRow}{notesRow}
   </table>
   <table>
-    <tr class="amount-row"><td>Montant payé</td><td>{symbol}{payment.Amount:N2} {currency}</td></tr>
+    <tr class="amount-row"><td>{t["amount_paid"]}</td><td>{symbol}{payment.Amount:N2} {currency}</td></tr>
   </table>
   <button class="no-print" onclick="window.print()" style="margin-top:24px;padding:10px 24px;background:#10b981;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">
-    Imprimer / Enregistrer en PDF
+    {t["print_button"]}
   </button>
   <div class="footer">
-    Ce reçu a été généré automatiquement par {tenantName} le {DateTime.UtcNow:dd/MM/yyyy} UTC.
+    {string.Format(t["footer"], tenantName, DateTime.UtcNow.ToString("dd/MM/yyyy"))}
   </div>
 </body>
 </html>
@@ -233,4 +239,42 @@ td:last-child{text-align:right;font-weight:500}
         var raw = EnforceOwnMemberId(principal, null);
         return Guid.TryParse(raw, out var id) ? id : null;
     }
+
+    private static Dictionary<string, string> ReceiptLabels(string lang) => lang == "fr"
+        ? new()
+        {
+            ["receipt"]           = "Reçu",
+            ["payment_receipt"]   = "Reçu de paiement",
+            ["receipt_number"]    = "N° de reçu",
+            ["member"]            = "Membre",
+            ["name"]              = "Nom",
+            ["membership_number"] = "N° adhérent",
+            ["payment"]           = "Paiement",
+            ["contribution_type"] = "Type de contribution",
+            ["payment_date"]      = "Date de paiement",
+            ["method"]            = "Méthode",
+            ["confirmed_at"]      = "Confirmé le",
+            ["notes"]             = "Notes",
+            ["amount_paid"]       = "Montant payé",
+            ["print_button"]      = "Imprimer / Enregistrer en PDF",
+            ["footer"]            = "Ce reçu a été généré automatiquement par {0} le {1} UTC.",
+        }
+        : new()
+        {
+            ["receipt"]           = "Receipt",
+            ["payment_receipt"]   = "Payment Receipt",
+            ["receipt_number"]    = "Receipt #",
+            ["member"]            = "Member",
+            ["name"]              = "Name",
+            ["membership_number"] = "Membership #",
+            ["payment"]           = "Payment",
+            ["contribution_type"] = "Contribution Type",
+            ["payment_date"]      = "Payment Date",
+            ["method"]            = "Method",
+            ["confirmed_at"]      = "Confirmed At",
+            ["notes"]             = "Notes",
+            ["amount_paid"]       = "Amount Paid",
+            ["print_button"]      = "Print / Save as PDF",
+            ["footer"]            = "This receipt was automatically generated by {0} on {1} UTC.",
+        };
 }

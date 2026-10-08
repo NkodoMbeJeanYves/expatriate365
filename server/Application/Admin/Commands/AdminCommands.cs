@@ -6,6 +6,7 @@ using server.Application.Common;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
 using server.Infrastructure.Services;
+using AppRoles = server.Application.Common.Roles;
 
 namespace server.Application.Admin.Commands;
 
@@ -19,14 +20,12 @@ public class InviteUserCommandHandler(
     ILogger<InviteUserCommandHandler> log)
     : IRequestHandler<InviteUserCommand, ServiceResult<AdminUserDto>>
 {
-    private static readonly string[] SuperAdminOnlyRoles = ["super_admin"];
-
     public async Task<ServiceResult<AdminUserDto>> Handle(InviteUserCommand request, CancellationToken ct)
     {
         var req = request.Request;
         var email = req.Email.ToLowerInvariant();
 
-        if (SuperAdminOnlyRoles.Contains(req.Role) && request.CallerRole != "super_admin")
+        if (req.Role == AppRoles.SuperAdmin && request.CallerRole != AppRoles.SuperAdmin)
             return ServiceResult<AdminUserDto>.Failure(
                 "Vous n'êtes pas autorisé à attribuer ce rôle.",
                 "errors.auth.forbidden");
@@ -82,11 +81,9 @@ public record ChangeUserRoleCommand(Guid TenantId, Guid UserId, ChangeRoleReques
 public class ChangeUserRoleCommandHandler(AppDbContext db)
     : IRequestHandler<ChangeUserRoleCommand, ServiceResult<AdminUserDto>>
 {
-    private static readonly string[] SuperAdminOnlyRoles = ["super_admin"];
-
     public async Task<ServiceResult<AdminUserDto>> Handle(ChangeUserRoleCommand request, CancellationToken ct)
     {
-        if (SuperAdminOnlyRoles.Contains(request.Request.Role) && request.CallerRole != "super_admin")
+        if (request.Request.Role == AppRoles.SuperAdmin && request.CallerRole != AppRoles.SuperAdmin)
             return ServiceResult<AdminUserDto>.Failure(
                 "Vous n'êtes pas autorisé à attribuer ce rôle.",
                 "errors.auth.forbidden");

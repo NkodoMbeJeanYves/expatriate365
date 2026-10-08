@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using server.API.Extensions;
 using server.Application.Auth.Commands;
 using server.Application.Auth.Queries;
 using server.Application.Common;
@@ -158,11 +159,7 @@ public static class AuthEndpoints
             if (!Guid.TryParse(sub, out var userId))
                 return Results.Unauthorized();
 
-            // Read role claim — supports both raw "role" and ASP.NET-remapped ClaimTypes.Role
-            var role = principal.FindFirstValue("role")
-                    ?? principal.FindFirstValue(System.Security.Claims.ClaimTypes.Role)
-                    ?? "";
-            if (role != "super_admin")
+            if (!principal.IsSuperAdmin())
                 return Results.Json(new { error = "Réservé au super administrateur." }, statusCode: 403);
 
             if (!Guid.TryParse(dto.TenantId, out var tenantId))
