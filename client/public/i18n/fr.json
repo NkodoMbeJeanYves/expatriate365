@@ -23,7 +23,8 @@
     "community_moderation": "Modération",
     "audit": "Audit",
     "tenants": "Associations",
-    "profile": "Mon profil"
+    "profile": "Mon profil",
+    "my_welfare": "Mes demandes welfare"
   },
   "tenants": {
     "title": "Gestion des associations",
@@ -704,7 +705,9 @@
     "type_death": "Décès",
     "type_illness": "Maladie",
     "type_birth": "Naissance",
-    "type_financial_hardship": "Difficulté financière"
+    "type_financial_hardship": "Difficulté financière",
+    "my_requests_title": "Mes demandes welfare",
+    "my_requests_subtitle": "Suivez vos demandes d aide et leur statut"
   },
   "events": {
     "title": "Événements",

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, hasRoleGuard } from '@core/auth/auth.guard';
-import { STAFF_ROLES } from '@core/auth/models/role.model';
+import { ROLES, STAFF_ROLES } from '@core/auth/models/role.model';
 
 export const routes: Routes = [
   { path: '', loadComponent: () => import('./features/landing/landing.page').then((m) => m.LandingPage) },
@@ -28,6 +28,7 @@ export const routes: Routes = [
       { path: 'finances', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@finances/finances.routes').then((m) => m.FINANCES_ROUTES) },
       { path: 'events', loadChildren: () => import('@events/events.routes').then((m) => m.EVENTS_ROUTES) },
       { path: 'welfare', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@welfare/welfare.routes').then((m) => m.WELFARE_ROUTES) },
+      { path: 'my-welfare', canActivate: [hasRoleGuard([ROLES.MEMBER])], loadChildren: () => import('@welfare/welfare.routes').then((m) => m.MY_WELFARE_ROUTES) },
       { path: 'elections', loadChildren: () => import('@elections/elections.routes').then((m) => m.ELECTIONS_ROUTES) },
       { path: 'meetings', loadChildren: () => import('@meetings/meetings.routes').then((m) => m.MEETINGS_ROUTES) },
       { path: 'communications', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@communications/communications.routes').then((m) => m.COMMUNICATIONS_ROUTES) },

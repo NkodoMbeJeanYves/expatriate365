@@ -23,7 +23,8 @@
     "community_moderation": "Moderation",
     "audit": "Audit",
     "tenants": "Associations",
-    "profile": "My profile"
+    "profile": "My profile",
+    "my_welfare": "My Welfare Requests"
   },
   "tenants": {
     "title": "Association management",
@@ -704,7 +705,9 @@
     "type_death": "Death",
     "type_illness": "Illness",
     "type_birth": "Birth",
-    "type_financial_hardship": "Financial hardship"
+    "type_financial_hardship": "Financial hardship",
+    "my_requests_title": "My Welfare Requests",
+    "my_requests_subtitle": "Track your aid requests and their status"
   },
   "events": {
     "title": "Events",

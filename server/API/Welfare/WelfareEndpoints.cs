@@ -24,6 +24,18 @@ public static class WelfareEndpoints
             return Results.Ok(result);
         }).RequireAuthorization(Permissions.ContributionsRead);
 
+        group.MapGet("/me", async (
+            ClaimsPrincipal principal, IMediator mediator,
+            int page = 1, int limit = 20, string? status = null) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var entityId = principal.FindFirstValue("entity_id");
+            if (string.IsNullOrWhiteSpace(entityId)) return Results.Forbid();
+            var result = await mediator.Send(new ListWelfareRequestsQuery(tenantId.Value, page, limit, entityId, status, null));
+            return Results.Ok(result);
+        });
+
         group.MapGet("/stats", async (ClaimsPrincipal principal, IMediator mediator) =>
         {
             var tenantId = GetTenantId(principal);

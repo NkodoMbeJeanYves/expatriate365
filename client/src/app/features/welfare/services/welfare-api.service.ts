@@ -23,6 +23,12 @@ export class WelfareApiService {
     return this.http.get<PagedWelfareResult>(this.base, { params });
   }
 
+  getMyRequests(page = 1, limit = 20, status?: string): Observable<PagedWelfareResult> {
+    let params = new HttpParams().set('page', page).set('limit', limit);
+    if (status) params = params.set('status', status);
+    return this.http.get<PagedWelfareResult>(`${this.base}/me`, { params });
+  }
+
   getStats(): Observable<WelfareStats> {
     return this.http.get<WelfareStats>(`${this.base}/stats`);
   }
