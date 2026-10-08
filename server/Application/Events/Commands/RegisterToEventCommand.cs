@@ -107,7 +107,7 @@ public class CancelRegistrationCommandHandler(AppDbContext db, ILogger<CancelReg
                             lang == "fr"
                                 ? "Une place s'est libérée. Vous avez été transféré(e) de la liste d'attente vers les inscrits."
                                 : "A spot has opened up. You have been moved from the waitlist to registered.",
-                            ct);
+                            ct, "event", request.EventId.ToString());
                     }
                 }
             }

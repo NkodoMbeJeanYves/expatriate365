@@ -63,7 +63,7 @@ public class ConfirmPaymentCommandHandler(
             lang == "fr"
                 ? $"Votre paiement de {payment.Amount} ({payment.Charge.ContributionType.Name}) a été confirmé. Reçu : {payment.ReceiptNumber}."
                 : $"Your payment of {payment.Amount} ({payment.Charge.ContributionType.Name}) has been confirmed. Receipt: {payment.ReceiptNumber}.",
-            ct);
+            ct, "payment", payment.Id.ToString());
 
         return ServiceResult<PaymentDto>.Success(ListPaymentsQueryHandler.ToDto(payment));
     }

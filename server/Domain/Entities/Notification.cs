@@ -10,6 +10,8 @@ public class Notification
     public string Body { get; set; } = string.Empty;
     public bool IsRead { get; set; } = false;
     public DateTime? ReadAt { get; set; }
+    public string? EntityType { get; set; }
+    public string? EntityId { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

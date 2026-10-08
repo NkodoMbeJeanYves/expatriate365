@@ -84,7 +84,7 @@ public class RecordPaymentCommandHandler(AppDbContext db, ILogger<RecordPaymentC
             lang == "fr"
                 ? $"Votre paiement de {dto.Amount} ({charge.ContributionType.Name}) a été enregistré et est en attente de confirmation."
                 : $"Your payment of {dto.Amount} ({charge.ContributionType.Name}) has been recorded and is pending confirmation.",
-            ct);
+            ct, "payment", payment.Id.ToString());
 
         return ServiceResult<PaymentDto>.Success(new PaymentDto(
             payment.Id.ToString(), payment.TenantId.ToString(), payment.MemberId.ToString(),

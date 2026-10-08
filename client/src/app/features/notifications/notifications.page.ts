@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal, WritableSignal } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -37,8 +38,8 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
       } @else {
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
           @for (n of notifications(); track n.id) {
-            <div class="flex items-start gap-4 p-4 transition-colors cursor-pointer"
-              [class]="n.is_read ? 'hover:bg-gray-50' : 'bg-emerald-50 hover:bg-emerald-100'"
+            <div class="flex items-start gap-4 p-4 transition-colors"
+              [class]="[n.is_read ? 'hover:bg-gray-50' : 'bg-emerald-50 hover:bg-emerald-100', getRoute(n.entity_type, n.entity_id) ? 'cursor-pointer' : 'cursor-default'].join(' ')"
               (click)="markRead(n)">
               <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white"
                 [class]="iconBg(n.type)">
@@ -77,8 +78,9 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
   `,
 })
 export class NotificationsPage implements OnInit {
-  private readonly api   = inject(NotificationsApiService);
-  private readonly store = inject(NotificationsStore);
+  private readonly api    = inject(NotificationsApiService);
+  private readonly store  = inject(NotificationsStore);
+  private readonly router = inject(Router);
 
   readonly notifications = signal<AppNotification[]>([]);
   readonly total         = signal(0);
@@ -111,9 +113,26 @@ export class NotificationsPage implements OnInit {
   }
 
   markRead(n: AppNotification): void {
-    if (n.is_read) return;
-    this.store.markRead(n.id);
-    this.notifications.update(list => list.map(x => x.id === n.id ? { ...x, is_read: true } : x));
+    if (!n.is_read) {
+      this.store.markRead(n.id);
+      this.notifications.update(list => list.map(x => x.id === n.id ? { ...x, is_read: true } : x));
+    }
+    const route = this.getRoute(n.entity_type, n.entity_id);
+    if (route) this.router.navigate([route]);
+  }
+
+  getRoute(entityType?: string, entityId?: string): string | null {
+    if (!entityType || !entityId) return null;
+    const map: Record<string, string> = {
+      communication: `/admin/communications/${entityId}`,
+      charge: `/contributions/charges/${entityId}`,
+      payment: `/payments/${entityId}`,
+      welfare: `/welfare/${entityId}`,
+      event: `/events/${entityId}`,
+      election: `/elections/${entityId}`,
+      contribution_type: `/contributions`,
+    };
+    return map[entityType] ?? null;
   }
 
   markAllRead(): void {
