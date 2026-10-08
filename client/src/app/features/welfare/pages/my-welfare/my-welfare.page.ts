@@ -6,7 +6,7 @@ import { SelectModule } from 'primeng/select';
 import { WelfareApiService } from '../../services/welfare-api.service';
 import { WelfareStatusBadgeComponent } from '../../components/welfare-status-badge/welfare-status-badge.component';
 import { WelfareRequestDrawerComponent } from '../../components/welfare-request-drawer/welfare-request-drawer.component';
-import { WelfareRequest, PagedWelfareResult, WELFARE_TYPES } from '@models/welfare.model';
+import { WelfareRequest, WELFARE_TYPES } from '@models/welfare.model';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({

@@ -262,7 +262,10 @@
     "password": "Password",
     "optional": "optional",
     "generic_error": "An error occurred. Please try again.",
-    "load_more": "Load more"
+    "load_more": "Load more",
+    "previous": "Previous",
+    "next": "Next",
+    "results": "results"
   },
   "profile": {
     "title": "My profile",
