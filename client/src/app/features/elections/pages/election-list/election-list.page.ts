@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -9,7 +9,9 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
 import { ElectionDto, ELECTION_STATUSES, ELECTION_TYPES } from '@models/election.model';
 import { AuthStore } from '@core/auth/auth.store';
+import { PERMISSIONS } from '@core/auth/models/permission.model';
 import { STAFF_ROLES } from '@core/auth/models/role.model';
+import { triggerBlobDownload } from '@shared/utils/csv-export';
 import { ElectionsStore } from '../../store/elections.store';
 import { ElectionsApiService } from '../../services/elections-api.service';
 import { ElectionFormDrawerComponent } from '../../components/election-form-drawer/election-form-drawer.component';
@@ -155,6 +157,11 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
                       [pTooltip]="'elections.publish_results' | translate" (onClick)="publishResults(e)" />
                   }
                 }
+                @if (canExport() && (e.status === 'closed' || e.status === 'results_published')) {
+                  <p-button icon="pi pi-download" size="small" severity="secondary" [text]="true"
+                    [loading]="exporting() === e.id"
+                    [pTooltip]="'common.export_csv' | translate" (onClick)="exportVotes(e)" />
+                }
               </div>
             </div>
           }
@@ -173,9 +180,11 @@ import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/pagin
   `,
 })
 export class ElectionListPage implements OnInit {
-  protected readonly store     = inject(ElectionsStore);
-  protected readonly authStore = inject(AuthStore);
-  protected readonly isStaff   = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
+  protected readonly store      = inject(ElectionsStore);
+  protected readonly authStore  = inject(AuthStore);
+  protected readonly isStaff    = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
+  protected readonly canExport  = computed(() => this.authStore.hasPermission(PERMISSIONS.VOTES_EXPORT));
+  protected readonly exporting  = signal<string | null>(null);
   private readonly api = inject(ElectionsApiService);
   private readonly translate = inject(TranslateService);
   private readonly toast = inject(ToastService);
@@ -246,6 +255,17 @@ export class ElectionListPage implements OnInit {
     this.api.publishResults(e.id).subscribe({
       next: updated => { this.store.upsertElection(updated); this.store.loadStats(); this.toast.success('Résultats publiés.'); },
       error: () => this.toast.error('Erreur lors de la publication des résultats.'),
+    });
+  }
+
+  protected exportVotes(e: ElectionDto): void {
+    this.exporting.set(e.id);
+    this.api.exportVotes(e.id).subscribe({
+      next: blob => {
+        triggerBlobDownload(blob, `votes_${e.title.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
+        this.exporting.set(null);
+      },
+      error: () => this.exporting.set(null),
     });
   }
 }

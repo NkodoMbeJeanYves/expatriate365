@@ -265,7 +265,8 @@
     "load_more": "Load more",
     "previous": "Previous",
     "next": "Next",
-    "results": "results"
+    "results": "results",
+    "export_csv": "Export CSV"
   },
   "profile": {
     "title": "My profile",

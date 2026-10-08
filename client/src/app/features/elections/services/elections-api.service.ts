@@ -60,4 +60,8 @@ export class ElectionsApiService {
   castVote(id: string, dto: CastVoteRequest): Observable<{ voted: boolean }> {
     return this.http.post<{ voted: boolean }>(`${this.base}/${id}/vote`, dto);
   }
+
+  exportVotes(electionId: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${electionId}/export-votes`, { responseType: 'blob' });
+  }
 }

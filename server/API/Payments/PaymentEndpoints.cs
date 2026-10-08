@@ -196,6 +196,16 @@ td:last-child{text-align:right;font-weight:500}
         })
         .RequireAuthorization(Permissions.PaymentsReceiptPrint)
         .DisableAntiforgery();
+
+        group.MapGet("/export", async (
+            ClaimsPrincipal principal, IMediator mediator,
+            string? status = null, string? from = null, string? to = null) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var bytes = await mediator.Send(new ExportPaymentsQuery(tenantId.Value, status, from, to));
+            return Results.File(bytes, "text/csv", $"payments_{DateTime.UtcNow:yyyyMMdd}.csv");
+        }).RequireAuthorization(Permissions.PaymentsExport);
     }
 
     private static Guid? GetTenantId(ClaimsPrincipal principal)

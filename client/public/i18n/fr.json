@@ -265,7 +265,8 @@
     "load_more": "Charger plus",
     "previous": "Précédent",
     "next": "Suivant",
-    "results": "résultats"
+    "results": "résultats",
+    "export_csv": "Exporter CSV"
   },
   "profile": {
     "title": "Mon profil",
