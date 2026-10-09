@@ -60,6 +60,10 @@ export class MembersApiService {
     return this.http.put<MembershipCategory>(`${this.base}/categories/${id}`, body);
   }
 
+  deleteMember(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
   deleteCategory(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/categories/${id}`);
   }

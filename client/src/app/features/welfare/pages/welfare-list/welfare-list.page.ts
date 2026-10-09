@@ -219,7 +219,12 @@ export class WelfareListPageComponent implements OnInit {
   selected = signal<WelfareRequest | null>(null);
   selectedStatus = '';
   selectedType = '';
-  typeOptions = [{ label: 'Tous les types', value: '' }, ...WELFARE_TYPES];
+  get typeOptions() {
+    return [
+      { label: this.translate.instant('common.all'), value: '' },
+      ...WELFARE_TYPES.map(v => ({ label: this.translate.instant('welfare.type_' + v), value: v })),
+    ];
+  }
 
   get statusOptions() {
     return [
@@ -241,8 +246,8 @@ export class WelfareListPageComponent implements OnInit {
     this.store.loadStats();
   }
 
-  typeLabel(type: string) {
-    return WELFARE_TYPES.find(t => t.value === type)?.label ?? type;
+  typeLabel(type: string): string {
+    return this.translate.instant('welfare.type_' + type);
   }
 
   onStatusChange() {

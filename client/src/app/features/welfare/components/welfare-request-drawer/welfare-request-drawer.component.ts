@@ -80,7 +80,7 @@ export class WelfareRequestDrawerComponent {
   error = signal<string | null>(null);
   members = signal<MemberListItem[]>([]);
   get welfareTypes() {
-    return [...WELFARE_TYPES].map(t => ({ label: this.translate.instant('welfare.type_' + t.value), value: t.value }));
+    return [...WELFARE_TYPES].map(v => ({ label: this.translate.instant('welfare.type_' + v), value: v }));
   }
 
   form = { member_id: '', type: 'other', description: '', amount_requested: 0, notes: '' };

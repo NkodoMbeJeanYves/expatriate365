@@ -47,6 +47,20 @@ export const PERMISSIONS = {
   VOTES_DELETE:  'votes.delete',
   VOTES_EXPORT:  'votes.export',
 
+  // Welfare
+  WELFARE_READ:              'welfare.read',
+  WELFARE_READ_OWN:          'welfare.read_own',
+  WELFARE_CREATE:            'welfare.create',
+  WELFARE_VALIDATE:          'welfare.validate',
+  WELFARE_DELETE:            'welfare.delete',
+
+  // Meetings
+  MEETINGS_READ:             'meetings.read',
+  MEETINGS_CREATE:           'meetings.create',
+  MEETINGS_UPDATE:           'meetings.update',
+  MEETINGS_DELETE:           'meetings.delete',
+  MEETINGS_MANAGE_ATTENDEES: 'meetings.manage_attendees',
+
   // Events
   EVENTS_READ:             'events.read',
   EVENTS_REGISTER:         'events.register',

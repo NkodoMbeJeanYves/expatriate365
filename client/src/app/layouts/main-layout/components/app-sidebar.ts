@@ -53,6 +53,23 @@ import { NAV_GROUPS, NavItem } from '../nav.config';
             <div class="my-2 border-t border-gray-100 dark:border-gray-700/30"></div>
           }
         }
+
+        <!-- Directory link (dynamic slug) -->
+        @if (tenantStore.slug()) {
+          <div class="my-2 border-t border-gray-100 dark:border-gray-700/30"></div>
+          <a [routerLink]="['/directory', tenantStore.slug()]"
+             routerLinkActive="bg-emerald-50 dark:bg-emerald-600/20 text-emerald-700 dark:text-emerald-400"
+             [routerLinkActiveOptions]="{ exact: false }"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-500 dark:text-gray-400
+                    hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100
+                    transition-colors group"
+             [title]="!showLabels ? ('nav.directory' | translate) : ''">
+            <i class="pi pi-address-book text-base flex-shrink-0"></i>
+            @if (showLabels) {
+              <span class="text-sm font-medium truncate">{{ 'nav.directory' | translate }}</span>
+            }
+          </a>
+        }
       </nav>
 
       <!-- User section -->

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { CardModule } from 'primeng/card';
@@ -13,11 +14,13 @@ import { EventFormDrawerComponent } from '../../components/event-form-drawer/eve
 import { EventRegistrationsDrawerComponent } from '../../components/event-registrations-drawer/event-registrations-drawer.component';
 import { EventsApiService } from '../../services/events-api.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ToastService } from '@service/toast.service';
 import { AuthStore } from '@core/auth/auth.store';
 import { PERMISSIONS } from '@core/auth/models/permission.model';
 import { STAFF_ROLES } from '@core/auth/models/role.model';
 import { triggerBlobDownload } from '@shared/utils/csv-export';
 import { RouterLink } from '@angular/router';
+import { CalendarViewComponent, CalendarEventItem } from '@shared/components/calendar-view/calendar-view.component';
 
 @Component({
   selector: 'app-event-list',
@@ -27,7 +30,7 @@ import { RouterLink } from '@angular/router';
     CommonModule, FormsModule, ButtonModule, CardModule,
     TagModule, SelectModule, ProgressSpinnerModule, TooltipModule,
     EventFormDrawerComponent, EventRegistrationsDrawerComponent,
-    TranslatePipe, RouterLink,
+    TranslatePipe, RouterLink, CalendarViewComponent,
   ],
   template: `
     <div class="p-6 flex flex-col gap-6">
@@ -37,7 +40,15 @@ import { RouterLink } from '@angular/router';
           <h1 class="text-2xl font-bold text-gray-800">{{ 'events.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'events.subtitle' | translate }}</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
+          <div class="flex gap-1 border border-gray-200 rounded-lg p-0.5">
+            <p-button icon="pi pi-list" size="small" [text]="true"
+              [severity]="viewMode() === 'list' ? 'primary' : 'secondary'"
+              [pTooltip]="'common.view_list' | translate" (onClick)="viewMode.set('list')" />
+            <p-button icon="pi pi-calendar" size="small" [text]="true"
+              [severity]="viewMode() === 'calendar' ? 'primary' : 'secondary'"
+              [pTooltip]="'common.view_calendar' | translate" (onClick)="viewMode.set('calendar')" />
+          </div>
           @if (canExport()) {
             <p-button severity="secondary" icon="pi pi-download" [label]="'common.export_csv' | translate"
               [loading]="exporting()" (onClick)="exportCsv()" />
@@ -82,8 +93,15 @@ import { RouterLink } from '@angular/router';
           placeholder="Tous les types" [showClear]="true" (onChange)="applyFilters()" />
       </div>
 
+      <!-- Calendar view -->
+      @if (viewMode() === 'calendar') {
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <app-calendar-view [events]="calendarEvents()" (eventClick)="onCalendarEventClick($event)" />
+        </div>
+      }
+
       <!-- Grid -->
-      @if (store.loading()) {
+      @if (viewMode() === 'list') { @if (store.loading()) {
         <div class="flex justify-center py-12">
           <p-progressspinner strokeWidth="4" />
         </div>
@@ -157,7 +175,7 @@ import { RouterLink } from '@angular/router';
               (onClick)="goToPage(store.pagination().page + 1)" />
           </div>
         }
-      }
+      } }
     </div>
 
     <app-event-form-drawer #formDrawer (saved)="onSaved($event)" />
@@ -169,9 +187,26 @@ export class EventListPage implements OnInit {
   private readonly api        = inject(EventsApiService);
   private readonly authStore  = inject(AuthStore);
   private readonly translate  = inject(TranslateService);
+  private readonly toast      = inject(ToastService);
+  private readonly router     = inject(Router);
   protected readonly isStaff   = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
   protected readonly canExport = computed(() => this.authStore.hasPermission(PERMISSIONS.EVENTS_EXPORT));
   protected readonly exporting = signal(false);
+  protected readonly viewMode  = signal<'list' | 'calendar'>('list');
+
+  protected readonly calendarEvents = computed<CalendarEventItem[]>(() =>
+    this.store.events().map(ev => ({
+      id: ev.id,
+      title: ev.title,
+      start: ev.start_date,
+      end: ev.end_date,
+      color: ev.status === 'published' ? '#3b82f6' : ev.status === 'completed' ? '#22c55e' : ev.status === 'cancelled' ? '#ef4444' : '#9ca3af',
+    }))
+  );
+
+  protected onCalendarEventClick(id: string): void {
+    this.router.navigate(['/events', id]);
+  }
 
   private readonly formDrawer = viewChild.required<EventFormDrawerComponent>('formDrawer');
   private readonly regsDrawer = viewChild.required<EventRegistrationsDrawerComponent>('regsDrawer');
@@ -208,15 +243,15 @@ export class EventListPage implements OnInit {
   protected onSaved(ev: EventDto): void { this.store.upsertEvent(ev); this.store.loadStats(); }
 
   protected publish(ev: EventDto): void {
-    this.api.publish(ev.id).subscribe({ next: updated => this.store.upsertEvent(updated) });
+    this.api.publish(ev.id).subscribe({ next: updated => this.store.upsertEvent(updated), error: () => this.toast.error(this.translate.instant('common.generic_error')) });
   }
 
   protected complete(ev: EventDto): void {
-    this.api.complete(ev.id).subscribe({ next: updated => this.store.upsertEvent(updated) });
+    this.api.complete(ev.id).subscribe({ next: updated => this.store.upsertEvent(updated), error: () => this.toast.error(this.translate.instant('common.generic_error')) });
   }
 
   protected cancelEvent(ev: EventDto): void {
-    this.api.cancelEvent(ev.id).subscribe({ next: updated => this.store.upsertEvent(updated) });
+    this.api.cancelEvent(ev.id).subscribe({ next: updated => this.store.upsertEvent(updated), error: () => this.toast.error(this.translate.instant('common.generic_error')) });
   }
 
   protected exportCsv(): void {

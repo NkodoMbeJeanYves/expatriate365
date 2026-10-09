@@ -1,8 +1,9 @@
 import { TenantApiService } from '@admin/services/tenant-api.service';
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { APP_CONFIG } from '@core/config/app-config.token';
+import { COUNTRIES as ALL_COUNTRIES } from '@core/data/countries';
 import { TenantService } from '@core/tenant/tenant.service';
 import { TenantStore } from '@core/tenant/tenant.store';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -20,19 +21,25 @@ const CURRENCIES = [
   { label: 'Livre sterling (£)', value: 'GBP', symbol: '£' },
   { label: 'Franc suisse (CHF)', value: 'CHF', symbol: 'CHF' },
   { label: 'Dirham marocain (MAD)', value: 'MAD', symbol: 'MAD' },
+  { label: 'Dollar canadien (CA$)', value: 'CAD', symbol: 'CA$' },
+  { label: 'Dollar australien (A$)', value: 'AUD', symbol: 'A$' },
+  { label: 'Couronne norvégienne (kr)', value: 'NOK', symbol: 'kr' },
+  { label: 'Couronne suédoise (kr)', value: 'SEK', symbol: 'kr' },
+  { label: 'Couronne danoise (kr)', value: 'DKK', symbol: 'kr' },
+  { label: 'Dirham des EAU (AED)', value: 'AED', symbol: 'AED' },
+  { label: 'Riyal saoudien (SAR)', value: 'SAR', symbol: 'SAR' },
+  { label: 'Riyal qatari (QAR)', value: 'QAR', symbol: 'QAR' },
+  { label: 'Naira nigérian (₦)', value: 'NGN', symbol: '₦' },
+  { label: 'Cedi ghanéen (GH₵)', value: 'GHS', symbol: 'GH₵' },
+  { label: 'Shilling kényan (KSh)', value: 'KES', symbol: 'KSh' },
+  { label: 'Rand sud-africain (R)', value: 'ZAR', symbol: 'R' },
+  { label: 'Shilling tanzanien (TSh)', value: 'TZS', symbol: 'TSh' },
+  { label: 'Franc rwandais (RWF)', value: 'RWF', symbol: 'RWF' },
+  { label: 'Franc congolais (CDF)', value: 'CDF', symbol: 'CDF' },
 ];
 
-const COUNTRIES = [
-  { label: 'Maurice', value: 'MU' },
-  { label: 'France', value: 'FR' },
-  { label: 'Cameroun', value: 'CM' },
-  { label: 'Belgique', value: 'BE' },
-  { label: 'Suisse', value: 'CH' },
-  { label: 'Canada', value: 'CA' },
-  { label: "Côte d'Ivoire", value: 'CI' },
-  { label: 'Sénégal', value: 'SN' },
-  { label: 'Maroc', value: 'MA' },
-];
+const COUNTRIES = ALL_COUNTRIES.map(c => ({ label: `${c.flag} ${c.name}`, value: c.code })).sort((a, b) => a.label.localeCompare(b.label));
+
 
 @Component({
   selector: 'app-admin-settings',
@@ -194,6 +201,24 @@ const COUNTRIES = [
             </div>
           </div>
 
+          <!-- Directory public link -->
+          @if (tenantStore.slug()) {
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex flex-col gap-2 border border-gray-200 dark:border-gray-700">
+              <div class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'settings.directory_url' | translate }}</div>
+              <div class="flex items-center gap-2">
+                <input readonly
+                  [value]="directoryUrl()"
+                  class="flex-1 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-gray-600 dark:text-gray-400 truncate" />
+                <p-button
+                  icon="pi pi-copy"
+                  severity="secondary"
+                  [label]="linkCopied() ? ('settings.link_copied' | translate) : ('settings.copy_link' | translate)"
+                  (onClick)="copyDirectoryLink()"
+                />
+              </div>
+            </div>
+          }
+
           <!-- Feedback -->
           @if (saved()) {
             <p-message severity="success">{{ 'settings.saved' | translate }}</p-message>
@@ -218,7 +243,7 @@ const COUNTRIES = [
 })
 export class AdminSettingsPage implements OnInit {
   private readonly tenantService = inject(TenantService);
-  private readonly tenantStore = inject(TenantStore);
+  readonly tenantStore = inject(TenantStore);
   private readonly tenantApi = inject(TenantApiService);
   private readonly http = inject(HttpClient);
   private readonly config = inject(APP_CONFIG);
@@ -234,6 +259,10 @@ export class AdminSettingsPage implements OnInit {
 
   readonly currencies = CURRENCIES;
   readonly countries = COUNTRIES;
+  readonly linkCopied = signal(false);
+  readonly directoryUrl = computed(() =>
+    `${window.location.origin}/directory/${this.tenantStore.slug()}`
+  );
 
   readonly form = this.fb.group({
     name: ['', Validators.required],
@@ -286,6 +315,13 @@ export class AdminSettingsPage implements OnInit {
   removeLogo(): void {
     this.tenantStore.patch({ logo_url: undefined });
     this.tenantApi.updateSettings({ logo_url: null }).subscribe();
+  }
+
+  copyDirectoryLink(): void {
+    navigator.clipboard.writeText(this.directoryUrl()).then(() => {
+      this.linkCopied.set(true);
+      setTimeout(() => this.linkCopied.set(false), 2000);
+    });
   }
 
   save(): void {

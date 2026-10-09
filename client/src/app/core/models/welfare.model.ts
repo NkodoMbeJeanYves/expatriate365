@@ -37,13 +37,15 @@ export interface PagedWelfareResult {
 }
 
 export const WELFARE_TYPES = [
-  { label: 'Décès', value: 'death' },
-  { label: 'Maladie', value: 'illness' },
-  { label: 'Naissance', value: 'birth' },
-  { label: 'Difficulté financière', value: 'financial_hardship' },
-  { label: 'Éducation', value: 'education' },
-  { label: 'Autre', value: 'other' },
+  'death',
+  'illness',
+  'birth',
+  'financial_hardship',
+  'education',
+  'other',
 ] as const;
+
+export type WelfareType = typeof WELFARE_TYPES[number];
 
 export interface CreateWelfareRequestRequest {
   member_id: string;

@@ -16,6 +16,7 @@ import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
 import { AppPaginatorComponent, PageChangeEvent } from '@shared/components/paginator/app-paginator.component';
 import { ExpenseDto, ExpenseStatsDto, CreateExpenseRequest } from '@models/finance.model';
 import { FinancesApiService } from '../../services/finances-api.service';
+import { ToastService } from '@service/toast.service';
 import { AuthStore } from '@core/auth/auth.store';
 import { STAFF_ROLES } from '@core/auth/models/role.model';
 
@@ -188,8 +189,9 @@ export class ExpensesPage implements OnInit {
   private readonly api     = inject(FinancesApiService);
   private readonly auth    = inject(AuthStore);
   private readonly confirm = inject(ConfirmationService);
-  private readonly toast   = inject(MessageService);
-  private readonly tr      = inject(TranslateService);
+  private readonly toast    = inject(MessageService);
+  private readonly toastSvc = inject(ToastService);
+  private readonly tr       = inject(TranslateService);
 
   readonly expenses  = signal<ExpenseDto[]>([]);
   readonly stats     = signal<ExpenseStatsDto | null>(null);
@@ -302,6 +304,7 @@ export class ExpensesPage implements OnInit {
       accept: () => {
         this.api.deleteExpense(exp.id).subscribe({
           next: () => this.loadAll(),
+          error: () => this.toastSvc.error(this.tr.instant('common.generic_error')),
         });
       },
     });
