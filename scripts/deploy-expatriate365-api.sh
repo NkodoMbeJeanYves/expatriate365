@@ -57,12 +57,11 @@ echo "→ Décompression…"
 mkdir -p "${API_DIR}"
 unzip -o "/tmp/${APP_NAME}-api.zip" -d "/tmp/${APP_NAME}-api-extract/"
 
-rsync -av --exclude='downloads/attachments' --exclude='downloads/branding' \
-          --exclude='downloads/avatars'     --exclude='downloads/docs' \
+rsync -av --exclude='downloads' \
           --exclude='logs' \
           "/tmp/${APP_NAME}-api-extract/" "${API_DIR}/"
 
-mkdir -p "${API_DIR}/downloads/{attachments,branding,avatars,docs}"
+mkdir -p "${API_DIR}/downloads"
 mkdir -p "${API_DIR}/logs"
 
 # ── Permissions ───────────────────────────────────────────────────────────────

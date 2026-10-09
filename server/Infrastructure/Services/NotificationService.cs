@@ -6,7 +6,7 @@ namespace server.Infrastructure.Services;
 
 public class NotificationService(AppDbContext db, IEmailService email, ILogger<NotificationService> log) : INotificationService
 {
-    public async Task NotifyAsync(Guid tenantId, Guid userId, string type, string title, string body, CancellationToken ct = default)
+    public async Task NotifyAsync(Guid tenantId, Guid userId, string type, string title, string body, CancellationToken ct = default, string? entityType = null, string? entityId = null)
     {
         if (!await IsEnabledAsync(tenantId, userId, type, ct)) return;
 
@@ -17,13 +17,15 @@ public class NotificationService(AppDbContext db, IEmailService email, ILogger<N
             Type = type,
             Title = title,
             Body = body,
+            EntityType = entityType,
+            EntityId = entityId,
         });
         await db.SaveChangesAsync(ct);
         log.LogInformation("In-app notification [{Type}] → user {UserId}", type, userId);
     }
 
     public async Task NotifyWithEmailAsync(Guid tenantId, Guid userId, string type, string title, string body,
-        string emailSubject, string emailHtml, CancellationToken ct = default)
+        string emailSubject, string emailHtml, CancellationToken ct = default, string? entityType = null, string? entityId = null)
     {
         if (!await IsEnabledAsync(tenantId, userId, type, ct)) return;
 
@@ -34,6 +36,8 @@ public class NotificationService(AppDbContext db, IEmailService email, ILogger<N
             Type = type,
             Title = title,
             Body = body,
+            EntityType = entityType,
+            EntityId = entityId,
         });
         await db.SaveChangesAsync(ct);
         log.LogInformation("In-app notification [{Type}] → user {UserId}", type, userId);

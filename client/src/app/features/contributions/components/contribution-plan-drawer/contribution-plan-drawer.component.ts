@@ -152,16 +152,16 @@ export class ContributionPlanDrawerComponent {
       next: (type) => {
         this.saving.set(false);
         if (this.editingPlan) {
-          this.toast.success('Plan mis à jour.');
+          this.toast.success(this.translate.instant('contributions.plan_updated'));
         } else {
-          this.toast.success('Plan créé avec succès.');
+          this.toast.success(this.translate.instant('contributions.plan_created'));
         }
         this.drawerRef()?.close(new MouseEvent('click'));
         this.saved.emit(type);
       },
       error: (err) => {
         this.saving.set(false);
-        this.toast.error('Erreur lors de l\'enregistrement.');
+        this.toast.error(this.translate.instant('contributions.plan_save_error'));
         this.error.set(err?.error?.error ?? 'Une erreur est survenue.');
       },
     });

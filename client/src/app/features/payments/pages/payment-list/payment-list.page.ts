@@ -234,7 +234,7 @@ export class PaymentListPageComponent implements OnInit {
   private readonly tenant = inject(TenantStore);
 
   readonly isStaff = computed(() => this.authStore.hasPermission(PERMISSIONS.PAYMENTS_READ));
-  readonly isBoardMember = computed(() => this.authStore.user()?.entity_type === 'board_member');
+  readonly isBoardMember = computed(() => this.authStore.hasPermission(PERMISSIONS.PAYMENTS_EXPORT));
   readonly printing  = signal(false);
   readonly exporting = signal(false);
 
@@ -435,16 +435,8 @@ ${stats ? `
   exportCsv(): void {
     this.exporting.set(true);
     const f = this.currentFilters();
-    const memberId = this.store['_ownMemberId']?.();
-    this.api.getPayments(1, 10000, memberId, f.status, f.from, f.to).subscribe({
-      next: (res) => {
-        const header = ['Receipt #', 'Date', 'Member', 'Membership #', 'Plan', 'Method', 'Amount', 'Status'];
-        const rows = res.data.map(p => [
-          p.receipt_number, p.payment_date, p.member_name, p.membership_number,
-          p.contribution_type_name, p.payment_method, p.amount, p.status,
-        ]);
-        const csv = [header, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    this.api.exportCsv(f.status, f.from, f.to).subscribe({
+      next: blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

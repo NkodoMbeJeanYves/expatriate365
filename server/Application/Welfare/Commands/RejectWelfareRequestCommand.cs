@@ -47,7 +47,7 @@ public class RejectWelfareRequestCommandHandler(AppDbContext db, ILogger<RejectW
             lang == "fr"
                 ? $"Votre demande d'aide a été refusée. Motif : {request.Dto.Reason}"
                 : $"Your welfare request has been rejected. Reason: {request.Dto.Reason}",
-            ct);
+            ct, "welfare", welfare.Id.ToString());
 
         return ServiceResult<WelfareRequestDto>.Success(ListWelfareRequestsQueryHandler.ToDto(welfare));
     }

@@ -15,6 +15,10 @@ export function toCsv<T extends Record<string, unknown>>(rows: T[], headers?: Pa
 export function downloadCsv(csv: string, filename: string): void {
   const BOM = '﻿';
   const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+  triggerBlobDownload(blob, filename);
+}
+
+export function triggerBlobDownload(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

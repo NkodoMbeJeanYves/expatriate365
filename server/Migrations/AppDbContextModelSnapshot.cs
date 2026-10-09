@@ -1391,6 +1391,12 @@ namespace server.Migrations
                         .HasColumnType("datetime(6)")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("EntityId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("EntityType")
+                        .HasColumnType("longtext");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)")
                         .HasColumnName("is_active");

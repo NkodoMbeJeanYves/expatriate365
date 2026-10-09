@@ -111,6 +111,16 @@ public static class EventEndpoints
             var result = await mediator.Send(new MarkAttendanceCommand(tenantId.Value, id, dto));
             return result.IsSuccess ? Results.Ok(new { updated = result.Data }) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.EventsManageAttendees);
+
+        group.MapGet("/export", async (
+            ClaimsPrincipal principal, IMediator mediator,
+            string? status = null, string? type = null) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var bytes = await mediator.Send(new ExportEventsQuery(tenantId.Value, status, type));
+            return Results.File(bytes, "text/csv", $"events_{DateTime.UtcNow:yyyyMMdd}.csv");
+        }).RequireAuthorization(Permissions.EventsExport);
     }
 
     private static Guid? GetTenantId(ClaimsPrincipal principal)

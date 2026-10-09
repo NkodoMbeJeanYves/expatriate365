@@ -27,6 +27,16 @@ public static class FinanceEndpoints
             return Results.Ok(await mediator.Send(new ListFinanceTransactionsQuery(
                 tenantId.Value, page, limit, type, status, from, to)));
         }).RequireAuthorization(Permissions.ReportsFinancial);
+
+        group.MapGet("/transactions/export", async (
+            ClaimsPrincipal principal, IMediator mediator,
+            string? type = null, string? status = null, string? from = null, string? to = null) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var bytes = await mediator.Send(new ExportFinanceTransactionsQuery(tenantId.Value, type, status, from, to));
+            return Results.File(bytes, "text/csv", $"transactions_{DateTime.UtcNow:yyyyMMdd}.csv");
+        }).RequireAuthorization(Permissions.ReportsFinancial);
     }
 
     private static Guid? GetTenantId(ClaimsPrincipal principal)

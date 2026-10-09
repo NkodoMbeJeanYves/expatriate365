@@ -15,7 +15,9 @@ public record NotificationDto(
     string Body,
     bool IsRead,
     string? ReadAt,
-    string CreatedAt
+    string CreatedAt,
+    string? EntityType = null,
+    string? EntityId = null
 );
 
 public record NotificationListResult(
@@ -50,7 +52,8 @@ public class ListNotificationsQueryHandler(AppDbContext db)
             .Select(n => new NotificationDto(
                 n.Id.ToString(), n.Type, n.Title, n.Body, n.IsRead,
                 n.ReadAt.HasValue ? n.ReadAt.Value.ToString("O") : null,
-                n.CreatedAt.ToString("O")))
+                n.CreatedAt.ToString("O"),
+                n.EntityType, n.EntityId))
             .ToListAsync(ct);
 
         return new NotificationListResult(items, unread,

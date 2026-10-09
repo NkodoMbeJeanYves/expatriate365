@@ -78,14 +78,14 @@ public class BulkGenerateChargesCommandHandler(
         log.LogInformation("Bulk generated {Count} charges for type {TypeId}, due {DueDate}",
             charges.Count, typeId, dueDate);
 
-        _ = NotifyMembersAsync(toGenerate, type.Name, type.BaseAmount, dueDate, request.TenantId, ct);
+        _ = NotifyMembersAsync(toGenerate, type.Name, type.BaseAmount, dueDate, request.TenantId, typeId, ct);
 
         return ServiceResult<int>.Success(charges.Count);
     }
 
     private async Task NotifyMembersAsync(
         List<server.Domain.Entities.Member> members,
-        string typeName, decimal amount, DateOnly dueDate, Guid tenantId, CancellationToken ct)
+        string typeName, decimal amount, DateOnly dueDate, Guid tenantId, Guid contributionTypeId, CancellationToken ct)
     {
         try
         {
@@ -112,7 +112,7 @@ public class BulkGenerateChargesCommandHandler(
                     lang == "fr"
                         ? $"Une nouvelle cotisation {typeName} de {amount} vous a été générée. Échéance : {dueDate:dd/MM/yyyy}."
                         : $"A new charge {typeName} of {amount} has been generated for you. Due: {dueDate:dd/MM/yyyy}.",
-                    ct);
+                    ct, "contribution_type", contributionTypeId.ToString());
             });
             await Task.WhenAll(notifTasks);
         }

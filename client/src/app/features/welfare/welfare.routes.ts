@@ -7,3 +7,11 @@ export const WELFARE_ROUTES: Routes = [
       import('./pages/welfare-list/welfare-list.page').then(m => m.WelfareListPageComponent),
   },
 ];
+
+export const MY_WELFARE_ROUTES: Routes = [
+  {
+    path: '',
+    loadComponent: () =>
+      import('./pages/my-welfare/my-welfare.page').then(m => m.MyWelfarePage),
+  },
+];

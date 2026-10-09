@@ -54,4 +54,12 @@ export class PaymentsApiService {
   openReceiptPage(id: string): void {
     window.open(`${this.base}/${id}/receipt`, '_blank');
   }
+
+  exportCsv(status?: string, from?: string, to?: string): Observable<Blob> {
+    const params: Record<string, string> = {};
+    if (status) params['status'] = status;
+    if (from) params['from'] = from;
+    if (to) params['to'] = to;
+    return this.http.get(`${this.base}/export`, { params, responseType: 'blob' });
+  }
 }

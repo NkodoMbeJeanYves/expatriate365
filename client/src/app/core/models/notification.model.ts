@@ -6,7 +6,10 @@ export interface AppNotification {
   title: string;
   body: string;
   is_read: boolean;
+  read_at?: string;
   created_at: string;
+  entity_type?: string;
+  entity_id?: string;
   data?: Record<string, unknown>;
 }
 

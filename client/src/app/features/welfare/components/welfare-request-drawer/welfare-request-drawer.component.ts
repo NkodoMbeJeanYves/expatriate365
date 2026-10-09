@@ -18,12 +18,14 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     <p-drawer #drawerEl [(visible)]="visible" [header]="'welfare.new_request' | translate" position="right" styleClass="!w-full sm:!w-[480px]">
       <div class="p-4 space-y-5">
 
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">{{ 'common.member' | translate }} <span class="text-red-500">*</span></label>
-          <p-select [options]="memberOptions()" [(ngModel)]="form.member_id"
-            optionLabel="label" optionValue="value" [filter]="true" filterBy="label"
-            [placeholder]="'common.none' | translate" styleClass="w-full" />
-        </div>
+        @if (!fixedMember) {
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">{{ 'common.member' | translate }} <span class="text-red-500">*</span></label>
+            <p-select [options]="memberOptions()" [(ngModel)]="form.member_id"
+              optionLabel="label" optionValue="value" [filter]="true" filterBy="label"
+              [placeholder]="'common.none' | translate" styleClass="w-full" />
+          </div>
+        }
 
         <div class="space-y-2">
           <label class="block text-sm font-medium text-gray-700">{{ 'common.type' | translate }} <span class="text-red-500">*</span></label>
@@ -73,6 +75,7 @@ export class WelfareRequestDrawerComponent {
   saved = output<WelfareRequest>();
 
   visible = false;
+  fixedMember = false;
   saving = signal(false);
   error = signal<string | null>(null);
   members = signal<MemberListItem[]>([]);
@@ -91,12 +94,21 @@ export class WelfareRequestDrawerComponent {
 
   open() {
     this.form = { member_id: '', type: 'other', description: '', amount_requested: 0, notes: '' };
+    this.fixedMember = false;
     this.error.set(null);
     this.visible = true;
     this.cdr.detectChanges();
     this.membersApi.list({ page: 1, limit: 200, status: 'active' }).subscribe({
       next: res => this.members.set(res.data),
     });
+  }
+
+  openForMember(memberId: string) {
+    this.form = { member_id: memberId, type: 'other', description: '', amount_requested: 0, notes: '' };
+    this.fixedMember = true;
+    this.error.set(null);
+    this.visible = true;
+    this.cdr.detectChanges();
   }
 
   submit() {

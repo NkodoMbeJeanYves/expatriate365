@@ -48,7 +48,7 @@ public class ApproveWelfareRequestCommandHandler(AppDbContext db, ILogger<Approv
             lang == "fr"
                 ? $"Votre demande d'aide a été approuvée. Montant accordé : {request.Dto.AmountApproved}."
                 : $"Your welfare request has been approved. Amount granted: {request.Dto.AmountApproved}.",
-            ct);
+            ct, "welfare", welfare.Id.ToString());
 
         return ServiceResult<WelfareRequestDto>.Success(ListWelfareRequestsQueryHandler.ToDto(welfare));
     }

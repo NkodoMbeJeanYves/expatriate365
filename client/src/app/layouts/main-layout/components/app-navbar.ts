@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthStore } from '@core/auth/auth.store';
 import { AuthService } from '@core/auth/auth.service';
 import { ThemeService } from '@core/theme/theme.service';
 import { NotificationsStore } from '@core/stores/notifications.store';
+import { AppNotification } from '@models/notification.model';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { Button } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
@@ -91,7 +92,7 @@ type Lang = typeof LANGS[number];
               </div>
             } @else {
               @for (n of notifStore.notifications(); track n.id) {
-                <div (click)="onNotifClick(n)"
+                <div (click)="onNotifClick(n, notifPanel)"
                   class="flex gap-3 px-4 py-3 cursor-pointer transition-colors"
                   [class]="n.is_read
                     ? 'hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -150,6 +151,7 @@ export class AppNavbarComponent {
   readonly theme = inject(ThemeService);
   readonly notifStore = inject(NotificationsStore);
   private readonly translate = inject(TranslateService);
+  private readonly router = inject(Router);
 
   readonly langs: Lang[] = ['fr', 'en'];
   readonly currentLang = signal<Lang>((localStorage.getItem('exp365_lang') ?? 'fr') as Lang);
@@ -177,8 +179,27 @@ export class AppNavbarComponent {
     this.notifStore.markAllRead();
   }
 
-  onNotifClick(n: { id: string; is_read: boolean }): void {
+  onNotifClick(n: AppNotification, panel: { hide: () => void }): void {
     if (!n.is_read) this.notifStore.markRead(n.id);
+    const route = this.notifRoute(n.entity_type, n.entity_id);
+    if (route) {
+      panel.hide();
+      this.router.navigate([route]);
+    }
+  }
+
+  notifRoute(entityType?: string, entityId?: string): string | null {
+    if (!entityType || !entityId) return null;
+    const map: Record<string, string> = {
+      communication: `/admin/communications/${entityId}`,
+      charge: `/contributions/charges/${entityId}`,
+      payment: `/payments/${entityId}`,
+      welfare: `/welfare/${entityId}`,
+      event: `/events/${entityId}`,
+      election: `/elections/${entityId}`,
+      contribution_type: `/contributions`,
+    };
+    return map[entityType] ?? null;
   }
 
   notifIcon(type: string): string {

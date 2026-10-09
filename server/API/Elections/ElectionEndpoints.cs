@@ -104,6 +104,16 @@ public static class ElectionEndpoints
             var result = await mediator.Send(new CastVoteCommand(tenantId.Value, id, voterId, dto));
             return result.IsSuccess ? Results.Ok(new { voted = true }) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesCast);
+
+        group.MapGet("/{id:guid}/export-votes", async (
+            Guid id, ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var bytes = await mediator.Send(new ExportVotesQuery(tenantId.Value, id));
+            if (bytes.Length == 0) return Results.NotFound(new { error = "errors.election.not_found" });
+            return Results.File(bytes, "text/csv", $"election_votes_{id:N}_{DateTime.UtcNow:yyyyMMdd}.csv");
+        }).RequireAuthorization(Permissions.VotesExport);
     }
 
     private static Guid? GetTenantId(ClaimsPrincipal principal)

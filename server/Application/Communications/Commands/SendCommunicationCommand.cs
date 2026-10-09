@@ -60,7 +60,7 @@ public class SendCommunicationCommandHandler(AppDbContext db, INotificationServi
         foreach (var m in members)
         {
             _ = notif.NotifyAsync(request.TenantId, m.UserId, "communication",
-                comm.Title, preview, ct);
+                comm.Title, preview, ct, "communication", comm.Id.ToString());
         }
 
         return ServiceResult<CommunicationDto>.Success(ListCommunicationsQueryHandler.ToDto(comm));

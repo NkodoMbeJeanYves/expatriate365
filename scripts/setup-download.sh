@@ -20,12 +20,10 @@ APP_NAME="expatriate"
 BASE_DIR="/var/www/${APP_NAME}/api"
 DOWNLOAD_DIR="${BASE_DIR}/downloads"
 
-# ── Création des dossiers ──────────────────────────────────────────────────────
-echo "→ Création des dossiers..."
-mkdir -p "${DOWNLOAD_DIR}/attachments"
-mkdir -p "${DOWNLOAD_DIR}/avatars"
-mkdir -p "${DOWNLOAD_DIR}/branding"
-mkdir -p "${DOWNLOAD_DIR}/docs"
+# ── Création du dossier racine ────────────────────────────────────────────────
+# Les sous-dossiers {tenant_id}/{folder}/ sont créés dynamiquement par l'API.
+echo "→ Création du dossier downloads..."
+mkdir -p "${DOWNLOAD_DIR}"
 
 # ── Propriétaire : service app ; groupe : www-data ────────────────────────────
 echo "→ Attribution des droits..."
@@ -52,8 +50,5 @@ systemctl reload nginx
 
 echo ""
 echo "✓ Configuration terminée."
-echo "  Dossiers d'upload disponibles :"
-echo "    ${DOWNLOAD_DIR}/attachments"
-echo "    ${DOWNLOAD_DIR}/avatars"
-echo "    ${DOWNLOAD_DIR}/branding"
-echo "    ${DOWNLOAD_DIR}/docs"
+echo "  Dossier d'upload racine : ${DOWNLOAD_DIR}"
+echo "  Les sous-dossiers {tenant_id}/{folder}/ seront créés par l'API au premier upload."

@@ -63,4 +63,11 @@ export class EventsApiService {
   markAttendance(id: string, dto: MarkAttendanceRequest): Observable<{ updated: number }> {
     return this.http.post<{ updated: number }>(`${this.base}/${id}/attendance`, dto);
   }
+
+  exportCsv(status?: string, type?: string): Observable<Blob> {
+    const params: Record<string, string> = {};
+    if (status) params['status'] = status;
+    if (type) params['type'] = type;
+    return this.http.get(`${this.base}/export`, { params, responseType: 'blob' });
+  }
 }

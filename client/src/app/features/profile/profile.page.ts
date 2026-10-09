@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -141,7 +141,8 @@ export class ProfilePage implements OnInit {
   private readonly store  = inject(AuthStore);
   protected readonly authStore   = this.store;
   private readonly auth   = inject(AuthService);
-  private readonly toast  = inject(ToastService);
+  private readonly toast     = inject(ToastService);
+  private readonly translate = inject(TranslateService);
   private readonly http   = inject(HttpClient);
   private readonly config = inject(APP_CONFIG);
   private readonly fb     = inject(FormBuilder);
@@ -193,7 +194,7 @@ export class ProfilePage implements OnInit {
       next: () => {
         this.pwSaving.set(false);
         this.pwForm.reset();
-        this.toast.success('Mot de passe mis à jour. Reconnectez-vous.');
+        this.toast.success(this.translate.instant('profile.password_updated'));
         this.auth.logout();
       },
       error: (err: any) => {
@@ -218,7 +219,7 @@ export class ProfilePage implements OnInit {
       next: () => {
         this.saving.set(false);
         this.form.markAsPristine();
-        this.toast.success('Profil mis à jour.');
+        this.toast.success(this.translate.instant('profile.profile_updated'));
         this.auth.me().subscribe();
       },
       error: (err: any) => {

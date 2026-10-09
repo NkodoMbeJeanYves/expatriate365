@@ -30,12 +30,12 @@ public class OpenElectionCommandHandler(AppDbContext db, ILogger<OpenElectionCom
         log.LogInformation("Election {Id} opened", e.Id);
 
         // Notify all active members
-        _ = NotifyMembersAsync(request.TenantId, e.Title, ct);
+        _ = NotifyMembersAsync(request.TenantId, e.Id, e.Title, ct);
 
         return ServiceResult<ElectionDto>.Success(ListElectionsQueryHandler.ToDto(e));
     }
 
-    private async Task NotifyMembersAsync(Guid tenantId, string electionTitle, CancellationToken ct)
+    private async Task NotifyMembersAsync(Guid tenantId, Guid electionId, string electionTitle, CancellationToken ct)
     {
         try
         {
@@ -52,7 +52,7 @@ public class OpenElectionCommandHandler(AppDbContext db, ILogger<OpenElectionCom
                     lang == "fr"
                         ? $"L'élection « {electionTitle} » est maintenant ouverte. Votez dès maintenant !"
                         : $"The election \"{electionTitle}\" is now open. Cast your vote!",
-                    ct);
+                    ct, "election", electionId.ToString());
             });
             await Task.WhenAll(tasks);
         }

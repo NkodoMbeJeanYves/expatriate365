@@ -364,7 +364,7 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
     this.loading.set(true);
     this.api.listTenants().subscribe({
       next: t  => { this.tenants.set(t); this.loading.set(false); },
-      error: () => { this.toast.error('Erreur de chargement.'); this.loading.set(false); },
+      error: () => { this.toast.error(this.translate.instant('admin.load_error')); this.loading.set(false); },
     });
   }
 
@@ -396,7 +396,7 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
         this.tenants.update(list => [tenant, ...list]);
         this.saving.set(false);
         this.drawerRef()?.close(new MouseEvent('click'));
-        this.toast.success(`Association "${tenant.name}" créée.`);
+        this.toast.success(this.translate.instant('admin.tenant_created', { name: tenant.name }));
       },
       error: (err: any) => {
         this.error.set(err?.error?.error ?? 'Erreur lors de la création.');

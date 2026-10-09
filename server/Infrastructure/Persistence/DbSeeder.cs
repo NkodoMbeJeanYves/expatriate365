@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using server.Application.Common;
 using server.Domain.Entities;
 
 namespace server.Infrastructure.Persistence;
@@ -67,7 +68,7 @@ public static class DbSeeder
         var email    = config["Seed:SuperAdminEmail"]    ?? "super_admin@expatriate365.mu";
         var password = config["Seed:SuperAdminPassword"] ?? "Admin@123";
 
-        var existing = await db.Users.FirstOrDefaultAsync(u => u.Role == "super_admin");
+        var existing = await db.Users.FirstOrDefaultAsync(u => u.Role == Roles.SuperAdmin);
         if (existing is not null)
         {
             // Update credentials if they changed in env
@@ -89,7 +90,7 @@ public static class DbSeeder
             PasswordHash    = BCrypt.Net.BCrypt.HashPassword(password),
             FirstName       = "Super",
             LastName        = "Admin",
-            Role            = "super_admin",
+            Role            = Roles.SuperAdmin,
             EmailVerifiedAt = DateTime.UtcNow,
             Status          = "active",
             IsActive        = true,

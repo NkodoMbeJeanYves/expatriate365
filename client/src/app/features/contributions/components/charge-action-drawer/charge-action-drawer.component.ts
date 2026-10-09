@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ContributionCharge } from '@models/contribution.model';
 import { ContributionsApiService } from '../../services/contributions-api.service';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ToastService } from '@service/toast.service';
 
 @Component({
@@ -62,7 +62,8 @@ export class ChargeActionDrawerComponent {
   private readonly api = inject(ContributionsApiService);
   protected readonly drawerRef = viewChild<Drawer>('drawerEl');
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly toast = inject(ToastService);
+  private readonly toast     = inject(ToastService);
+  private readonly translate = inject(TranslateService);
 
   charge = input<ContributionCharge | null>(null);
   action = input<'pay' | 'waive'>('pay');
@@ -94,16 +95,16 @@ export class ChargeActionDrawerComponent {
       next: (updated) => {
         this.saving.set(false);
         if (this.action() === 'pay') {
-          this.toast.success('Paiement enregistré.');
+          this.toast.success(this.translate.instant('contributions.payment_recorded'));
         } else {
-          this.toast.success('Exonération appliquée.');
+          this.toast.success(this.translate.instant('contributions.exemption_applied'));
         }
         this.drawerRef()?.close(new MouseEvent('click'));
         this.saved.emit(updated);
       },
       error: (err) => {
         this.saving.set(false);
-        this.toast.error('Erreur lors de l\'opération.');
+        this.toast.error(this.translate.instant('contributions.action_error'));
         this.error.set(err?.error?.error ?? 'Une erreur est survenue.');
       },
     });

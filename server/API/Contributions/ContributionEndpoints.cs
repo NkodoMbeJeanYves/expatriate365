@@ -4,6 +4,7 @@ using server.Application.Common;
 using server.Application.Contributions.Commands;
 using server.Application.Contributions.DTOs;
 using server.Application.Contributions.Queries;
+using Serilog;
 
 namespace server.API.Contributions;
 
@@ -119,6 +120,16 @@ public static class ContributionEndpoints
                 ? Results.Ok(new { sent = result.Data })
                 : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.ContributionsValidate);
+
+        charges.MapGet("/export", async (
+            ClaimsPrincipal principal, IMediator mediator,
+            string? member_id = null, string? type_id = null, string? status = null) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var bytes = await mediator.Send(new ExportContributionChargesQuery(tenantId.Value, member_id, type_id, status));
+            return Results.File(bytes, "text/csv", $"contributions_{DateTime.UtcNow:yyyyMMdd}.csv");
+        }).RequireAuthorization(Permissions.ContributionsExport);
     }
 
     private static Guid? GetTenantId(ClaimsPrincipal principal)

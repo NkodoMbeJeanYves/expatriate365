@@ -12,7 +12,9 @@ import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialog } from 'primeng/confirmdialog';
 import { MembersApiService } from '../../services/members-api.service';
 import { MembershipCategory } from '@core/models/member.model';
 import { ToastService } from '@core/services/toast.service';
@@ -27,8 +29,11 @@ import { PERMISSIONS } from '@core/auth/models/permission.model';
     DecimalPipe, FormsModule, ReactiveFormsModule,
     ButtonModule, InputTextModule, TextareaModule, CheckboxModule, InputNumberModule,
     TagModule, SkeletonModule, TooltipModule, DialogModule, TranslatePipe,
+    ConfirmDialog,
   ],
+  providers: [ConfirmationService],
   template: `
+    <p-confirmdialog />
     <div class="flex flex-col gap-4">
 
       <!-- Header -->
@@ -164,6 +169,8 @@ export class MemberCategoriesPageComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly authStore = inject(AuthStore);
   private readonly fb = inject(FormBuilder);
+  private readonly confirm = inject(ConfirmationService);
+  private readonly translate = inject(TranslateService);
 
   readonly isMemberAdmin = computed(() => this.authStore.hasPermission(PERMISSIONS.CATEGORIES_CREATE));
 
@@ -224,22 +231,29 @@ export class MemberCategoriesPageComponent implements OnInit {
         }
         this.saving.set(false);
         this.dialogVisible = false;
-        this.toast.success(id ? 'Catégorie mise à jour.' : 'Catégorie créée.');
+        this.toast.success(this.translate.instant(id ? 'members.category_updated' : 'members.category_created'));
       },
-      error: () => { this.saving.set(false); this.toast.error('Une erreur est survenue.'); },
+      error: () => { this.saving.set(false); this.toast.error(this.translate.instant('members.category_save_error')); },
     });
   }
 
   deleteCategory(cat: MembershipCategory): void {
-    if (!confirm(`Supprimer "${cat.name}" ?`)) return;
-    this.api.deleteCategory(cat.id).subscribe({
-      next: () => {
-        this.categories.update(list => list.filter(c => c.id !== cat.id));
-        this.toast.success('Catégorie supprimée.');
-      },
-      error: (err) => {
-        const msg = err?.error?.error ?? 'Une erreur est survenue.';
-        this.toast.error(msg);
+    this.confirm.confirm({
+      message: this.translate.instant('members.confirm_delete_category', { name: cat.name }),
+      header: this.translate.instant('common.confirm_delete'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: this.translate.instant('common.yes'),
+      rejectLabel: this.translate.instant('common.no'),
+      accept: () => {
+        this.api.deleteCategory(cat.id).subscribe({
+          next: () => {
+            this.categories.update(list => list.filter(c => c.id !== cat.id));
+            this.toast.success(this.translate.instant('members.category_deleted'));
+          },
+          error: (err) => {
+            this.toast.error(err?.error?.error ?? this.translate.instant('common.generic_error'));
+          },
+        });
       },
     });
   }

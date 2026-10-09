@@ -308,12 +308,12 @@ export class DashboardPageComponent {
       startWith(0),
       switchMap(() => this.fetchAll()),
       takeUntilDestroyed(),
-    ).subscribe(res => this.applyResult(res));
+    ).subscribe({ next: res => this.applyResult(res), error: () => this.loading.set(false) });
   }
 
   refresh(): void {
     this.loading.set(true);
-    this.fetchAll().subscribe(res => this.applyResult(res));
+    this.fetchAll().subscribe({ next: res => this.applyResult(res), error: () => this.loading.set(false) });
   }
 
   firstName(): string {

@@ -37,7 +37,7 @@ public class MarkWelfarePaidCommandHandler(AppDbContext db, ILogger<MarkWelfareP
             _ = notif.NotifyAsync(request.TenantId, userId.Value, "welfare_update",
                 "Payment Received",
                 $"Your welfare payment of {welfare.AmountPaid:C} has been disbursed.",
-                ct);
+                ct, "welfare", welfare.Id.ToString());
         }
 
         return ServiceResult<WelfareRequestDto>.Success(ListWelfareRequestsQueryHandler.ToDto(welfare));

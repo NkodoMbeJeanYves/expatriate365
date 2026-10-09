@@ -50,6 +50,20 @@ public static class Permissions
     public const string VotesDelete  = "votes.delete";
     public const string VotesExport  = "votes.export";
 
+    // ── Welfare ──────────────────────────────────────────────────────────────
+    public const string WelfareRead     = "welfare.read";
+    public const string WelfareReadOwn  = "welfare.read_own";
+    public const string WelfareCreate   = "welfare.create";
+    public const string WelfareValidate = "welfare.validate";
+    public const string WelfareDelete   = "welfare.delete";
+
+    // ── Meetings ─────────────────────────────────────────────────────────────
+    public const string MeetingsRead            = "meetings.read";
+    public const string MeetingsCreate          = "meetings.create";
+    public const string MeetingsUpdate          = "meetings.update";
+    public const string MeetingsDelete          = "meetings.delete";
+    public const string MeetingsManageAttendees = "meetings.manage_attendees";
+
     // ── Events ───────────────────────────────────────────────────────────────
     public const string EventsRead            = "events.read";
     public const string EventsRegister        = "events.register";
@@ -124,6 +138,8 @@ public static class Permissions
             ["contributions"] = [ContributionsRead, ContributionsReadOwn, ContributionsCreate, ContributionsUpdate, ContributionsDelete, ContributionsValidate, ContributionsExport, ContributionsImport],
             ["payments"]      = [PaymentsRead, PaymentsReadOwn, PaymentsCreate, PaymentsUpdate, PaymentsDelete, PaymentsValidate, PaymentsRefund, PaymentsExport, PaymentsReceiptPrint],
             ["votes"]         = [VotesRead, VotesCast, VotesResults, VotesCreate, VotesManage, VotesDelete, VotesExport],
+            ["welfare"]       = [WelfareRead, WelfareReadOwn, WelfareCreate, WelfareValidate, WelfareDelete],
+            ["meetings"]      = [MeetingsRead, MeetingsCreate, MeetingsUpdate, MeetingsDelete, MeetingsManageAttendees],
             ["events"]        = [EventsRead, EventsRegister, EventsCreate, EventsUpdate, EventsDelete, EventsManageAttendees, EventsExport],
             ["documents"]     = [DocumentsRead, DocumentsUpload, DocumentsManage, DocumentsPublish],
             ["community"]     = [CommunityRead, CommunityWrite, CommunityModerate],

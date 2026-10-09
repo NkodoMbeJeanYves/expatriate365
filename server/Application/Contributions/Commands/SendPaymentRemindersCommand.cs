@@ -45,7 +45,7 @@ public class SendPaymentRemindersCommandHandler(
                 lang == "fr"
                     ? $"Votre cotisation {c.ContributionType.Name} est en retard. Solde restant : {c.Balance}. Veuillez régulariser dès que possible."
                     : $"Your contribution {c.ContributionType.Name} is overdue. Remaining balance: {c.Balance}. Please settle as soon as possible.",
-                ct);
+                ct, "charge", c.Id.ToString());
 
             // Email reminder
             if (!string.IsNullOrWhiteSpace(c.Member.User.ContactEmail))

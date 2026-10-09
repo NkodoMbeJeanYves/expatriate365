@@ -28,7 +28,8 @@ public static class RoleEndpoints
             });
             return Results.Ok(result);
         })
-        .WithName("ListPermissions");
+        .WithName("ListPermissions")
+        .RequireAuthorization(Permissions.RolesRead);
 
         // GET /api/v1/roles/tenant — tenant-specific role list (any admin)
         group.MapGet("/tenant", async (ClaimsPrincipal principal, IMediator mediator) =>

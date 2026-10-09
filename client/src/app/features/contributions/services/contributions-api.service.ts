@@ -73,4 +73,12 @@ export class ContributionsApiService {
   sendReminders(): Observable<{ sent: number }> {
     return this.http.post<{ sent: number }>(`${this.base}/contribution-charges/send-reminders`, {});
   }
+
+  exportCharges(memberId?: string, typeId?: string, status?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (memberId) params = params.set('member_id', memberId);
+    if (typeId) params = params.set('type_id', typeId);
+    if (status) params = params.set('status', status);
+    return this.http.get(`${this.base}/contribution-charges/export`, { params, responseType: 'blob' });
+  }
 }

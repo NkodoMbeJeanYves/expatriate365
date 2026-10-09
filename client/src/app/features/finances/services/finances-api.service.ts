@@ -23,6 +23,15 @@ export class FinancesApiService {
     return this.http.get<PagedResult<FinanceTransactionDto>>(`${this.base}/transactions`, { params });
   }
 
+  exportTransactions(f: Omit<FinanceTransactionFilters, 'page' | 'limit'>): Observable<Blob> {
+    const params: Record<string, string> = {};
+    if (f.type) params['type'] = f.type;
+    if (f.status) params['status'] = f.status;
+    if (f.from) params['from'] = f.from;
+    if (f.to) params['to'] = f.to;
+    return this.http.get(`${this.base}/transactions/export`, { params, responseType: 'blob' });
+  }
+
   // --- Expenses ---
   private readonly expBase = `${environment.apiUrl}/api/v1/expenses`;
 

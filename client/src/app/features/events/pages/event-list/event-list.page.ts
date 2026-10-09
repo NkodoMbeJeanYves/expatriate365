@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -14,7 +14,9 @@ import { EventRegistrationsDrawerComponent } from '../../components/event-regist
 import { EventsApiService } from '../../services/events-api.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthStore } from '@core/auth/auth.store';
+import { PERMISSIONS } from '@core/auth/models/permission.model';
 import { STAFF_ROLES } from '@core/auth/models/role.model';
+import { triggerBlobDownload } from '@shared/utils/csv-export';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -35,9 +37,15 @@ import { RouterLink } from '@angular/router';
           <h1 class="text-2xl font-bold text-gray-800">{{ 'events.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'events.subtitle' | translate }}</p>
         </div>
-        @if (isStaff()) {
-          <p-button [label]="'events.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
-        }
+        <div class="flex gap-2">
+          @if (canExport()) {
+            <p-button severity="secondary" icon="pi pi-download" [label]="'common.export_csv' | translate"
+              [loading]="exporting()" (onClick)="exportCsv()" />
+          }
+          @if (isStaff()) {
+            <p-button [label]="'events.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+          }
+        </div>
       </div>
 
       <!-- Stats -->
@@ -161,7 +169,9 @@ export class EventListPage implements OnInit {
   private readonly api        = inject(EventsApiService);
   private readonly authStore  = inject(AuthStore);
   private readonly translate  = inject(TranslateService);
-  protected readonly isStaff  = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
+  protected readonly isStaff   = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
+  protected readonly canExport = computed(() => this.authStore.hasPermission(PERMISSIONS.EVENTS_EXPORT));
+  protected readonly exporting = signal(false);
 
   private readonly formDrawer = viewChild.required<EventFormDrawerComponent>('formDrawer');
   private readonly regsDrawer = viewChild.required<EventRegistrationsDrawerComponent>('regsDrawer');
@@ -207,5 +217,16 @@ export class EventListPage implements OnInit {
 
   protected cancelEvent(ev: EventDto): void {
     this.api.cancelEvent(ev.id).subscribe({ next: updated => this.store.upsertEvent(updated) });
+  }
+
+  protected exportCsv(): void {
+    this.exporting.set(true);
+    this.api.exportCsv(this.filterStatus ?? undefined, this.filterType ?? undefined).subscribe({
+      next: blob => {
+        triggerBlobDownload(blob, `events_${new Date().toISOString().slice(0, 10)}.csv`);
+        this.exporting.set(false);
+      },
+      error: () => this.exporting.set(false),
+    });
   }
 }
