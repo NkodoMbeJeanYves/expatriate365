@@ -2,6 +2,8 @@ import {
   ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit,
   computed, inject, signal, viewChild,
 } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -181,6 +183,12 @@ import { PagedResult } from '@shared/models/pagination.model';
                     </div>
                   </div>
                 }
+                @if (hasMoreResolutions()) {
+                  <div class="flex justify-center pt-2">
+                    <p-button severity="secondary" [label]="'common.load_more' | translate"
+                      [loading]="resLoadingMore()" (onClick)="loadMoreResolutions()" />
+                  </div>
+                }
               </div>
             }
           </p-tabpanel>
@@ -198,7 +206,8 @@ import { PagedResult } from '@shared/models/pagination.model';
           <p-select [options]="members()" optionLabel="label" optionValue="value"
             formControlName="member_id"
             [filter]="true" filterBy="label"
-            [placeholder]="'Rechercher un membre…'" />
+            [placeholder]="'Rechercher un membre…'"
+            (onFilter)="onMemberFilter($event)" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">{{ 'governance.role' | translate }}</label>
@@ -364,7 +373,12 @@ export class GovernancePage implements OnInit {
   readonly boardRolesLoading = signal(false);
   readonly resolutions = signal<ResolutionDto[]>([]);
   readonly resLoading = signal(false);
+  readonly resLoadingMore = signal(false);
+  private resPage = 1;
+  private resTotalPages = 1;
+  readonly hasMoreResolutions = signal(false);
   readonly members = signal<{ label: string; value: string }[]>([]);
+  private readonly memberSearch$ = new Subject<string>();
 
   // Board member form
   readonly showBoardForm = signal(false);
@@ -438,6 +452,19 @@ export class GovernancePage implements OnInit {
     this.loadMembers();
     this.loadBoardRoles();
     this.loadMandateAlerts();
+    this.memberSearch$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(q => this.membersApi.list({ page: 1, limit: 20, status: 'active', search: q || undefined })),
+    ).subscribe({
+      next: (res: PagedResult<MemberListItem>) => {
+        this.members.set(res.data.map((m: MemberListItem) => ({
+          label: `${m.first_name} ${m.last_name} (${m.membership_number})`,
+          value: m.id,
+        })));
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   loadMandateAlerts(): void {
@@ -445,12 +472,16 @@ export class GovernancePage implements OnInit {
   }
 
   loadMembers(): void {
-    this.membersApi.list({ page: 1, limit: 500, status: 'active' }).subscribe({
+    this.membersApi.list({ page: 1, limit: 20, status: 'active' }).subscribe({
       next: (res: PagedResult<MemberListItem>) => this.members.set(res.data.map((m: MemberListItem) => ({
         label: `${m.first_name} ${m.last_name} (${m.membership_number})`,
         value: m.id,
       }))),
     });
+  }
+
+  onMemberFilter(event: { filter: string }): void {
+    this.memberSearch$.next(event.filter ?? '');
   }
 
   loadStats(): void {
@@ -474,10 +505,30 @@ export class GovernancePage implements OnInit {
   }
 
   loadResolutions(): void {
+    this.resPage = 1;
     this.resLoading.set(true);
-    this.api.listResolutions(1, 50, this.filterResStatus ?? undefined).subscribe({
-      next: r => { this.resolutions.set(r.data); this.resLoading.set(false); },
+    this.api.listResolutions(1, 20, this.filterResStatus ?? undefined).subscribe({
+      next: r => {
+        this.resolutions.set(r.data);
+        this.resTotalPages = Math.ceil(r.pagination.total / r.pagination.limit);
+        this.hasMoreResolutions.set(this.resPage < this.resTotalPages);
+        this.resLoading.set(false);
+      },
       error: () => this.resLoading.set(false),
+    });
+  }
+
+  loadMoreResolutions(): void {
+    this.resPage++;
+    this.resLoadingMore.set(true);
+    this.api.listResolutions(this.resPage, 20, this.filterResStatus ?? undefined).subscribe({
+      next: r => {
+        this.resolutions.update(list => [...list, ...r.data]);
+        this.resTotalPages = Math.ceil(r.pagination.total / r.pagination.limit);
+        this.hasMoreResolutions.set(this.resPage < this.resTotalPages);
+        this.resLoadingMore.set(false);
+      },
+      error: () => { this.resPage--; this.resLoadingMore.set(false); },
     });
   }
 
@@ -506,14 +557,14 @@ export class GovernancePage implements OnInit {
         this.boardForm.reset();
         this.loadStats();
       },
-      error: () => { this.boardError.set('Erreur.'); this.boardSaving.set(false); },
+      error: () => { this.boardError.set(this.translate.instant('common.generic_error')); this.boardSaving.set(false); },
     });
   }
 
   confirmRemoveBoard(bm: BoardMemberDto): void {
     this.confirm.confirm({
-      message: `Retirer ${bm.member_name} du bureau ?`,
-      header: 'Confirmation',
+      message: this.translate.instant('governance.confirm_remove_board', { name: bm.member_name }),
+      header: this.translate.instant('common.confirmation'),
       icon: 'pi pi-trash',
       accept: () => {
         this.api.removeBoardMember(bm.id).subscribe(() => {
@@ -562,7 +613,7 @@ export class GovernancePage implements OnInit {
         this.boardRoleFormDrawerRef()?.close(new MouseEvent('click'));
       },
       error: (err: any) => {
-        this.boardRoleError.set(err?.error?.error ?? 'Erreur.');
+        this.boardRoleError.set(err?.error?.error ?? this.translate.instant('common.generic_error'));
         this.boardRoleSaving.set(false);
       },
     });
@@ -570,16 +621,15 @@ export class GovernancePage implements OnInit {
 
   confirmDeleteBoardRole(role: BoardRoleDto): void {
     this.confirm.confirm({
-      message: `Supprimer le rôle "${role.label}" ?`,
-      header: 'Confirmation',
+      message: this.translate.instant('governance.confirm_delete_board_role', { label: role.label }),
+      header: this.translate.instant('common.confirmation'),
       icon: 'pi pi-trash',
       accept: () => {
         this.api.deleteBoardRole(role.id).subscribe({
           next: () => this.boardRoles.update(list => list.filter(r => r.id !== role.id)),
           error: (err: any) => {
-            this.translate.get('common.error').subscribe(msg =>
-              this.confirm.confirm({ message: err?.error?.error ?? msg, header: 'Erreur', icon: 'pi pi-times' })
-            );
+            const fallback = this.translate.instant('common.error');
+            this.confirm.confirm({ message: err?.error?.error ?? fallback, header: this.translate.instant('common.error'), icon: 'pi pi-times' });
           },
         });
       },
@@ -600,7 +650,7 @@ export class GovernancePage implements OnInit {
         this.resForm.reset();
         this.loadStats();
       },
-      error: () => { this.resError.set('Erreur.'); this.resSaving.set(false); },
+      error: () => { this.resError.set(this.translate.instant('common.generic_error')); this.resSaving.set(false); },
     });
   }
 
@@ -632,8 +682,8 @@ export class GovernancePage implements OnInit {
 
   confirmDeleteRes(res: ResolutionDto): void {
     this.confirm.confirm({
-      message: `Supprimer la résolution "${res.title}" ?`,
-      header: 'Confirmation',
+      message: this.translate.instant('governance.confirm_delete_resolution', { title: res.title }),
+      header: this.translate.instant('common.confirmation'),
       icon: 'pi pi-trash',
       accept: () => {
         this.api.deleteResolution(res.id).subscribe(() => {

@@ -146,6 +146,20 @@ public static class MemberEndpoints
             return result.IsSuccess ? Results.Ok(new { message = "Activation envoyée." }) : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.MembersSendActivation);
 
+        group.MapDelete("/{id:guid}", async (
+            Guid id, ClaimsPrincipal principal, IMediator mediator) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var result = await mediator.Send(new DeleteMemberCommand(tenantId.Value, id));
+            if (!result.IsSuccess)
+            {
+                if (result.ErrorCode == "errors.member.not_found") return Results.NotFound(new { error = result.ErrorMessage });
+                return Results.Conflict(new { error = result.ErrorCode ?? result.ErrorMessage });
+            }
+            return Results.NoContent();
+        }).RequireAuthorization(Permissions.MembersDelete);
+
         group.MapPost("/bulk-import", async (
             ClaimsPrincipal principal, IMediator mediator,
             List<BulkImportMemberRow> rows) =>

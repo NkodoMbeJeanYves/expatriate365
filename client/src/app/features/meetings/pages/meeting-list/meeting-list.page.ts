@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, viewChild
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { CalendarViewComponent, CalendarEventItem } from '@shared/components/calendar-view/calendar-view.component';
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { SelectModule } from 'primeng/select';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ToastService } from '@service/toast.service';
 import { MeetingDto, MeetingMinuteDto, MEETING_STATUSES, MEETING_TYPES } from '@models/meeting.model';
 import { AuthStore } from '@core/auth/auth.store';
 import { STAFF_ROLES } from '@core/auth/models/role.model';
@@ -26,7 +28,7 @@ import { MeetingActionItemsDrawerComponent } from '../../components/meeting-acti
     CommonModule, FormsModule, ButtonModule, CardModule, TagModule,
     SelectModule, ProgressSpinnerModule, TooltipModule, TranslatePipe,
     MeetingFormDrawerComponent, MeetingAttendanceDrawerComponent, MeetingMinutesDrawerComponent,
-    MeetingActionItemsDrawerComponent,
+    MeetingActionItemsDrawerComponent, CalendarViewComponent,
   ],
   template: `
     <div class="p-6 flex flex-col gap-6">
@@ -36,9 +38,19 @@ import { MeetingActionItemsDrawerComponent } from '../../components/meeting-acti
           <h1 class="text-2xl font-bold text-gray-800">{{ 'meetings.title' | translate }}</h1>
           <p class="text-gray-500 text-sm">{{ 'meetings.subtitle' | translate }}</p>
         </div>
-        @if (isStaff()) {
-          <p-button [label]="'meetings.new' | translate" icon="pi pi-plus" (onClick)="openForm()" styleClass="self-start sm:self-auto" />
-        }
+        <div class="flex gap-2 flex-wrap self-start sm:self-auto">
+          <div class="flex gap-1 border border-gray-200 rounded-lg p-0.5">
+            <p-button icon="pi pi-list" size="small" [text]="true"
+              [severity]="viewMode() === 'list' ? 'primary' : 'secondary'"
+              [pTooltip]="'common.view_list' | translate" (onClick)="viewMode.set('list')" />
+            <p-button icon="pi pi-calendar" size="small" [text]="true"
+              [severity]="viewMode() === 'calendar' ? 'primary' : 'secondary'"
+              [pTooltip]="'common.view_calendar' | translate" (onClick)="viewMode.set('calendar')" />
+          </div>
+          @if (isStaff()) {
+            <p-button [label]="'meetings.new' | translate" icon="pi pi-plus" (onClick)="openForm()" />
+          }
+        </div>
       </div>
 
       <!-- Stats -->
@@ -75,8 +87,15 @@ import { MeetingActionItemsDrawerComponent } from '../../components/meeting-acti
           placeholder="Tous les types" [showClear]="true" (onChange)="applyFilters()" />
       </div>
 
+      <!-- Calendar view -->
+      @if (viewMode() === 'calendar') {
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <app-calendar-view [events]="calendarEvents()" (eventClick)="onCalendarEventClick($event)" />
+        </div>
+      }
+
       <!-- Liste -->
-      @if (store.loading()) {
+      @if (viewMode() === 'list') { @if (store.loading()) {
         <div class="flex justify-center py-12"><p-progressspinner strokeWidth="4" /></div>
       } @else if (store.meetings().length === 0) {
         <div class="text-center py-16 text-gray-400">
@@ -147,7 +166,7 @@ import { MeetingActionItemsDrawerComponent } from '../../components/meeting-acti
               [disabled]="store.pagination().page >= totalPages()" (onClick)="goToPage(store.pagination().page + 1)" />
           </div>
         }
-      }
+      } }
     </div>
 
     <app-meeting-form-drawer #formDrawer (saved)="onSaved($event)" />
@@ -162,8 +181,24 @@ export class MeetingListPage implements OnInit {
   protected readonly store    = inject(MeetingsStore);
   private readonly api        = inject(MeetingsApiService);
   private readonly translate  = inject(TranslateService);
+  private readonly toast      = inject(ToastService);
   private readonly authStore  = inject(AuthStore);
   protected readonly isStaff  = computed(() => this.authStore.hasAnyRole(STAFF_ROLES));
+  protected readonly viewMode = signal<'list' | 'calendar'>('list');
+
+  protected readonly calendarEvents = computed<CalendarEventItem[]>(() =>
+    this.store.meetings().map(m => ({
+      id: m.id,
+      title: m.title,
+      start: m.scheduled_at,
+      color: m.status === 'completed' ? '#22c55e' : m.status === 'cancelled' ? '#ef4444' : '#6366f1',
+    }))
+  );
+
+  protected onCalendarEventClick(id: string): void {
+    const m = this.store.meetings().find(x => x.id === id);
+    if (m) this.openAttendance(m);
+  }
 
   private readonly formDrawer = viewChild.required<MeetingFormDrawerComponent>('formDrawer');
   private readonly attendanceDrawer = viewChild.required<MeetingAttendanceDrawerComponent>('attendanceDrawer');
@@ -220,12 +255,12 @@ export class MeetingListPage implements OnInit {
   protected onSaved(m: MeetingDto): void { this.store.upsertMeeting(m); this.store.loadStats(); }
 
   protected start(m: MeetingDto): void {
-    this.api.start(m.id).subscribe({ next: updated => this.store.upsertMeeting(updated) });
+    this.api.start(m.id).subscribe({ next: updated => this.store.upsertMeeting(updated), error: () => this.toast.error(this.translate.instant('common.generic_error')) });
   }
   protected close(m: MeetingDto): void {
-    this.api.close(m.id).subscribe({ next: updated => this.store.upsertMeeting(updated) });
+    this.api.close(m.id).subscribe({ next: updated => this.store.upsertMeeting(updated), error: () => this.toast.error(this.translate.instant('common.generic_error')) });
   }
   protected cancel(m: MeetingDto): void {
-    this.api.cancel(m.id).subscribe({ next: updated => this.store.upsertMeeting(updated) });
+    this.api.cancel(m.id).subscribe({ next: updated => this.store.upsertMeeting(updated), error: () => this.toast.error(this.translate.instant('common.generic_error')) });
   }
 }

@@ -197,7 +197,7 @@ export class MyWelfarePage implements OnInit {
   }
 
   typeLabel(type: string): string {
-    return WELFARE_TYPES.find(t => t.value === type)?.label ?? type;
+    return this.translate.instant('welfare.type_' + type);
   }
 
   formatDate(iso: string): string {

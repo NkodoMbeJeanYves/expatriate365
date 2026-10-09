@@ -43,6 +43,7 @@ export class TenantStore {
     const url = this._settings().logo_url;
     return url ? `${url}?v=${this._logoVersion()}` : null;
   });
+  readonly slug        = computed(() => this._settings().slug);
   readonly currency    = computed(() => this._settings().base_currency);
   readonly symbol      = computed(() => this._settings().currency_symbol);
   readonly countryCode = computed(() => this._settings().country_code);

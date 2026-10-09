@@ -78,7 +78,7 @@ public static class CommunicationEndpoints
             return result.IsSuccess
                 ? Results.Ok()
                 : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
-        });
+        }).RequireAuthorization(Permissions.NotificationsReadOwn);
     }
 
     private static Guid? GetTenantId(ClaimsPrincipal principal)

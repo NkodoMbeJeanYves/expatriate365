@@ -12,6 +12,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { APP_CONFIG } from '@core/config/app-config.token';
 import { DOCUMENT_CATEGORIES, DOCUMENT_TYPES, DocumentDto } from '@models/document.model';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ToastService } from '@service/toast.service';
 import { ButtonModule } from 'primeng/button';
 import { Drawer, DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
@@ -140,6 +141,7 @@ export class DocumentFormDrawerComponent {
   private readonly store = inject(DocumentsStore);
   private readonly fb = inject(FormBuilder);
   private readonly translate = inject(TranslateService);
+  private readonly toast = inject(ToastService);
   private readonly http = inject(HttpClient);
   private readonly config = inject(APP_CONFIG);
   private readonly cdr = inject(ChangeDetectorRef);
