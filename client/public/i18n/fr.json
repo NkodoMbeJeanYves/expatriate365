@@ -506,7 +506,7 @@
     }
   },
   "dashboard": {
-    "greeting": "Bonjour, {{name}} ðŸ‘‹",
+    "greeting": "Bonjour, {{name}} 👋",
     "auto_refresh": "Actualisation auto toutes les 60 s",
     "active_members": "Membres actifs",
     "new_this_month": "+{{count}} ce mois",
