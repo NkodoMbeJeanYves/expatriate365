@@ -16,7 +16,7 @@ import { RolesApiService } from '@service/roles-api.service';
 import { ToastService } from '@service/toast.service';
 import { AuthStore } from '@core/auth/auth.store';
 import { ROLES } from '@core/auth/models/role.model';
-import { forkJoin } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-admin-roles',
@@ -331,7 +331,7 @@ export class AdminRolesPage implements OnInit {
 
     reset$.subscribe({
       next: () => {
-        const reload$ = this.isSuperAdmin ? this.api.list() : this.api.listTenant();
+        const reload$: Observable<AnyRoleDto[]> = this.isSuperAdmin ? this.api.list() : this.api.listTenant();
         reload$.subscribe((roles: AnyRoleDto[]) => {
           const visible = this.isSuperAdmin
             ? roles
