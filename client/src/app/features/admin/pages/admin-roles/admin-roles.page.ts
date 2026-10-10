@@ -329,16 +329,15 @@ export class AdminRolesPage implements OnInit {
       ? this.api.resetPermissions(role.id)
       : this.api.resetTenantPermissions(role.id);
 
-    const reload$ = this.isSuperAdmin ? this.api.list() : this.api.listTenant();
-
     reset$.subscribe({
       next: () => {
-        reload$.subscribe(roles => {
+        const reload$ = this.isSuperAdmin ? this.api.list() : this.api.listTenant();
+        reload$.subscribe((roles: AnyRoleDto[]) => {
           const visible = this.isSuperAdmin
             ? roles
-            : (roles as TenantRoleDto[]).filter(r => r.name !== ROLES.SUPER_ADMIN);
+            : roles.filter((r: AnyRoleDto) => r.name !== ROLES.SUPER_ADMIN);
           this.roles.set(visible);
-          const refreshed = visible.find(r => r.id === role.id);
+          const refreshed = visible.find((r: AnyRoleDto) => r.id === role.id);
           if (refreshed) this.selectRole(refreshed);
         });
         this.resetting.set(false);
