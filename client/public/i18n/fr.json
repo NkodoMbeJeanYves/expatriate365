@@ -167,7 +167,8 @@
     "save_error": "Erreur lors de la sauvegarde des permissions",
     "reset_success": "Permissions réinitialisées aux valeurs par défaut",
     "reset_error": "Erreur lors de la réinitialisation des permissions",
-    "super_admin_readonly_notice": "Vous consultez la configuration globale des rôles. Cette vue est en lecture seule — les permissions sont gérées au niveau de chaque association par son administrateur."
+    "super_admin_readonly_notice": "Vous consultez la configuration globale des rôles. Cette vue est en lecture seule — les permissions sont gérées au niveau de chaque association par son administrateur.",
+    "super_admin_global_notice": "Vous modifiez les templates de rôles globaux. Les modifications s'appliquent à toutes les nouvelles associations et aux associations existantes qui n'ont pas personnalisé leurs rôles."
   },
   "auth": {
     "login": "Connexion",

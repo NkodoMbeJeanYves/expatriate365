@@ -35,9 +35,9 @@ import { forkJoin } from 'rxjs';
         [subtitle]="'roles.subtitle' | translate" />
 
       @if (isSuperAdmin) {
-        <div class="mb-4 flex items-center gap-2 px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-sm">
-          <i class="pi pi-info-circle"></i>
-          {{ 'roles.super_admin_readonly_notice' | translate }}
+        <div class="mb-4 flex items-center gap-2 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm">
+          <i class="pi pi-exclamation-triangle"></i>
+          {{ 'roles.super_admin_global_notice' | translate }}
         </div>
       }
 
@@ -233,18 +233,16 @@ export class AdminRolesPage implements OnInit {
 
   /** True when the entire selected role is read-only */
   readonly isReadOnly = computed(() => {
-    // super_admin always sees a read-only global overview
-    if (this.isSuperAdmin) return true;
     const role = this.selectedRole();
     if (!role) return false;
+    // super_admin role itself is never editable by anyone
     if (role.name === ROLES.SUPER_ADMIN) return true;
-    if (role.name === ROLES.ORG_ADMIN) return true;
     return false;
   });
 
   /** True when a specific domain is locked for the current user */
   isDomainReadOnly(domain: PermissionDomain): boolean {
-    if (this.isSuperAdmin) return true; // everything read-only for super_admin
+    if (this.isSuperAdmin) return false;
     return AdminRolesPage.RESTRICTED_DOMAINS.includes(domain.domain);
   }
 
@@ -326,12 +324,19 @@ export class AdminRolesPage implements OnInit {
     const role = this.selectedRole();
     if (!role || this.isReadOnly()) return;
     this.resetting.set(true);
-    this.api.resetTenantPermissions(role.id).subscribe({
+
+    const reset$ = this.isSuperAdmin
+      ? this.api.resetPermissions(role.id)
+      : this.api.resetTenantPermissions(role.id);
+
+    const reload$ = this.isSuperAdmin ? this.api.list() : this.api.listTenant();
+
+    reset$.subscribe({
       next: () => {
-        this.api.listTenant().subscribe(roles => {
+        reload$.subscribe(roles => {
           const visible = this.isSuperAdmin
             ? roles
-            : roles.filter(r => r.name !== ROLES.SUPER_ADMIN);
+            : (roles as TenantRoleDto[]).filter(r => r.name !== ROLES.SUPER_ADMIN);
           this.roles.set(visible);
           const refreshed = visible.find(r => r.id === role.id);
           if (refreshed) this.selectRole(refreshed);
@@ -358,7 +363,11 @@ export class AdminRolesPage implements OnInit {
     );
     const permissions = [...this._checked()].filter(p => !lockedPerms.has(p));
 
-    this.api.updateTenantPermissions(role.id, { permissions }).subscribe({
+    const update$ = this.isSuperAdmin
+      ? this.api.updatePermissions(role.id, { permissions })
+      : this.api.updateTenantPermissions(role.id, { permissions });
+
+    update$.subscribe({
       next: () => {
         this.roles.update(list =>
           list.map(r => r.id === role.id ? { ...r, permissions, is_customized: true } : r)
