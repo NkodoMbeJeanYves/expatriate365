@@ -7,5 +7,6 @@
 @conventions/school365_functional_spec_EN.md
 @conventions/checklist_startup_project.
 @conventions/claude_behavior
+@conventions/i18n_json_conventions.md
 
 > **Stack de référence** : Angular 21 (standalone, signals) · PrimeNG 21 · Tailwind 4 · `@ngx-translate` · Angular Service Worker (PWA)
