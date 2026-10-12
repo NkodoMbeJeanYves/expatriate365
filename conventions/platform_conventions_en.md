@@ -1,7 +1,5 @@
-# SCHOOL365 — Project Conventions and Decisions (EN)
+# Platform — Project Conventions and Decisions (EN)
 
-**Project:** School365  
-**Type:** School, academic and financial management platform  
 **Convention version:** 1.0 consolidated  
 **Date:** 2026-07-02
 
@@ -472,4 +470,4 @@ GET  /api/v1/payments/{payment_id}/receipt
 
 ---
 
-_End of document — school365_conventions_en.md_
+_End of document — platform_conventions_en.md_

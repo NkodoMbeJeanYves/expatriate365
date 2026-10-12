@@ -1,4 +1,4 @@
-# SCHOOL365 — Additional Conventions and Decisions v4 (EN)
+# Platform — Additional Conventions and Decisions v4 (EN)
 
 **Convention version:** 4.0  
 **Date:** 2026-07-08  
@@ -302,4 +302,4 @@ interface QuickLoginAccount {
 
 ---
 
-_End of document — school365_conventions_en_v4.md_
+_End of document — platform_conventions_en_v4.md_
