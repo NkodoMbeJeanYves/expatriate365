@@ -1,4 +1,4 @@
-# SCHOOL365 - Additional Conventions and Decisions (EN)
+# Platform — Additional Conventions and Decisions v2 (EN)
 
 ## Changes extracted from the specification
 

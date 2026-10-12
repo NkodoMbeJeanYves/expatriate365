@@ -1129,7 +1129,7 @@
     "results": "professionnel(s) trouvé(s)"
   },
   "onboarding": {
-    "welcome": "Bienvenue, {{name}} ðŸ‘‹",
+    "welcome": "Bienvenue, {{name}} 👋",
     "step": "Étape",
     "start": "Commencer",
     "skip": "Passer pour l'instant",
