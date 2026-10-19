@@ -2029,6 +2029,210 @@ namespace server.Migrations
                     b.ToTable("tenant_roles", (string)null);
                 });
 
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("HelperOptedIn")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("helper_opted_in");
+
+                    b.Property<DateTime?>("HelperReviewedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("helper_reviewed_at");
+
+                    b.Property<Guid?>("HelperReviewedBy")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("helper_reviewed_by");
+
+                    b.Property<string>("HelperVerificationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("helper_verification_reason");
+
+                    b.Property<string>("HelperVerificationStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("helper_verification_status");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("member_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at");
+
+                    b.Property<bool>("WitnessOptedIn")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("witness_opted_in");
+
+                    b.Property<DateTime?>("WitnessReviewedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("witness_reviewed_at");
+
+                    b.Property<Guid?>("WitnessReviewedBy")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("witness_reviewed_by");
+
+                    b.Property<string>("WitnessVerificationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("witness_verification_reason");
+
+                    b.Property<string>("WitnessVerificationStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("witness_verification_status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("TenantId", "MemberId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "HelperVerificationStatus", "WitnessVerificationStatus");
+
+                    b.ToTable("transfer_assistance_profiles", (string)null);
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("AmountMur")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("amount_mur");
+
+                    b.Property<DateOnly>("AvailableFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("available_from");
+
+                    b.Property<DateOnly>("AvailableTo")
+                        .HasColumnType("date")
+                        .HasColumnName("available_to");
+
+                    b.Property<Guid?>("BeneficiaryMemberId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("beneficiary_member_id");
+
+                    b.Property<string>("BeneficiaryName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("beneficiary_name");
+
+                    b.Property<string>("BeneficiaryRelationship")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("beneficiary_relationship");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DestinationCountry")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("varchar(2)")
+                        .HasColumnName("destination_country");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("MeetingArea")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("meeting_area");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("purpose");
+
+                    b.Property<string>("ReceiveCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("varchar(3)")
+                        .HasColumnName("receive_currency");
+
+                    b.Property<string>("ReceiveMethod")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("receive_method");
+
+                    b.Property<Guid>("RequesterMemberId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("requester_member_id");
+
+                    b.Property<string>("ReviewReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("review_reason");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("reviewed_by");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BeneficiaryMemberId");
+
+                    b.HasIndex("RequesterMemberId");
+
+                    b.HasIndex("TenantId", "BeneficiaryMemberId");
+
+                    b.HasIndex("TenantId", "RequesterMemberId", "CreatedAt");
+
+                    b.HasIndex("TenantId", "Status", "CreatedAt");
+
+                    b.ToTable("transfer_assistance_requests", (string)null);
+                });
+
             modelBuilder.Entity("server.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2627,6 +2831,34 @@ namespace server.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceProfile", b =>
+                {
+                    b.HasOne("server.Domain.Entities.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceRequest", b =>
+                {
+                    b.HasOne("server.Domain.Entities.Member", "BeneficiaryMember")
+                        .WithMany()
+                        .HasForeignKey("BeneficiaryMemberId");
+
+                    b.HasOne("server.Domain.Entities.Member", "RequesterMember")
+                        .WithMany()
+                        .HasForeignKey("RequesterMemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BeneficiaryMember");
+
+                    b.Navigation("RequesterMember");
                 });
 
             modelBuilder.Entity("server.Domain.Entities.User", b =>

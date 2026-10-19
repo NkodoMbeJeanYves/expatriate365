@@ -11,6 +11,7 @@ using server.Api.Members;
 using server.API.Contributions;
 using server.API.Payments;
 using server.API.Welfare;
+using server.API.TransferAssistance;
 using server.API.Events;
 using server.API.Meetings;
 using server.API.Elections;
@@ -209,6 +210,7 @@ try
     app.MapContributionEndpoints();
     app.MapPaymentEndpoints();
     app.MapWelfareEndpoints();
+    app.MapTransferAssistanceEndpoints();
     app.MapEventEndpoints();
     app.MapMeetingEndpoints();
     app.MapElectionEndpoints();
@@ -238,4 +240,3 @@ finally
 {
     Log.CloseAndFlush();
 }
-

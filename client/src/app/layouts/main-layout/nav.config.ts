@@ -30,6 +30,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.payments', icon: 'pi pi-wallet', route: '/payments' },
       { labelKey: 'nav.welfare', icon: 'pi pi-heart', route: '/welfare', roles: STAFF_ROLES },
       { labelKey: 'nav.my_welfare', icon: 'pi pi-heart', route: '/my-welfare', roles: [ROLES.MEMBER] },
+      { labelKey: 'nav.transfer_assistance', icon: 'pi pi-send', route: '/transfer-assistance' },
     ],
   },
   {

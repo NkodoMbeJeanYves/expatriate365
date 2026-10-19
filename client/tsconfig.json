@@ -32,6 +32,7 @@
       "@finances/*":      ["app/features/finances/*"],
       "@events/*":        ["app/features/events/*"],
       "@welfare/*":       ["app/features/welfare/*"],
+      "@transfer-assistance/*": ["app/features/transfer-assistance/*"],
       "@elections/*":     ["app/features/elections/*"],
       "@meetings/*":      ["app/features/meetings/*"],
       "@communications/*":["app/features/communications/*"],

@@ -19,6 +19,8 @@ public static class RoleSeeder
         Permissions.PaymentsReadOwn, Permissions.PaymentsReceiptPrint,
         Permissions.VotesRead, Permissions.VotesCast, Permissions.VotesResults,
         Permissions.WelfareReadOwn,
+        Permissions.TransferAssistanceCreate, Permissions.TransferAssistanceReadOwn,
+        Permissions.TransferAssistanceProfileManage,
         Permissions.MeetingsRead,
         Permissions.EventsRead, Permissions.EventsRegister,
         Permissions.DocumentsRead, Permissions.DocumentsUpload,
@@ -64,6 +66,7 @@ public static class RoleSeeder
                 Permissions.ReportsRead, Permissions.ReportsFinancial, Permissions.ReportsMembers,
                 Permissions.ReportsContributions, Permissions.ReportsExport,
                 Permissions.AuditRead,
+                Permissions.TransferAssistanceReview, Permissions.TransferAssistanceVerifyUsers,
                 Permissions.SettingsUpdate, Permissions.SettingsNotifications, Permissions.SettingsBilling,
                 Permissions.RolesRead, Permissions.RolesAssign, Permissions.RolesUpdate,
                 Permissions.UsersRead, Permissions.UsersUpdate, Permissions.UsersResetPassword,
@@ -231,6 +234,7 @@ public static class RoleSeeder
                 Permissions.ReportsRead, Permissions.ReportsFinancial, Permissions.ReportsMembers,
                 Permissions.ReportsContributions, Permissions.ReportsExport,
                 Permissions.AuditRead,
+                Permissions.TransferAssistanceReview, Permissions.TransferAssistanceVerifyUsers,
             ])
         ),
         (

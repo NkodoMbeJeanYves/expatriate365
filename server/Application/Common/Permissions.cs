@@ -57,6 +57,13 @@ public static class Permissions
     public const string WelfareValidate = "welfare.validate";
     public const string WelfareDelete   = "welfare.delete";
 
+    // ── Transfer Assistance ──────────────────────────────────────────────────
+    public const string TransferAssistanceCreate       = "transfer_assistance.create";
+    public const string TransferAssistanceReadOwn      = "transfer_assistance.read_own";
+    public const string TransferAssistanceProfileManage = "transfer_assistance.profile_manage";
+    public const string TransferAssistanceReview      = "transfer_assistance.review";
+    public const string TransferAssistanceVerifyUsers = "transfer_assistance.verify_users";
+
     // ── Meetings ─────────────────────────────────────────────────────────────
     public const string MeetingsRead            = "meetings.read";
     public const string MeetingsCreate          = "meetings.create";
@@ -139,6 +146,7 @@ public static class Permissions
             ["payments"]      = [PaymentsRead, PaymentsReadOwn, PaymentsCreate, PaymentsUpdate, PaymentsDelete, PaymentsValidate, PaymentsRefund, PaymentsExport, PaymentsReceiptPrint],
             ["votes"]         = [VotesRead, VotesCast, VotesResults, VotesCreate, VotesManage, VotesDelete, VotesExport],
             ["welfare"]       = [WelfareRead, WelfareReadOwn, WelfareCreate, WelfareValidate, WelfareDelete],
+            ["transfer_assistance"] = [TransferAssistanceCreate, TransferAssistanceReadOwn, TransferAssistanceProfileManage, TransferAssistanceReview, TransferAssistanceVerifyUsers],
             ["meetings"]      = [MeetingsRead, MeetingsCreate, MeetingsUpdate, MeetingsDelete, MeetingsManageAttendees],
             ["events"]        = [EventsRead, EventsRegister, EventsCreate, EventsUpdate, EventsDelete, EventsManageAttendees, EventsExport],
             ["documents"]     = [DocumentsRead, DocumentsUpload, DocumentsManage, DocumentsPublish],
