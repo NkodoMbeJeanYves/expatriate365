@@ -1,10 +1,12 @@
 import { MEMBER_ADMIN_ROLES, Role, ROLES, STAFF_ROLES } from '@core/auth/models/role.model';
+import { environment } from '@env/environment';
 
 export interface NavItem {
   labelKey: string;
   icon: string;
   route: string;
   roles?: Role[];
+  enabled?: boolean;
 }
 
 export interface NavGroup {
@@ -30,7 +32,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.payments', icon: 'pi pi-wallet', route: '/payments' },
       { labelKey: 'nav.welfare', icon: 'pi pi-heart', route: '/welfare', roles: STAFF_ROLES },
       { labelKey: 'nav.my_welfare', icon: 'pi pi-heart', route: '/my-welfare', roles: [ROLES.MEMBER] },
-      { labelKey: 'nav.transfer_assistance', icon: 'pi pi-send', route: '/transfer-assistance' },
+      { labelKey: 'nav.transfer_assistance', icon: 'pi pi-send', route: '/transfer-assistance', enabled: environment.features.transferAssistance },
     ],
   },
   {

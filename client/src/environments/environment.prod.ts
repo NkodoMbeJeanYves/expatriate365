@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
   apiUrl: 'https://acm365hub.poweryoursaas.com',
+  features: { transferAssistance: false },
   quickLoginAccounts: [
     { label: 'Super Admin', email: 'super_admin@expatriate365.mu', password: 'Admin@123' },
     { label: 'Président', email: 'jean.nkodo@acm.mu', password: 'Password123!' },

@@ -21,6 +21,9 @@ public static class RoleSeeder
         Permissions.WelfareReadOwn,
         Permissions.TransferAssistanceCreate, Permissions.TransferAssistanceReadOwn,
         Permissions.TransferAssistanceProfileManage,
+        Permissions.TransferAssistanceViewAvailable, Permissions.TransferAssistanceOffer,
+        Permissions.TransferAssistanceParticipate, Permissions.TransferAssistanceConfirmReceipt,
+        Permissions.TransferAssistanceOpenDispute,
         Permissions.MeetingsRead,
         Permissions.EventsRead, Permissions.EventsRegister,
         Permissions.DocumentsRead, Permissions.DocumentsUpload,
@@ -67,6 +70,7 @@ public static class RoleSeeder
                 Permissions.ReportsContributions, Permissions.ReportsExport,
                 Permissions.AuditRead,
                 Permissions.TransferAssistanceReview, Permissions.TransferAssistanceVerifyUsers,
+                Permissions.TransferAssistanceResolveDispute, Permissions.TransferAssistanceSuspend,
                 Permissions.SettingsUpdate, Permissions.SettingsNotifications, Permissions.SettingsBilling,
                 Permissions.RolesRead, Permissions.RolesAssign, Permissions.RolesUpdate,
                 Permissions.UsersRead, Permissions.UsersUpdate, Permissions.UsersResetPassword,
@@ -235,6 +239,7 @@ public static class RoleSeeder
                 Permissions.ReportsContributions, Permissions.ReportsExport,
                 Permissions.AuditRead,
                 Permissions.TransferAssistanceReview, Permissions.TransferAssistanceVerifyUsers,
+                Permissions.TransferAssistanceResolveDispute, Permissions.TransferAssistanceSuspend,
             ])
         ),
         (
@@ -309,6 +314,14 @@ public static class RoleSeeder
                 Permissions.AnnouncementsRead,
                 Permissions.NotificationsReadOwn,
                 Permissions.DashboardRead,
+                Permissions.TransferAssistanceCreate,
+                Permissions.TransferAssistanceReadOwn,
+                Permissions.TransferAssistanceProfileManage,
+                Permissions.TransferAssistanceViewAvailable,
+                Permissions.TransferAssistanceOffer,
+                Permissions.TransferAssistanceParticipate,
+                Permissions.TransferAssistanceConfirmReceipt,
+                Permissions.TransferAssistanceOpenDispute,
             ])
         ),
     ];

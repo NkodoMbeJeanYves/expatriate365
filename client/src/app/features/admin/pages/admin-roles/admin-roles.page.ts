@@ -153,7 +153,9 @@ import { Observable, forkJoin } from 'rxjs';
                                 <i class="pi pi-check text-white" style="font-size: 8px;"></i>
                               }
                             </span>
-                            {{ ('roles.perm_' + perm.split('.').slice(1).join('_')) | translate }}
+                            {{ ('roles.perm_' + (domain.domain === 'dashboard'
+                              ? perm.split('.').join('_')
+                              : perm.split('.').slice(1).join('_'))) | translate }}
                           </button>
                         }
                       </div>

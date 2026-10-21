@@ -63,6 +63,13 @@ public static class Permissions
     public const string TransferAssistanceProfileManage = "transfer_assistance.profile_manage";
     public const string TransferAssistanceReview      = "transfer_assistance.review";
     public const string TransferAssistanceVerifyUsers = "transfer_assistance.verify_users";
+    public const string TransferAssistanceViewAvailable = "transfer_assistance.view_available";
+    public const string TransferAssistanceOffer = "transfer_assistance.offer";
+    public const string TransferAssistanceParticipate = "transfer_assistance.participate";
+    public const string TransferAssistanceConfirmReceipt = "transfer_assistance.confirm_receipt";
+    public const string TransferAssistanceOpenDispute = "transfer_assistance.open_dispute";
+    public const string TransferAssistanceResolveDispute = "transfer_assistance.resolve_dispute";
+    public const string TransferAssistanceSuspend = "transfer_assistance.suspend";
 
     // ── Meetings ─────────────────────────────────────────────────────────────
     public const string MeetingsRead            = "meetings.read";
@@ -146,7 +153,11 @@ public static class Permissions
             ["payments"]      = [PaymentsRead, PaymentsReadOwn, PaymentsCreate, PaymentsUpdate, PaymentsDelete, PaymentsValidate, PaymentsRefund, PaymentsExport, PaymentsReceiptPrint],
             ["votes"]         = [VotesRead, VotesCast, VotesResults, VotesCreate, VotesManage, VotesDelete, VotesExport],
             ["welfare"]       = [WelfareRead, WelfareReadOwn, WelfareCreate, WelfareValidate, WelfareDelete],
-            ["transfer_assistance"] = [TransferAssistanceCreate, TransferAssistanceReadOwn, TransferAssistanceProfileManage, TransferAssistanceReview, TransferAssistanceVerifyUsers],
+            ["transfer_assistance"] = [
+                TransferAssistanceCreate, TransferAssistanceReadOwn, TransferAssistanceProfileManage,
+                TransferAssistanceReview, TransferAssistanceVerifyUsers, TransferAssistanceViewAvailable,
+                TransferAssistanceOffer, TransferAssistanceParticipate, TransferAssistanceConfirmReceipt,
+                TransferAssistanceOpenDispute, TransferAssistanceResolveDispute, TransferAssistanceSuspend],
             ["meetings"]      = [MeetingsRead, MeetingsCreate, MeetingsUpdate, MeetingsDelete, MeetingsManageAttendees],
             ["events"]        = [EventsRead, EventsRegister, EventsCreate, EventsUpdate, EventsDelete, EventsManageAttendees, EventsExport],
             ["documents"]     = [DocumentsRead, DocumentsUpload, DocumentsManage, DocumentsPublish],

@@ -2029,6 +2029,104 @@ namespace server.Migrations
                     b.ToTable("tenant_roles", (string)null);
                 });
 
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("actor_user_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("details");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("event_type");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("request_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("RequestId");
+
+                    b.HasIndex("TenantId", "RequestId", "CreatedAt");
+
+                    b.ToTable("transfer_assistance_events", (string)null);
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceOffer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Availability")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("availability");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("HelperMemberId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("helper_member_id");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("message");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("request_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HelperMemberId");
+
+                    b.HasIndex("RequestId", "HelperMemberId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "RequestId", "Status");
+
+                    b.ToTable("transfer_assistance_offers", (string)null);
+                });
+
             modelBuilder.Entity("server.Domain.Entities.TransferAssistanceProfile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2041,6 +2139,7 @@ namespace server.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<bool>("HelperOptedIn")
+                        .IsConcurrencyToken()
                         .HasColumnType("tinyint(1)")
                         .HasColumnName("helper_opted_in");
 
@@ -2058,6 +2157,7 @@ namespace server.Migrations
                         .HasColumnName("helper_verification_reason");
 
                     b.Property<string>("HelperVerificationStatus")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)")
@@ -2080,6 +2180,7 @@ namespace server.Migrations
                         .HasColumnName("updated_at");
 
                     b.Property<bool>("WitnessOptedIn")
+                        .IsConcurrencyToken()
                         .HasColumnType("tinyint(1)")
                         .HasColumnName("witness_opted_in");
 
@@ -2097,6 +2198,7 @@ namespace server.Migrations
                         .HasColumnName("witness_verification_reason");
 
                     b.Property<string>("WitnessVerificationStatus")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)")
@@ -2133,6 +2235,15 @@ namespace server.Migrations
                         .HasColumnType("date")
                         .HasColumnName("available_to");
 
+                    b.Property<string>("BeneficiaryConfirmation")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("beneficiary_confirmation");
+
+                    b.Property<DateTime?>("BeneficiaryConfirmedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("beneficiary_confirmed_at");
+
                     b.Property<Guid?>("BeneficiaryMemberId")
                         .HasColumnType("char(36)")
                         .HasColumnName("beneficiary_member_id");
@@ -2159,6 +2270,48 @@ namespace server.Migrations
                         .HasColumnType("varchar(2)")
                         .HasColumnName("destination_country");
 
+                    b.Property<DateTime?>("DisputeOpenedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("dispute_opened_at");
+
+                    b.Property<Guid?>("DisputeOpenedBy")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("dispute_opened_by");
+
+                    b.Property<string>("DisputeReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("dispute_reason");
+
+                    b.Property<string>("DisputeResolution")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("dispute_resolution");
+
+                    b.Property<DateTime?>("DisputeResolvedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("dispute_resolved_at");
+
+                    b.Property<Guid?>("DisputeResolvedBy")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("dispute_resolved_by");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("expires_at");
+
+                    b.Property<DateTime?>("HandoverConfirmedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("handover_confirmed_at");
+
+                    b.Property<bool>("HelperHandoverConfirmed")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("helper_handover_confirmed");
+
+                    b.Property<Guid?>("HelperMemberId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("helper_member_id");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)")
                         .HasColumnName("is_active");
@@ -2168,6 +2321,15 @@ namespace server.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)")
                         .HasColumnName("meeting_area");
+
+                    b.Property<DateTime?>("MeetingAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("meeting_at");
+
+                    b.Property<string>("OpenRequestKey")
+                        .HasMaxLength(65)
+                        .HasColumnType("varchar(65)")
+                        .HasColumnName("open_request_key");
 
                     b.Property<string>("Purpose")
                         .IsRequired()
@@ -2186,6 +2348,10 @@ namespace server.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)")
                         .HasColumnName("receive_method");
+
+                    b.Property<bool>("RequesterHandoverConfirmed")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("requester_handover_confirmed");
 
                     b.Property<Guid>("RequesterMemberId")
                         .HasColumnType("char(36)")
@@ -2210,27 +2376,137 @@ namespace server.Migrations
                         .HasColumnType("varchar(30)")
                         .HasColumnName("status");
 
+                    b.Property<string>("SuspendedFromStatus")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("suspended_from_status");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("char(36)")
                         .HasColumnName("tenant_id");
+
+                    b.Property<string>("TransferEvidenceReference")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)")
+                        .HasColumnName("transfer_evidence_reference");
+
+                    b.Property<string>("TransferProvider")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("transfer_provider");
+
+                    b.Property<DateTime?>("TransferSentAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("transfer_sent_at");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("updated_at");
 
+                    b.Property<bool>("WitnessAttested")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("witness_attested");
+
+                    b.Property<Guid?>("WitnessMemberId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("witness_member_id");
+
+                    b.Property<long>("WorkflowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("workflow_version");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BeneficiaryMemberId");
 
+                    b.HasIndex("HelperMemberId");
+
+                    b.HasIndex("OpenRequestKey")
+                        .IsUnique();
+
                     b.HasIndex("RequesterMemberId");
 
+                    b.HasIndex("WitnessMemberId");
+
                     b.HasIndex("TenantId", "BeneficiaryMemberId");
+
+                    b.HasIndex("TenantId", "HelperMemberId", "Status");
 
                     b.HasIndex("TenantId", "RequesterMemberId", "CreatedAt");
 
                     b.HasIndex("TenantId", "Status", "CreatedAt");
 
+                    b.HasIndex("TenantId", "Status", "ExpiresAt");
+
+                    b.HasIndex("TenantId", "WitnessMemberId", "Status");
+
                     b.ToTable("transfer_assistance_requests", (string)null);
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceWitnessInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("ConflictDeclared")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("conflict_declared");
+
+                    b.Property<string>("ConflictReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("conflict_reason");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("InvitedByUserId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("invited_by_user_id");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("request_id");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("responded_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("WitnessMemberId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("witness_member_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvitedByUserId");
+
+                    b.HasIndex("RequestId");
+
+                    b.HasIndex("WitnessMemberId");
+
+                    b.HasIndex("TenantId", "RequestId", "Status");
+
+                    b.HasIndex("TenantId", "WitnessMemberId", "Status");
+
+                    b.ToTable("transfer_assistance_witness_invitations", (string)null);
                 });
 
             modelBuilder.Entity("server.Domain.Entities.User", b =>
@@ -2833,6 +3109,41 @@ namespace server.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceEvent", b =>
+                {
+                    b.HasOne("server.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("server.Domain.Entities.TransferAssistanceRequest", "Request")
+                        .WithMany()
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Request");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceOffer", b =>
+                {
+                    b.HasOne("server.Domain.Entities.Member", "HelperMember")
+                        .WithMany()
+                        .HasForeignKey("HelperMemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("server.Domain.Entities.TransferAssistanceRequest", "Request")
+                        .WithMany("Offers")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("HelperMember");
+
+                    b.Navigation("Request");
+                });
+
             modelBuilder.Entity("server.Domain.Entities.TransferAssistanceProfile", b =>
                 {
                     b.HasOne("server.Domain.Entities.Member", "Member")
@@ -2850,15 +3161,52 @@ namespace server.Migrations
                         .WithMany()
                         .HasForeignKey("BeneficiaryMemberId");
 
+                    b.HasOne("server.Domain.Entities.Member", "HelperMember")
+                        .WithMany()
+                        .HasForeignKey("HelperMemberId");
+
                     b.HasOne("server.Domain.Entities.Member", "RequesterMember")
                         .WithMany()
                         .HasForeignKey("RequesterMemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("server.Domain.Entities.Member", "WitnessMember")
+                        .WithMany()
+                        .HasForeignKey("WitnessMemberId");
+
                     b.Navigation("BeneficiaryMember");
 
+                    b.Navigation("HelperMember");
+
                     b.Navigation("RequesterMember");
+
+                    b.Navigation("WitnessMember");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceWitnessInvitation", b =>
+                {
+                    b.HasOne("server.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("InvitedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("server.Domain.Entities.TransferAssistanceRequest", "Request")
+                        .WithMany("WitnessInvitations")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("server.Domain.Entities.Member", "WitnessMember")
+                        .WithMany()
+                        .HasForeignKey("WitnessMemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Request");
+
+                    b.Navigation("WitnessMember");
                 });
 
             modelBuilder.Entity("server.Domain.Entities.User", b =>
@@ -2942,6 +3290,13 @@ namespace server.Migrations
             modelBuilder.Entity("server.Domain.Entities.Tenant", b =>
                 {
                     b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.TransferAssistanceRequest", b =>
+                {
+                    b.Navigation("Offers");
+
+                    b.Navigation("WitnessInvitations");
                 });
 
             modelBuilder.Entity("server.Domain.Entities.User", b =>

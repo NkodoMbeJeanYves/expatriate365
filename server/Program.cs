@@ -36,6 +36,7 @@ using server.Infrastructure.BackgroundServices;
 using server.Infrastructure.Persistence;
 using server.Infrastructure.Services;
 using Microsoft.Extensions.FileProviders;
+using server.Application.TransferAssistance;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -90,6 +91,10 @@ try
         server.Infrastructure.Services.SmtpEmailService>();
 
     builder.Services.AddHostedService<ChargeGenerationBackgroundService>();
+    builder.Services.Configure<TransferAssistanceOptions>(
+        builder.Configuration.GetSection("TransferAssistance"));
+    if (builder.Configuration.GetValue<bool>("Features:TransferAssistanceEnabled"))
+        builder.Services.AddHostedService<TransferAssistanceExpirationService>();
     builder.Services.AddSingleton<JwtService>();
     builder.Services.AddScoped<server.Infrastructure.Services.AuditService>();
     builder.Services.AddScoped<server.Infrastructure.Services.PermissionResolverService>();
@@ -135,23 +140,23 @@ try
     
     Directory.CreateDirectory(downloadPath);
 
-    foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
-    {
-        if (!Directory.Exists(Path.Combine(downloadPath, sub)))
-        {
-            Directory.CreateDirectory(Path.Combine(downloadPath, sub));
-        }
-    }
+    // foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
+    // {
+    //     if (!Directory.Exists(Path.Combine(downloadPath, sub)))
+    //     {
+    //         Directory.CreateDirectory(Path.Combine(downloadPath, sub));
+    //     }
+    // }
 
     app.UseStaticFiles();
-    foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
-    {
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = new PhysicalFileProvider(Path.Combine(downloadPath, sub)),
-            RequestPath  = $"/downloads/{sub}",
-        });
-    }
+    // foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
+    // {
+    //     app.UseStaticFiles(new StaticFileOptions
+    //     {
+    //         FileProvider = new PhysicalFileProvider(Path.Combine(downloadPath, sub)),
+    //         RequestPath  = $"/downloads/{sub}",
+    //     });
+    // }
 
     app.UseAuthentication();
     app.UseAuthorization();
@@ -210,7 +215,8 @@ try
     app.MapContributionEndpoints();
     app.MapPaymentEndpoints();
     app.MapWelfareEndpoints();
-    app.MapTransferAssistanceEndpoints();
+    if (app.Configuration.GetValue<bool>("Features:TransferAssistanceEnabled"))
+        app.MapTransferAssistanceEndpoints();
     app.MapEventEndpoints();
     app.MapMeetingEndpoints();
     app.MapElectionEndpoints();

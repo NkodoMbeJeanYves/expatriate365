@@ -121,6 +121,7 @@ export class AppSidebarComponent {
   }
 
   private isVisible(item: NavItem): boolean {
+    if (item.enabled === false) return false;
     if (!item.roles || item.roles.length === 0) return true;
     return this.store.hasAnyRole(item.roles);
   }
