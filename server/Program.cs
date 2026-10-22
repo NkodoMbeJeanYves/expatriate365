@@ -85,11 +85,7 @@ try
 
     builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
     builder.Services.AddSingleton(TimeProvider.System);
-    builder.Services.AddHttpClient("Frankfurter", client =>
-    {
-        client.BaseAddress = new Uri("https://api.frankfurter.dev/");
-        client.Timeout = TimeSpan.FromSeconds(5);
-    });
+    builder.Services.AddFrankfurterHttpClient(builder.Configuration);
     builder.Services.AddSingleton<server.Application.TenantSettings.ICurrencyCatalogue,
         server.Infrastructure.Services.FrankfurterCurrencyCatalogue>();
     builder.Services.AddScoped<server.Application.TenantSettings.CurrencyValidationService>();

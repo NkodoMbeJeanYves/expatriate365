@@ -24,10 +24,10 @@ public sealed class FrankfurterCurrencyCatalogue(
             {
                 if (now < retryAt)
                     return new("unavailable", null);
-                log.LogInformation("Refreshing Frankfurter current currency catalogue");
                 try
                 {
-                    using var client = clients.CreateClient("Frankfurter");
+                    using var client = clients.CreateClient(FrankfurterServiceCollectionExtensions.ClientName);
+                    log.LogInformation("Refreshing Frankfurter current currency catalogue from {BaseAddress}", client.BaseAddress);
                     var entries = await client.GetFromJsonAsync<CurrencyEntry?[]>("v2/currencies", ct);
                     if (entries is null || entries.Length == 0 ||
                         entries.Any(e => e?.IsoCode is null || e.IsoCode.Length != 3 ||

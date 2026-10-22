@@ -929,3 +929,17 @@ Cette extension ne remplace pas les plafonds par association/devise et ne sert p
 - Le référentiel pays/devise doit être maintenu lorsque de nouveaux pays ou changements monétaires sont ajoutés ; la couverture Frankfurter ne remplace pas ce référentiel.
 - Validation de cette tranche : **96 tests backend hors MySQL réussis en Release**, dont 37 nouveaux cas de catalogue, cohérence, sauvegarde/création et audit ; **44 tests frontend réussis**, dont six pour la vérification réactive. Build production Angular et parité i18n réussis. Avertissements préexistants de budget initial (`706,25 kB` pour `500 kB`) et `CS9113` conservés.
 - Les réponses publiques du catalogue Frankfurter et du détail RSD ont été vérifiées ; les assertions automatisées utilisent des réponses simulées et ne dépendent pas du réseau public. Aucune recette navigateur ou validation HTTP bout en bout de cette tranche n’est revendiquée.
+
+### 14.10 Configuration du fournisseur Frankfurter
+
+Section `Frankfurter` de `server/appsettings.json`, validée au démarrage (l’API refuse de démarrer si elle est invalide) :
+
+| Clé | Défaut | Rôle |
+|---|---|---|
+| `BaseUrl` | `https://api.frankfurter.dev/` | API publique ou instance Frankfurter hébergée en interne (http/https absolu, sans query ; le `/` final est ajouté automatiquement). |
+| `TimeoutSeconds` | `5` | Délai HTTP maximal, entre 1 et 60 secondes. |
+| `ProxyUrl` | vide | Proxy HTTP(S) explicite ; vide = paramètres proxy système (`HTTPS_PROXY`, proxy Windows). |
+| `ProxyUseDefaultCredentials` | `false` | Authentification du proxy avec le compte Windows du service. |
+| `ProxyBypassOnLocal` | `true` | Ne pas passer par le proxy pour les adresses locales. |
+
+Les valeurs peuvent être surchargées par variables d’environnement (`Frankfurter__BaseUrl`, `Frankfurter__ProxyUrl`, etc.). Ne pas inscrire d’identifiants dans `ProxyUrl` versionné. La validation des certificats TLS n’est jamais désactivée. Le journal de rafraîchissement du catalogue indique l’adresse utilisée. Validation : **111 tests backend hors MySQL réussis en Release**, dont 15 nouveaux cas de configuration.
