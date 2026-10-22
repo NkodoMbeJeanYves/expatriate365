@@ -2,7 +2,9 @@
 
 **Nom du module :** Community Transfer Assistance  
 **Nom français :** Assistance communautaire au transfert de fonds  
-**Statut :** Lots 1 à 6 approuvés ; workflow MVP non transactionnel implémenté, validation pré-pilote en cours.
+**Statut :** Lots 1 à 6 et première tranche de préparation à la production (PROD-0 à PROD-2) approuvés. Correctifs de cette tranche implémentés ; exécution MySQL en CI et décisions opérationnelles encore attendues. Aucune activation en production.
+**Mise à jour :** 22 octobre 2026.
+**Base de données cible :** MySQL uniquement. SQLite est retiré du périmètre sur décision produit du 22 octobre 2026 ; aucune implémentation ni validation SQLite n’est prévue.
 
 ### MFA optionnelle pour le MVP non transactionnel
 
@@ -38,7 +40,7 @@ Le MVP est **non transactionnel** : l’application organise le parcours et enre
 
 ## 2. État des lieux et décisions à confirmer
 
-- Le serveur est structuré en `API`, `Application`, `Domain` et `Infrastructure`, avec des endpoints Minimal API, MediatR, EF Core et SQLite/MySQL. Le nouveau domaine doit suivre cette organisation, sans placer de logique métier dans les endpoints.
+- Le serveur est structuré en `API`, `Application`, `Domain` et `Infrastructure`, avec des endpoints Minimal API, MediatR, EF Core et MySQL via Pomelo. Le nouveau domaine doit suivre cette organisation, sans placer de logique métier dans les endpoints.
 - Le client utilise des fonctionnalités par domaine, des services HTTP, des modèles TypeScript et deux catalogues de traduction (`en.json`, `fr.json`).
 - Les versions actuellement déclarées diffèrent de certaines conventions de référence : le client déclare Angular 22, PrimeNG 22 et Tailwind 3.4 ; le serveur cible .NET 10 avec des packages EF Core 9. Avant le développement, confirmer la matrice de versions prise en charge et éviter une mise à niveau ou un ajout de dépendance uniquement pour ce module.
 - Les routes des fonctionnalités existantes utilisent des fichiers de routes lazy-loadés. La convention cible demande des composants standalone chargés par `loadComponent`. Décider de la règle à suivre pour le nouveau module en cohérence avec l’application et résoudre l’écart documentaire sans refactoriser les fonctionnalités hors périmètre.
@@ -109,7 +111,7 @@ Les phases sont séquentielles lorsque la suivante dépend d’une décision ou 
 Créer le module dans les emplacements existants, en respectant les conventions C#, EF Core et les noms de tables/colonnes snake_case :
 
 - `server/Domain/Entities/` : entités de demande, bénéficiaire, offre/affectation, invitation de témoin, session de remise, exécution déclarée, preuve, confirmation bénéficiaire, revue/alerte de risque.
-- `server/Infrastructure/Persistence/Configurations/` : configurations EF explicites, clés, index, longueurs, contraintes et conversions compatibles SQLite et MySQL.
+- `server/Infrastructure/Persistence/Configurations/` : configurations EF explicites, clés, index, longueurs, contraintes et conversions compatibles avec la version MySQL de production.
 - `server/Infrastructure/Persistence/AppDbContext.cs` : DbSet et configuration du nouveau domaine.
 - Migration EF Core vérifiée sur le provider par défaut et contrôlée pour compatibilité avec le second provider.
 
@@ -219,7 +221,7 @@ Créer une fonctionnalité `client/src/app/features/transfer-assistance/`, avec 
 - [ ] Tests d’intégration des handlers et persistance : transaction annulée, conflits, double soumission, preuve réutilisée et réception partielle.
 - [ ] Tests API d’autorisation : demandeur, aidant, témoin et conformité ; accès inter-tenant interdit ; champs et pièces visibles seulement aux acteurs autorisés.
 - [ ] Tests frontend des formulaires, masquage, rôles, transitions d’écrans et erreurs HTTP ; tests end-to-end du parcours non transactionnel.
-- [ ] Vérifier migrations et contraintes sur SQLite puis compatibilité MySQL ; vérifier pagination, contrats snake_case et exemples OpenAPI.
+- [ ] Vérifier migrations et contraintes sur MySQL, sur base vierge et historique ; vérifier pagination, contrats snake_case et exemples OpenAPI.
 - [ ] Exécuter les tests .NET ciblés, les tests Vitest concernés, le build client et le validateur i18n.
 - [ ] Déployer derrière un feature flag désactivé par défaut ; tester le flux en données fictives et former les opérateurs.
 - **Sortie :** pilote non transactionnel exploitable, journalisé et limité aux membres/corridors convenus.
@@ -291,7 +293,7 @@ Invariants à faire respecter côté serveur :
 - Les accès aux demandes, champs sensibles et fichiers sont limités au rôle et aux participants autorisés ; aucun accès inter-tenant n’est possible.
 - Les erreurs métier sont explicites, les opérations répétées ne créent pas de doubles effets, les listes sont paginées et les API respectent le format snake_case du projet.
 - Les parcours demandeur, aidant, témoin et conformité fonctionnent sur mobile et sont disponibles en français et en anglais.
-- Build frontend, tests pertinents backend/frontend, migration SQLite, contrôle de compatibilité MySQL et validation de parité i18n réussissent.
+- Build frontend, tests pertinents backend/frontend, migrations MySQL sur bases vierge et historique et validation de parité i18n réussissent.
 - Le module est désactivé par défaut et les écrans/contrats n’affirment pas qu’Expatriate est une banque, un portefeuille, un bureau de change ou un opérateur de transfert.
 
 ## 8. Livrables
@@ -345,11 +347,11 @@ Ce découpage transforme les phases précédentes en lots de travail vérifiable
 1. Ajouter les entités et types de domaine minimaux dans `server/Domain/`.
 2. Ajouter les configurations EF Core explicites et contraintes/index dans `server/Infrastructure/Persistence/Configurations/`, puis les DbSet dans `AppDbContext`.
 3. Créer la migration avec noms de tables et colonnes snake_case, UUID compatibles, contraintes et index adaptés aux recherches et vérifications d’unicité.
-4. Vérifier la migration avec SQLite ; examiner et valider les types et opérations pour MySQL sans ajouter de dépendance spécifique au domaine.
+4. Vérifier la migration sur MySQL ; examiner et valider les types et opérations sur la version de production sans ajouter de dépendance spécifique au domaine.
 5. Ajouter les tests de mapping, contraintes, relations et application de migration.
 
 **Livrable :** schéma persisté et migration réversible/traçable selon les conventions du dépôt.  
-**Critère de sortie :** migration appliquée sur une base de test SQLite vierge ; compatibilité MySQL documentée et aucune règle de persistance dépendante du provider dans Domain/Application.
+**Critère de sortie :** migration appliquée sur des bases MySQL de test vierge et historique ; aucune règle de persistance dépendante du provider dans Domain/Application.
 
 ### Lot 3 — Règles métier et cas d’usage backend
 
@@ -408,7 +410,7 @@ Ce découpage transforme les phases précédentes en lots de travail vérifiable
 1. Exécuter les tests backend ciblés, tests frontend ciblés, build client et validation i18n.
 2. Exécuter les tests d’intégration du workflow avec scénarios de double requête, concurrence, annulation, preuve réutilisée, réception partielle, suspension et incident.
 3. Effectuer une revue des droits, du masquage, du stockage, de la journalisation et de la rétention des données.
-4. Vérifier SQLite et la compatibilité du schéma avec MySQL ; contrôler la documentation et les exemples API.
+4. Vérifier le schéma et les migrations MySQL ; contrôler la documentation et les exemples API.
 5. Activer le module uniquement derrière un feature flag désactivé par défaut, sur données fictives et avec accès opérateur limité.
 6. Documenter procédure de support, revue manuelle, suspension, signalement et réponse à incident.
 
@@ -445,12 +447,251 @@ Le Lot 0 et le **plan d’implémentation des Lots 1 à 6** ont été approuvés
 - Confirmation authentifiée par le bénéficiaire sélectionné. Une réception complète clôt le dossier ; une réception partielle ou absente ouvre un litige.
 - Suspension/reprise et résolution des litiges par la conformité, journal d’événements, notifications in-app, concurrence optimiste et expiration périodique.
 - Interfaces Angular pour les rôles demandeur, aidant, témoin, bénéficiaire et conformité ; feature flag désactivé par défaut côté client et serveur.
-- Migration du workflow avec reprise prudente des clés des demandes ouvertes historiques : seule une demande ouverte unique par tenant et demandeur reçoit la clé d’unicité ; les groupes historiques ambigus restent sans clé plutôt que d’échouer à la migration.
+- Migration du workflow générée avec reprise des clés des demandes ouvertes historiques. Sa relecture a identifié un défaut : le filtre des états ouverts porte sur la sous-requête mais pas sur les lignes modifiées ; des dossiers fermés peuvent recevoir la même clé et empêcher la création de l’index unique. La correction et le traitement des groupes historiques ambigus sont prévus en section 12.
 
 ### Validation et prérequis avant pilote
 
 - Le build backend et le build production Angular réussissent ; la validation de parité i18n réussit. Le bundle Angular dépasse toujours le budget initial préexistant de 500 kB (706,39 kB).
-- La compilation des tests ciblés est bloquée par des erreurs préexistantes dans `server.Tests/RecordPaymentCommandTests.cs` : les appels au constructeur de `RecordPaymentCommandHandler` ne fournissent pas `INotificationService`. Les nouveaux tests du module doivent être exécutés après résolution de ce blocage ; aucun résultat de tests .NET n’est revendiqué.
-- La migration a été générée et relue, mais n’a pas été appliquée ni validée sur une base MySQL de test. Elle n’a pas été validée sous SQLite ; le dépôt utilise actuellement Pomelo/MySQL pour ce schéma.
+- Les validations de la première tranche ont donné 59 tests backend hors MySQL et 38 tests frontend réussis, sans exclusion temporaire. Les quatre constructions du handler paiement et la fixture d’ownership ont été corrigées ; un cas distinct vérifie le membre inexistant. Six tests d’intégration MySQL sont explicitement ignorés localement en l’absence d’instance dédiée, conformément à la décision de les exécuter uniquement en CI pour le moment.
+- La migration a été générée et relue, mais n’a pas été appliquée ni validée sur une base MySQL de test représentative. MySQL est désormais l’unique cible ; SQLite n’est pas un prérequis de livraison.
 - Le module reste désactivé. Pour un environnement de test, activer explicitement le feature flag serveur et son équivalent client, et définir un `MaximumRequestAmountMur` strictement positif ; sa valeur par défaut `0` bloque les demandes. Ne pas choisir de plafond métier sans décision produit/juridique.
 - Avant pilote : faire passer les tests workflow et d’accès inter-tenant, appliquer la migration sur un jeu de données représentatif, vérifier les permissions en HTTP et conduire les revues juridique, opérationnelle et de sécurité. Aucun mouvement de fonds réel ni intégration financière n’est autorisé.
+
+## 12. Plan d’application des écarts avant production
+
+### 12.1 Objectif, limites et statut
+
+Rendre exploitable en production **l’assistance communautaire non transactionnelle** : dossiers, accréditations, coordination, déclarations et litiges. La référence externe reste déclarative et ne vaut pas confirmation du prestataire.
+
+- **MySQL uniquement** : utiliser la même version, collation, configuration de fuseau horaire et mode SQL en intégration/préproduction qu’en production. Aucun lot SQLite.
+- Aucun mouvement de fonds, connecteur financier, webhook prestataire, rapprochement ou remboursement. Le Lot 7 reste soumis à une approbation séparée.
+- La MFA reste optionnelle selon la décision MVP existante. Une ouverture sans MFA exige une acceptation explicite du risque ; si la gouvernance exige la MFA, son implémentation complète devient un prérequis distinct. Un booléen utilisateur ne suffit pas.
+- La première tranche PROD-0 à PROD-2 a été approuvée le 22 octobre 2026. Cette approbation n’est ni une autorisation d’activation ni une déclaration de conformité ; PROD-3 à PROD-6 restent nécessaires avant ouverture.
+- Les conventions historiques mentionnant SQLite devront être alignées sur la décision MySQL uniquement, sans refactorisation générale ni changement de stack opportuniste.
+
+### 12.2 Synthèse des lots et dépendances
+
+Les priorités indiquent l’ordre de traitement, pas une dispense de validation : les critères de sortie de tous les lots applicables doivent être satisfaits avant ouverture.
+
+| Lot | Priorité | Objet | Dépendances |
+|---|---|---|---|
+| PROD-0 | P0 | Fixer les décisions de mise en production et la cible MySQL | Première tranche approuvée ; certaines décisions restent attendues |
+| PROD-1 | P0 | Fiabiliser la migration et les données historiques | PROD-0 |
+| PROD-2 | P0 | Rétablir une validation automatisée standard | PROD-0 |
+| PROD-3 | P0 | Valider le workflow réel, ses droits et sa concurrence | PROD-1 et PROD-2 |
+| PROD-4 | P1 | Terminer la robustesse frontend et la recette navigateur | PROD-2 ; recette intégrée après PROD-3 |
+| PROD-5 | P1 | Fiabiliser l’exploitation, les notifications et l’expiration | PROD-0 ; validation intégrée après PROD-3 |
+| PROD-6 | P0 | Préproduction, restauration, pilote et décision d’ouverture | PROD-1 à PROD-5 et validations opérationnelles |
+
+### PROD-0 — Décisions de livraison et configuration
+
+**Travaux**
+
+1. Consigner la version exacte de MySQL et la matrice .NET/EF Core/Pomelo supportée ; conserver les versions actuelles sauf incompatibilité démontrée.
+2. Aligner les références documentaires pertinentes sur MySQL uniquement. L’absence de prise en charge SQLite n’est plus un défaut à corriger.
+3. Faire approuver le plafond métier, les délais de mise en relation/invitation et les règles d’éligibilité ; conserver le plafond bloquant tant que la décision n’est pas prise.
+4. Définir les tenants autorisés au pilote, les responsables conformité/support et la procédure d’accréditation. Utiliser des comptes opérateurs distincts des participants.
+5. Faire valider la politique MFA : maintien optionnel avec risque accepté ou chantier MFA complet séparé, sans activation artificielle de `MfaEnabled`.
+6. Fixer les durées de rétention des dossiers, références externes, événements et journaux, ainsi que les règles d’archivage/purge compatibles avec l’audit.
+7. Définir avant les essais les volumes représentatifs, le pic de concurrence, les objectifs de latence p95, les délais de notification/expiration et les objectifs de restauration RPO/RTO.
+8. Documenter les configurations client/serveur par environnement, la gestion des secrets et la désactivation d’urgence. Vérifier que les identifiants de démonstration et quick-login ne sont pas exposés en production.
+
+**Critères de sortie**
+
+- Fiche de décisions approuvée, avec responsables et valeurs explicites ; aucune valeur métier choisie arbitrairement par le développement.
+- Configurations de préproduction documentées ; production toujours désactivée à ce stade.
+
+### PROD-1 — Migration MySQL et intégrité historique
+
+**Travaux**
+
+1. Corriger la reprise de `open_request_key` pour ne viser que le dossier ouvert unique du couple tenant/demandeur, jamais ses dossiers fermés.
+2. Inventorier les états historiques : aucun ouvert, un ouvert avec plusieurs fermés, plusieurs ouverts, dossiers inactifs et clés déjà renseignées. Définir explicitement quels dossiers comptent pour l’unicité.
+3. Détecter les groupes ambigus avant migration ; produire un diagnostic exploitable et les traiter par une décision métier tracée. Ne pas résoudre le problème en supprimant arbitrairement des dossiers ni en laissant des doublons actifs contournant l’unicité.
+4. Vérifier si la migration a déjà été appliquée dans un environnement partagé. Si oui, préparer aussi une réparation en avant pour les données existantes ; une simple modification du fichier historique ne répare pas les bases déjà migrées.
+5. Valider les index uniques, clés étrangères, jetons de concurrence, longueurs et types MySQL ; vérifier le comportement des erreurs d’unicité et de concurrence.
+6. Tester sur une base vierge et une copie anonymisée représentative du schéma précédent, avec les fixtures historiques ci-dessus.
+7. Préparer un script de précontrôle et le script de déploiement révisé ; mesurer la durée et les verrous. Tenir compte des commits implicites DDL de MySQL : ne pas promettre un rollback transactionnel global.
+8. Prévoir sauvegarde et restauration avant migration ; tester la restauration plutôt qu’un `Down` destructif sur des dossiers réels.
+
+**Critères de sortie**
+
+- Migration réussie sur les deux types de bases ; dossiers fermés sans clé d’ouverture et au plus un dossier ouvert autorisé par tenant/demandeur.
+- Comptages et relations conservés, aucun groupe ambigu non traité, contrôles post-migration réussis.
+- Réexécution du déploiement sur une base à jour sans altération inattendue ; procédure de récupération répétée en préproduction.
+
+### PROD-2 — Tests standards et garde-fous de livraison
+
+**Travaux**
+
+1. Mettre à jour les quatre constructions de `RecordPaymentCommandHandler` dans les tests de paiement avec un double de `INotificationService`, sans changer le métier paiement.
+2. Réparer la fixture du test d’ownership du transfert en utilisant un autre membre réellement éligible ; conserver un test distinct pour le membre inexistant/inéligible.
+3. Rendre le lancement ciblé Vitest reproductible avec la configuration du dépôt, sans option corrective ad hoc.
+4. Exécuter les tests ciblés après corrections, puis la suite backend/frontend standard pour constituer une référence de livraison sans exclusion temporaire.
+5. Ajouter des tests d’intégration avec une base MySQL isolée et éphémère. Ne pas utiliser EF InMemory comme preuve des contraintes ou de la concurrence MySQL.
+6. Créer ou compléter le pipeline CI : restauration reproductible, builds, tests unitaires/intégration, parité i18n et publication des résultats. Ne pas réutiliser une base de développement partagée.
+7. Examiner les avertissements de dépendances et de build ; corriger les incompatibilités bloquantes ou documenter leur traitement avant ouverture, sans mise à niveau globale non justifiée.
+
+**Critères de sortie**
+
+- Commandes documentées et reproductibles depuis un checkout propre ; zéro exclusion temporaire, zéro test en échec et aucune nouvelle régression.
+- CI bloquante en cas d’échec ; résultats MySQL consultables et distincts des résultats unitaires.
+
+### PROD-3 — Contrats HTTP, workflow et concurrence réelle
+
+**Travaux**
+
+1. Tester via HTTP le parcours complet : accréditations → soumission → approbation → offre → sélection → invitation/acceptation témoin → rendez-vous → trois confirmations → référence externe → réception totale.
+2. Tester les branches rejet, annulation avant remise, refus/expiration du témoin, retrait d’accréditation, réception partielle/non reçue, litige, suspension/reprise et résolution.
+3. Construire une matrice rôle/permission/état pour chaque endpoint. Vérifier notamment `org_admin` exclu des nouvelles missions aidant/témoin, l’interdiction d’auto-revue, l’indépendance du témoin et les missions déjà engagées préservées.
+4. Vérifier l’isolation inter-tenant par accès direct aux identifiants, listes, recherches, audit et notifications, y compris les comptes multi-rôles et les changements de tenant autorisés.
+5. Sur MySQL, envoyer simultanément : deux soumissions du même demandeur, deux demandes d’accréditation du même rôle, deux sélections, deux réponses à invitation et deux confirmations identiques.
+6. Tester les références externes réutilisées selon la portée d’unicité prévue, les mises à jour concurrentes et la course entre expiration et action utilisateur.
+7. Vérifier les effets persistés, pas seulement le code HTTP : un seul état valide, aucun doublon d’événement métier ou de notification logique et aucune confirmation perdue. Une répétition doit être idempotente ou produire un conflit explicite conforme au contrat.
+8. Contrôler les champs masqués de chaque DTO, pagination, snake_case, erreurs `{ "error": "..." }`, codes HTTP, exemples OpenAPI et cohérence du feature flag sur toutes les routes.
+
+**Critères de sortie**
+
+- Chaque transition permise et interdite de la matrice possède un test ; tous réussissent sur la cible MySQL.
+- Aucun accès inter-tenant ou non autorisé ; invariants métier conservés après les tests concurrents.
+- Aucun endpoint du module ne contourne la désactivation serveur.
+
+### PROD-4 — Robustesse frontend et recette multi-comptes
+
+**Travaux**
+
+1. Tester puis corriger la reprise des recherches après erreur HTTP : une panne ne doit pas terminer définitivement le flux des recherches témoins/bénéficiaires.
+2. Conserver le délai de 1 000 ms des recherches concernées, le minimum de caractères, l’annulation immédiate des requêtes obsolètes et la suppression des anciens résultats.
+3. Vérifier les actions en cours : boutons protégés contre le double clic, retour explicite en cas de conflit, rechargement de l’état serveur et absence de faux succès.
+4. Vérifier connexion, restauration de session, renouvellement, déconnexion et changement de tenant ; aucune donnée ou confirmation de l’ancien contexte ne doit subsister.
+5. Exécuter une recette navigateur avec des comptes distincts demandeur, aidant, témoin, bénéficiaire et opérateur. Couvrir le parcours nominal et les branches principales de PROD-3.
+6. Vérifier les messages FR/EN de toutes les erreurs du module, formulaires, dialogues PrimeNG, états vide/chargement/échec, navigation clavier, focus et affichage mobile.
+7. Examiner les caches PWA/service worker et le stockage navigateur : aucune réponse métier sensible réutilisée après changement de compte/tenant ni mise en cache non autorisée des API.
+8. Mesurer le chargement du module et le bundle. Traiter les régressions attribuables au module ; toute exception au budget doit être motivée et approuvée, pas masquée par une hausse arbitraire.
+
+**Critères de sortie**
+
+- Tests frontend et parcours navigateur réussis ; recherche réutilisable après une erreur et délai de 1 000 ms testé précisément.
+- Aucun mélange de comptes, aucun doublon d’action et aucune clé i18n brute dans les scénarios couverts.
+- Résultats de recette desktop/mobile et clavier consignés ; budget respecté ou exception acceptée.
+
+### PROD-5 — Exploitation, expiration, notifications et observabilité
+
+**Travaux**
+
+1. Tester le service d’expiration au démarrage, après indisponibilité, à la frontière des échéances et en présence de plusieurs instances API.
+2. Traiter explicitement les conflits et erreurs transitoires du traitement périodique avec journalisation, stratégie de reprise bornée et alerte ; ne pas avaler les erreurs ni transformer un échec en succès.
+3. Vérifier l’atomicité des mutations et la fiabilité des notifications. Tester panne d’envoi et reprise ; réutiliser les mécanismes existants et n’ajouter une persistance de livraison que si l’existant ne satisfait pas la garantie retenue.
+4. Documenter le rôle des préférences de notification : le dossier et l’historique restent consultables même si la notification in-app est désactivée.
+5. Mettre en place des logs structurés corrélés et des indicateurs : erreurs HTTP/conflits, durée des actions, dossiers bloqués, retard d’expiration et échecs de notification. Ne pas journaliser de secrets ni de références sensibles complètes.
+6. Vérifier la configuration de production : HTTPS, authentification, permissions, CORS, secrets externalisés, limites des recherches/actions et accès aux journaux.
+7. Exécuter les tests de charge définis en PROD-0 sur les listes, recherches et transitions ; analyser les requêtes/index avant toute optimisation.
+8. Documenter l’exploitation : revue d’accréditation, litige, incident, suspension, dossiers bloqués, rétention et purge sans destruction de l’audit requis.
+
+**Critères de sortie**
+
+- Redémarrage et exécution multi-instance sans mutation perdue ni événement logique dupliqué ; rattrapage des échéances démontré.
+- Tests de panne/reprise réussis ; alertes déclenchées lors d’un exercice et reçues par le responsable désigné.
+- Objectifs de charge/latence et de délai opérationnel approuvés en PROD-0 atteints.
+
+### PROD-6 — Préproduction, pilote et ouverture contrôlée
+
+**Travaux**
+
+1. Déployer le même artefact validé par CI dans une préproduction MySQL représentative, avec données fictives ou anonymisées.
+2. Répéter la sauvegarde, la migration, les contrôles post-déploiement et la restauration ; mesurer les RPO/RTO. Ne pas supposer que désactiver le module annule la migration.
+3. Réaliser les revues juridique, opérationnelle et de sécurité avant ouverture ; consigner les décisions et traiter les défauts bloquants. Aucune de ces revues n’est déclarée réalisée par ce plan.
+4. Vérifier l’accord explicite sur le plafond, les tenants pilotes, les opérateurs, la rétention et le risque MFA ; ne pas activer si une décision requise manque.
+5. Tester la désactivation d’urgence côté serveur et client, et son effet sur les dossiers déjà engagés. Prévoir un traitement opérateur documenté sans réactiver silencieusement les endpoints.
+6. Ouvrir d’abord un pilote limité avec surveillance active et procédure de signalement ; définir sa durée et ses seuils d’arrêt avant le démarrage.
+7. Après pilote, statuer sur l’ouverture élargie à partir des résultats, incidents, indicateurs et réserves, pas uniquement du succès des builds.
+
+**Critères de sortie**
+
+- Sauvegarde/restauration et désactivation d’urgence testées ; objectifs RPO/RTO atteints.
+- Aucun défaut bloquant non corrigé d’autorisation, d’intégrité, de confidentialité ou de disponibilité.
+- Accord explicite produit, technique et opérationnel, avec validation juridique et de sécurité consignée.
+- Le statut « prêt production » concerne uniquement le périmètre non transactionnel validé ; il n’autorise aucune intégration financière.
+
+### 12.3 Preuves attendues et ordre d’exécution
+
+**Ordre proposé :** approbation → PROD-0 → PROD-1 et PROD-2 → PROD-3 ; préparation de PROD-4/PROD-5 en parallèle lorsque leurs prérequis sont disponibles → recette intégrée → PROD-6.
+
+Les résultats seront consignés lors de l’exécution : commit/artefact testé, version MySQL, commandes et résultats de tests, matrice de recette, contrôles de migration, mesures de charge/restauration, réserves et approbations. Un élément non exécuté reste explicitement « non validé ».
+
+**Première tranche proposée après approbation :** PROD-0 à PROD-2, sans activation en production. Les tranches suivantes restent nécessaires pour atteindre l’objectif de production ; les tests unitaires seuls ne clôturent pas ce plan.
+
+### 12.4 Décisions et réalisation de la première tranche — 22 octobre 2026
+
+#### Décisions confirmées
+
+| Sujet | Décision |
+|---|---|
+| MySQL de production | `8.0.46-0ubuntu0.24.04.4` |
+| Modes SQL | `ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION` |
+| Encodage / collation | `utf8mb4` / `utf8mb4_unicode_ci` |
+| MFA | Optionnelle, avec acceptation explicite du risque par le demandeur du projet ; ne pas activer artificiellement les profils MFA |
+| Plafond et délais métier | À confirmer ; conserver le plafond bloquant actuel et ne pas activer le module |
+| Tenants pilotes, responsables, rétention, charge, p95 et RPO/RTO | À confirmer ; prérequis d’ouverture non levés |
+| Fuseau horaire / configuration temporelle MySQL | À confirmer ; aucune conversion globale introduite |
+| Validation MySQL de cette tranche | CI uniquement pour le moment, sans connexion à une base locale ou partagée |
+
+La CI utilise l’image officielle `mysql:8.0.46`, les modes SQL ci-dessus et des bases `utf8mb4_unicode_ci`. Ce contrôle du moteur ne remplace pas la recette finale sur le paquet Ubuntu exact et la configuration de production.
+
+#### Correctifs et garde-fous implémentés
+
+- Migration historique : contrôle des doublons actifs avant toute nouvelle DDL du workflow ; reprise des clés limitée aux états ouverts actifs. Les dossiers fermés/inactifs ne réservent pas de clé. Un groupe ambigu provoque une erreur explicite identifiant sa clé tenant/demandeur, plutôt qu’une migration silencieusement incomplète.
+- Migration de réparation en avant `20261022060000_RepairTransferAssistanceOpenRequestKeys` pour les bases ayant déjà appliqué le workflow : contrôle préalable, nettoyage des clés fermées/inactives et reconstruction des clés ouvertes. Aucun dossier ni historique métier supprimé ; le retour arrière de cette normalisation exige la sauvegarde vérifiée.
+- Script de diagnostic [transfer-assistance-preflight.sql](scripts/transfer-assistance-preflight.sql), à lancer avant déploiement ; toute ligne de doublon doit faire l’objet d’une résolution métier tracée.
+- Tests standards réparés : double de notifications dans les tests paiement, contrôle d’ownership avec membre existant et éligible, cas distinct pour membre inexistant, racine Vitest corrigée. Aucun retrait supplémentaire de fichier de test.
+- Quatre tests sans base vérifient la génération SQL des migrations, le script complet idempotent et la correspondance du modèle EF avec le snapshot.
+- Six tests MySQL couvrent base vierge/réexécution, historique ouvert/fermé/inactif, refus des ambiguïtés avant DDL, réparation d’un workflow déjà appliqué, refus d’ambiguïté en réparation, index unique et concurrence optimiste réelle.
+- [Pipeline de validation](.github/workflows/validation.yml) : suites backend/frontend, build production Angular, i18n, MySQL éphémère, rapports TRX/JUnit et génération SQL idempotente pour revue. Le job MySQL exige au moins six tests exécutés et réussis, sans tests ignorés.
+- Outil EF local fixé à `9.0.7` dans [.config/dotnet-tools.json](.config/dotnet-tools.json) ; version de génération MySQL fixée à `8.0.46` dans la factory design-time.
+- Dépendance `Microsoft.OpenApi` explicitement fixée à `2.7.5` pour éliminer l’avertissement NU1903 signalé par la restauration ; le contrôle NuGet des dépendances transitives ne signale plus de paquet vulnérable.
+- Conventions DB-CONF v1/v3 et référence de stack v4 alignées sur MySQL uniquement.
+
+#### Commandes reproductibles
+
+Depuis la racine, PowerShell :
+
+```powershell
+dotnet tool restore
+dotnet test .\server\server.Tests\server.Tests.csproj --filter "Category!=MySqlIntegration"
+Set-Location .\client
+npm test -- --maxWorkers 1
+npm run lint:i18n
+npm run build
+```
+
+Le job MySQL exécute la sélection `Category=MySqlIntegration`. Pour une exécution future hors CI, fournir `TRANSFER_ASSISTANCE_TEST_MYSQL` via l’environnement sécurisé, vers une **instance dédiée**, sans propriété `Database`. Les tests créent leurs propres bases au nom aléatoire et ne suppriment que celles qu’ils ont créées. Le compte de test doit pouvoir créer/supprimer ces bases ; ne jamais utiliser une instance de production. Sans cette variable, les six tests sont signalés comme ignorés, pas comme validés.
+
+Pour préparer le SQL de déploiement, depuis la racine :
+
+```powershell
+dotnet tool restore
+Set-Location .\server
+dotnet ef migrations script --idempotent --output "$env:TEMP\exp365-migrations-review.sql"
+```
+
+La génération lit la configuration design-time et ne doit pas être confondue avec l’application de la migration. Le script généré doit être relu et testé avant usage ; la CI en conserve une copie dans ses résultats backend.
+
+#### Procédure de migration à répéter en préproduction
+
+1. Désactiver le module et arrêter toutes les instances API, traitements d’expiration et autres écritures ; le feature flag seul n’arrête pas les traitements de fond. Ne pas laisser plusieurs instances appliquer les migrations simultanément.
+2. Vérifier la sauvegarde et sa restauration, puis exécuter le script de diagnostic sur la base concernée. Ne pas poursuivre si des dossiers ouverts actifs sont en doublon.
+3. Vérifier `__EFMigrationsHistory` et les colonnes/index présents. Si une ancienne migration a partiellement échoué, MySQL peut avoir conservé des DDL : ne pas relancer aveuglément. Restaurer la sauvegarde ou préparer une réparation contrôlée après inspection.
+4. Appliquer le script validé en maintenance, ou laisser une seule instance effectuer la migration au démarrage selon le mécanisme existant. Ne pas modifier manuellement l’historique EF pour masquer un échec.
+5. Contrôler les comptages, les relations, les clés et l’absence de doublons ; vérifier que la migration de réparation apparaît dans l’historique.
+6. Reprendre les instances et traitements après les contrôles ; garder l’assistance désactivée et son plafond à `0` jusqu’aux décisions et validations de PROD-3 à PROD-6.
+
+#### Résultats obtenus et réserves
+
+- Backend : **59 tests hors MySQL réussis en Release, 0 échec** ; six tests MySQL réservés à la CI, signalés comme ignorés lors du lancement local sans connexion. Aucune exclusion temporaire et snapshot EF conforme. Une sortie temporaire a évité les conflits avec les fichiers du serveur de développement.
+- Frontend : **38 réussis sur les quatre fichiers de la suite configurée**, dont 18 sur le module transfert. Des délais d’initialisation de workers Vitest ont affecté les premières tentatives locales ; la suite complète a ensuite réussi avec un seul worker.
+- Build Angular et parité i18n : réussis. Avertissement préexistant conservé : bundle initial `706,25 kB` pour un budget d’avertissement de `500 kB` ; aucun relèvement de seuil.
+- Compilation backend réussie ; avertissement préexistant `CS9113` sur `BulkImportMembersCommand` conservé.
+- Syntaxe et expressions du workflow GitHub vérifiées avec `actionlint 1.7.7` ; aucun défaut signalé après correction.
+- **MySQL non exécuté localement**, conformément au choix explicite de validation en CI. Le workflow est préparé, mais aucun résultat d’exécution GitHub n’est revendiqué avant son lancement après publication.
+- PROD-0 reste partiellement bloqué par les décisions métier/opérationnelles manquantes. PROD-1 reste à valider sur MySQL et sur un historique représentatif ; PROD-2 reste à confirmer par une CI verte.
+- Aucune migration appliquée sur une base partagée, aucun mouvement de fonds et aucune activation client/serveur effectués.

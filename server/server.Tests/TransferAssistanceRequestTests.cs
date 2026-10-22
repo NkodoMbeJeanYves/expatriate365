@@ -81,8 +81,10 @@ public class TransferAssistanceRequestTests
         Assert.Equal("errors.transfer_assistance.member_not_eligible", result.ErrorCode);
     }
 
-    [Fact]
-    public async Task SubmitRequest_OnlyAllowsTheOwningMemberToSubmitTheirDraft()
+    [Theory]
+    [InlineData(true, "errors.transfer_assistance.not_found")]
+    [InlineData(false, "errors.transfer_assistance.member_not_eligible")]
+    public async Task SubmitRequest_RejectsOtherOrMissingMembers(bool useEligibleMember, string expectedError)
     {
         await using var db = TestDbFactory.Create();
         var tenantId = Guid.NewGuid();
@@ -123,6 +125,25 @@ public class TransferAssistanceRequestTests
             Status = "active",
             JoinedDate = DateOnly.FromDateTime(DateTime.UtcNow)
         };
+        var otherUser = new User
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Email = "other-member@example.com",
+            FirstName = "Other",
+            LastName = "Member"
+        };
+        var otherMember = new Member
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            UserId = otherUser.Id,
+            MembershipNumber = "M-003",
+            Status = "active",
+            JoinedDate = DateOnly.FromDateTime(DateTime.UtcNow)
+        };
+        db.Users.Add(otherUser);
+        db.Members.Add(otherMember);
         db.Members.Add(member);
         db.Members.Add(beneficiary);
         var request = new TransferAssistanceRequest
@@ -156,11 +177,12 @@ public class TransferAssistanceRequestTests
             }),
             NullLogger<SubmitTransferAssistanceRequestHandler>.Instance);
         var result = await handler.Handle(
-            new SubmitTransferAssistanceRequestCommand(tenantId, Guid.NewGuid(), user.Id, request.Id),
+            new SubmitTransferAssistanceRequestCommand(
+                tenantId, useEligibleMember ? otherMember.Id : Guid.NewGuid(), otherUser.Id, request.Id),
             CancellationToken.None);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("errors.transfer_assistance.not_found", result.ErrorCode);
+        Assert.Equal(expectedError, result.ErrorCode);
         Assert.Equal(TransferAssistanceStatuses.Draft, request.Status);
     }
 

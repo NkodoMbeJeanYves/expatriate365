@@ -11,6 +11,8 @@ namespace server.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql(TransferAssistanceOpenRequestKeySql.Preflight);
+
             migrationBuilder.AddColumn<string>(
                 name: "beneficiary_confirmation",
                 table: "transfer_assistance_requests",
@@ -273,27 +275,7 @@ namespace server.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
-            migrationBuilder.Sql("""
-                UPDATE transfer_assistance_requests AS request_row
-                INNER JOIN (
-                    SELECT tenant_id, requester_member_id
-                    FROM transfer_assistance_requests
-                    WHERE status IN (
-                        'draft', 'submitted', 'matching', 'witness_pending',
-                        'meeting_scheduled', 'transfer_in_progress', 'transfer_sent',
-                        'disputed', 'suspended'
-                    )
-                    GROUP BY tenant_id, requester_member_id
-                    HAVING COUNT(*) = 1
-                ) AS unique_open_request
-                    ON unique_open_request.tenant_id = request_row.tenant_id
-                    AND unique_open_request.requester_member_id = request_row.requester_member_id
-                SET request_row.open_request_key = CONCAT(
-                    REPLACE(LOWER(CAST(request_row.tenant_id AS CHAR)), '-', ''),
-                    ':',
-                    REPLACE(LOWER(CAST(request_row.requester_member_id AS CHAR)), '-', '')
-                );
-                """);
+            migrationBuilder.Sql(TransferAssistanceOpenRequestKeySql.Backfill);
 
             migrationBuilder.CreateIndex(
                 name: "IX_transfer_assistance_requests_helper_member_id",

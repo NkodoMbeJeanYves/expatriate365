@@ -38,7 +38,7 @@ The CLAUDE.md reference stack, promoted here as a binding convention:
 **Backend**
 - ASP.NET Core **9**
 - Entity Framework Core
-- SQLite (MVP) / MySQL (evolution) — see DB-CONF in v3
+- MySQL only — see DB-CONF in v3 (updated by the product decision of 2026-10-22)
 - Serilog for structured logging
 - Scalar / Swagger / OpenAPI for documentation
 
