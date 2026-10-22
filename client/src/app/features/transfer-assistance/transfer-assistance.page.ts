@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -44,7 +45,7 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
   selector: 'app-transfer-assistance-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, DatePipe, ButtonModule, InputTextModule, SelectModule, ConfirmDialog],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe, DatePipe, ButtonModule, InputTextModule, SelectModule, ConfirmDialog],
   providers: [ConfirmationService],
   template: `
     <p-confirmdialog />
@@ -165,12 +166,17 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
       @if (isOrgAdmin()) {
         <p role="status" class="rounded-lg bg-blue-50 p-4 text-sm text-blue-900">
           {{ 'transfer_assistance.admin_participation_forbidden' | translate }}
+          <a routerLink="/transfer-assistance/info" class="ml-1 font-medium underline">{{ 'transfer_assistance.info.link' | translate }}</a>
         </p>
       }
       @if (canManageProfile()) {
         <section class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
           <h2 class="text-lg font-semibold text-gray-900">{{ 'transfer_assistance.participate_title' | translate }}</h2>
           <p class="mt-1 text-sm text-gray-500">{{ 'transfer_assistance.manual_verification' | translate }}</p>
+          <a routerLink="/transfer-assistance/info" data-testid="info-link-accreditation"
+            class="mt-1 inline-flex items-center gap-1 text-sm text-primary-600 hover:underline">
+            <i class="pi pi-question-circle" aria-hidden="true"></i>{{ 'transfer_assistance.info.link' | translate }}
+          </a>
           <div class="mt-4 grid gap-3 sm:grid-cols-2">
             @for (participation of participationRoles(); track participation.role) {
               <div class="space-y-3 rounded-lg border border-gray-200 p-3 text-sm">
@@ -252,6 +258,9 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
                         <input class="rounded-lg border border-gray-300 px-3 py-2"
                           (input)="onWitnessSearch(request.id, $event)" autocomplete="off" />
                       </label>
+                      <a routerLink="/transfer-assistance/info" class="text-xs text-primary-600 hover:underline">
+                        {{ 'transfer_assistance.info.link_witness' | translate }}
+                      </a>
                       @for (witness of witnessOptions(); track witness.member_id) {
                         <button type="button" (click)="inviteWitness(request, witness)"
                           class="rounded-lg border border-gray-200 px-3 py-2 text-left text-sm hover:bg-gray-50">
@@ -418,6 +427,9 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
         <section class="rounded-2xl border border-gray-100 bg-white shadow-sm">
           <div class="border-b border-gray-100 p-5">
             <h2 class="text-lg font-semibold">{{ 'transfer_assistance.witness_invitations' | translate }}</h2>
+            <a routerLink="/transfer-assistance/info" class="mt-1 inline-block text-sm text-primary-600 hover:underline">
+              {{ 'transfer_assistance.info.link_witness' | translate }}
+            </a>
           </div>
           @if (!witnessInvitations().length) {
             <p class="p-5 text-sm text-gray-500">{{ 'transfer_assistance.no_witness_invitations' | translate }}</p>
