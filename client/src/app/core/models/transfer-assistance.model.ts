@@ -175,6 +175,26 @@ export interface TransferAssistanceProfile {
   witness_verification_status: 'not_requested' | 'pending' | 'verified' | 'rejected';
 }
 
+export interface TransferAssistanceMyEligibility {
+  member_active: boolean;
+  email_verified: boolean;
+  mfa_enabled: boolean;
+  is_community_admin: boolean;
+  can_request_accreditation: boolean;
+}
+
+export interface TransferAssistanceRules {
+  require_mfa: boolean;
+  matching_window_days: number;
+  invitation_window_days: number;
+  minimum_request_amount: number;
+  maximum_request_amount: number;
+  amount_currency: string;
+  requests_open: boolean;
+  verifier_roles: string[];
+  my_eligibility: TransferAssistanceMyEligibility;
+}
+
 export interface TransferAssistanceProfileReviewItem extends TransferAssistanceProfile {
   member_id: string;
   member_name: string;

@@ -943,3 +943,49 @@ Section `Frankfurter` de `server/appsettings.json`, validée au démarrage (l’
 | `ProxyBypassOnLocal` | `true` | Ne pas passer par le proxy pour les adresses locales. |
 
 Les valeurs peuvent être surchargées par variables d’environnement (`Frankfurter__BaseUrl`, `Frankfurter__ProxyUrl`, etc.). Ne pas inscrire d’identifiants dans `ProxyUrl` versionné. La validation des certificats TLS n’est jamais désactivée. Le journal de rafraîchissement du catalogue indique l’adresse utilisée. Validation : **111 tests backend hors MySQL réussis en Release**, dont 15 nouveaux cas de configuration.
+
+## 15. Page d’information « Qui peut être aidant ou témoin ? »
+
+**Statut :** réalisé. Aucune modification de règle métier, de permission ni de rôle.
+
+### 15.1 Objectif
+
+Expliquer aux membres, dans l’application, qui peut devenir aidant ou témoin, comment obtenir l’accréditation, qui la valide et quelles règles s’appliquent pendant un dossier. Le contenu reflète les contrôles serveur existants ; il ne les remplace pas.
+
+### 15.2 Contenu de la page
+
+1. **Rôles** : aidant (se propose sur une demande ouverte) et témoin (invité par le demandeur après le choix de l’aidant).
+2. **Qui peut participer** : tout membre actif de l’association, membres du bureau compris ; l’administrateur de l’association (`org_admin`) est exclu.
+3. **Conditions communes** : compte et fiche membre actifs, e-mail vérifié, double authentification si l’association l’exige, accréditation validée, une accréditation par rôle.
+4. **Validation** : par un responsable habilité (rôles portant `transfer_assistance.verify_users`, par défaut administrateur de l’association et commissaire aux comptes) ; personne ne valide sa propre accréditation.
+5. **Règles de l’aidant** : pas d’aide sur sa propre demande ni lorsqu’on est bénéficiaire ; une offre par demande ; éligibilité revérifiée au choix de l’offre.
+6. **Règles du témoin** : indépendant du demandeur, de l’aidant et du bénéficiaire ; une seule invitation en attente à la fois ; éligibilité revérifiée à l’acceptation ; délai de réponse configuré.
+7. **Étapes** : accréditation → validation → offre (aidant) et choix → invitation du témoin et remise → transfert et confirmation de réception.
+8. **Rappel** : la plateforme ne collecte, ne détient ni ne transfère d’argent ; elle met en relation et trace les engagements.
+9. **Mon statut** : conditions personnelles remplies/manquantes et état des accréditations aidant/témoin, avec un lien vers la gestion des accréditations ; message dédié pour `org_admin`.
+
+### 15.3 Lots
+
+| Lot | Contenu |
+|---|---|
+| INFO-0 | Endpoint `GET /api/v1/transfer-assistance/rules` (authentifié, lecture seule, permission `transfer_assistance.profile_manage`) exposant `require_mfa`, `matching_window_days`, `invitation_window_days`, `minimum_request_amount`, `maximum_request_amount`, `amount_currency`, `requests_open`, `verifier_roles` et `my_eligibility` ; documentation OpenAPI avec exemple ; logs Serilog ; tests. |
+| INFO-1 | Page Angular autonome `features/transfer-assistance/transfer-assistance-info.page.ts`, route `/transfer-assistance/info` sous le layout authentifié (même condition d’activation que le module), OnPush, signaux, PrimeNG `Tag`, Tailwind responsive. Chargement parallèle (`forkJoin`) des règles et de `GET /transfer-assistance/profile/me` ; en cas d’échec, les informations générales restent affichées. |
+| INFO-2 | Liens « Qui peut être aidant ou témoin ? » dans la zone accréditation et dans le message `org_admin` ; lien « Qui peut être témoin ? » dans la recherche de témoin et dans la section des invitations ; pas d’entrée dans le menu principal. |
+| INFO-3 | i18n FR/EN dans `transfer_assistance.info.*` (parité, sans BOM). La ligne MFA n’apparaît comme obligatoire que si `require_mfa` est vrai ; les rôles valideurs sont traduits via `roles.<code>`. |
+| INFO-4 | Tests backend des règles (configuration, bornes, éligibilité, rôles valideurs) et tests de la page (chargement, ligne MFA conditionnelle, statut personnel, état d’erreur, cas `org_admin`, sévérités). |
+
+### 15.4 Hors périmètre
+
+- Aucun changement des règles d’éligibilité, des permissions ou des rôles.
+- Pas de page publique non authentifiée (le module est réservé aux membres d’une association).
+- Pas de contenu éditable par l’administrateur dans cette tranche (option future : texte complémentaire par association).
+
+### 15.5 Critère d’acceptation
+
+Un membre comprend, sans contacter le bureau, s’il peut être aidant ou témoin, ce qu’il lui manque, qui valide sa demande et quelles situations sont interdites ; la page reste cohérente avec la configuration serveur.
+
+### 15.6 Réalisation et validation
+
+- Backend : `TransferAssistanceRulesQueries.cs`, DTO `TransferAssistanceRulesResponse` / `TransferAssistanceMyEligibility`, endpoint `/api/v1/transfer-assistance/rules` (monté uniquement si `Features:TransferAssistanceEnabled`). Les fenêtres sont bornées (offres 1–90 jours, invitation 1–30 jours) ; `requests_open` est faux tant que le plafond configuré vaut 0.
+- Frontend : page d’information, route, liens d’accès, service `getRules()`, modèles TypeScript, 56 clés i18n FR/EN.
+- Validation : **120 tests backend hors MySQL réussis en Release** (9 nouveaux), **50 tests frontend réussis** (6 nouveaux), build Angular réussi (seul l’avertissement préexistant de budget initial subsiste), parité i18n vérifiée.

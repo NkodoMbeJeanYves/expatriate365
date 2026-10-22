@@ -19,6 +19,7 @@ import {
   TransferAssistanceEvent,
   TransferAssistanceProfile,
   TransferAssistanceRequest,
+  TransferAssistanceRules,
   UpdateTransferAssistanceProfile,
 } from '@models/transfer-assistance.model';
 
@@ -30,6 +31,11 @@ export class TransferAssistanceApiService {
   private readonly profileUrl = `${environment.apiUrl}/api/v1/transfer-assistance/profile`;
   private readonly profileReviewsUrl = `${environment.apiUrl}/api/v1/admin/transfer-assistance-profiles`;
   private readonly adminCasesUrl = `${environment.apiUrl}/api/v1/admin/transfer-assistance-requests`;
+  private readonly rulesUrl = `${environment.apiUrl}/api/v1/transfer-assistance/rules`;
+
+  getRules(): Observable<TransferAssistanceRules> {
+    return this.http.get<TransferAssistanceRules>(this.rulesUrl);
+  }
 
   getProfile(): Observable<TransferAssistanceProfile> {
     return this.http.get<TransferAssistanceProfile>(`${this.profileUrl}/me`);

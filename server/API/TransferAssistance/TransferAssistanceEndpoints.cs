@@ -20,6 +20,31 @@ public static class TransferAssistanceEndpoints
             .WithTags("Transfer Assistance Profile")
             .RequireAuthorization(Permissions.TransferAssistanceProfileManage);
 
+        app.MapGet("/api/v1/transfer-assistance/rules", async (
+                ClaimsPrincipal principal, IMediator mediator, CancellationToken ct) =>
+            {
+                var tenantId = GetTenantId(principal);
+                var memberId = GetMemberId(principal);
+                if (tenantId is null) return Results.Unauthorized();
+                if (memberId is null) return Results.Forbid();
+                return Results.Ok(await mediator.Send(
+                    new GetTransferAssistanceRulesQuery(tenantId.Value, memberId.Value), ct));
+            })
+            .WithTags("Transfer Assistance Profile")
+            .RequireAuthorization(Permissions.TransferAssistanceProfileManage)
+            .WithSummary("Get helper/witness participation rules and the current member's eligibility")
+            .WithDescription("""
+                Read-only rules mirrored from the server configuration, used by the information page.
+                verifier_roles lists the association roles allowed to review accreditations.
+                Sample response: {"require_mfa":false,"matching_window_days":14,"invitation_window_days":5,
+                "minimum_request_amount":1,"maximum_request_amount":0,"amount_currency":"MUR","requests_open":false,
+                "verifier_roles":["org_admin","auditor"],"my_eligibility":{"member_active":true,"email_verified":true,
+                "mfa_enabled":false,"is_community_admin":false,"can_request_accreditation":true}}.
+                """)
+            .Produces<TransferAssistanceRulesResponse>()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
         profiles.MapGet("/me", async (ClaimsPrincipal principal, IMediator mediator) =>
             {
                 var tenantId = GetTenantId(principal);
