@@ -555,7 +555,8 @@
       "invalid_status": "Seules les dépenses en attente peuvent être validées."
     },
     "tenant": {
-      "not_found": "Association introuvable."
+      "not_found": "Association introuvable.",
+      "currency_mismatch": "Choisissez une devise locale valide pour le pays de l'association."
     }
   },
   "dashboard": {
@@ -1283,6 +1284,14 @@
     "no_activity": "Aucune activité enregistrée"
   },
   "settings": {
+    "currency_checking": "Vérification du pays, de la devise et de la couverture fournisseur...",
+    "currency_consistent": "Devise cohérente avec le pays de l'association.",
+    "currency_covered": "Devise couverte par Frankfurter. La disponibilité d'un taux récent est vérifiée séparément.",
+    "currency_not_covered": "Devise non couverte par Frankfurter. L'enregistrement reste possible ; les estimations peuvent être indisponibles.",
+    "currency_unavailable": "Vérification Frankfurter indisponible. Une configuration locale valide reste enregistrable.",
+    "currency_check_failed": "Échec de la vérification. Réessayez ; le serveur validera la configuration à l'enregistrement.",
+    "currency_allowed": "Devises autorisées :",
+    "currency_verify": "Vérifier la devise",
     "title": "Paramètres de l'association",
     "subtitle": "Informations générales et devise monétaire",
     "general": "Informations générales",
@@ -1524,6 +1533,7 @@
     "RW": "Rwanda",
     "ST": "São Tomé-et-Príncipe",
     "SN": "Sénégal",
+    "RS": "Serbie",
     "SC": "Seychelles",
     "SL": "Sierra Leone",
     "SO": "Somalie",

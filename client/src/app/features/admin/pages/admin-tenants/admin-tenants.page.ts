@@ -20,6 +20,7 @@ import { ToastService } from '@service/toast.service';
 import { AuthService } from '@core/auth/auth.service';
 import { TenantSummaryDto } from '@models/admin.model';
 import { COUNTRIES, CountryData } from '@core/data/countries';
+import { CurrencyValidationComponent } from '@shared/components/currency-validation/currency-validation.component';
 
 @Component({
   selector: 'app-admin-tenants',
@@ -27,7 +28,7 @@ import { COUNTRIES, CountryData } from '@core/data/countries';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe, ReactiveFormsModule, ButtonModule, InputTextModule, PasswordModule,
-    DrawerModule, TagModule, ProgressSpinnerModule, TooltipModule, TranslatePipe, SelectModule,
+    DrawerModule, TagModule, ProgressSpinnerModule, TooltipModule, TranslatePipe, SelectModule, CurrencyValidationComponent,
   ],
   template: `
     <div class="p-6 max-w-7xl mx-auto">
@@ -189,6 +190,11 @@ import { COUNTRIES, CountryData } from '@core/data/countries';
           </div>
         </div>
 
+        @if (showForm()) {
+          <app-currency-validation [country]="form.controls.country_code.value"
+            [currency]="form.controls.base_currency.value" [superAdmin]="true" />
+        }
+
         <!-- Section administrateur -->
         <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">
           {{ 'tenants.section_admin' | translate }}
@@ -349,8 +355,8 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
   onCountryChange(code: string): void {
     const country = COUNTRIES.find(c => c.code === code);
     if (!country) return;
-    this.form.get('country_code')!.setValue(country.code, { emitEvent: false });
-    this.form.get('base_currency')!.setValue(country.currency, { emitEvent: false });
+    this.form.get('country_code')!.setValue(country.code);
+    this.form.get('base_currency')!.setValue(country.currency);
   }
 
   toUpper(event: Event, field: 'country_code' | 'base_currency'): void {
@@ -399,7 +405,7 @@ export class AdminTenantsPage implements OnInit, OnDestroy {
         this.toast.success(this.translate.instant('admin.tenant_created', { name: tenant.name }));
       },
       error: (err: any) => {
-        this.error.set(err?.error?.error ?? 'Erreur lors de la création.');
+        this.error.set(this.translate.instant(err?.error?.error ?? 'errors.save_error'));
         this.saving.set(false);
       },
     });

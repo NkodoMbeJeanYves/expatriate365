@@ -11,8 +11,9 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { CurrencyValidationComponent } from '@shared/components/currency-validation/currency-validation.component';
 
-const CURRENCIES = [
+const CURRENCY_OPTIONS = [
   { label: 'Euro (€)', value: 'EUR', symbol: '€' },
   { label: 'Franc CFA BEAC (FCFA)', value: 'XAF', symbol: 'FCFA' },
   { label: 'Franc CFA BCEAO (FCFA)', value: 'XOF', symbol: 'FCFA' },
@@ -37,6 +38,12 @@ const CURRENCIES = [
   { label: 'Franc rwandais (RWF)', value: 'RWF', symbol: 'RWF' },
   { label: 'Franc congolais (CDF)', value: 'CDF', symbol: 'CDF' },
 ];
+const CURRENCIES = [
+  ...CURRENCY_OPTIONS,
+  ...ALL_COUNTRIES.filter(country => !CURRENCY_OPTIONS.some(option => option.value === country.currency))
+    .filter((country, index, countries) => countries.findIndex(c => c.currency === country.currency) === index)
+    .map(country => ({ label: country.currency, value: country.currency, symbol: country.currency })),
+];
 
 const COUNTRIES = ALL_COUNTRIES.map(c => ({ label: `${c.flag} ${c.name}`, value: c.code })).sort((a, b) => a.label.localeCompare(b.label));
 
@@ -52,6 +59,7 @@ const COUNTRIES = ALL_COUNTRIES.map(c => ({ label: `${c.flag} ${c.name}`, value:
     SelectModule,
     MessageModule,
     TranslatePipe,
+    CurrencyValidationComponent,
   ],
   template: `
     <div class="p-6 max-w-2xl flex flex-col gap-6">
@@ -141,6 +149,7 @@ const COUNTRIES = ALL_COUNTRIES.map(c => ({ label: `${c.flag} ${c.name}`, value:
                 </label>
                 <p-select
                   formControlName="country_code"
+                  (onChange)="onCountryChange($event.value)"
                   [options]="countries"
                   optionLabel="label"
                   optionValue="value"
@@ -219,6 +228,10 @@ const COUNTRIES = ALL_COUNTRIES.map(c => ({ label: `${c.flag} ${c.name}`, value:
             </div>
           }
 
+          <app-currency-validation
+            [country]="form.controls.country_code.value"
+            [currency]="form.controls.base_currency.value" />
+
           <!-- Feedback -->
           @if (saved()) {
             <p-message severity="success">{{ 'settings.saved' | translate }}</p-message>
@@ -282,7 +295,15 @@ export class AdminSettingsPage implements OnInit {
     this.loading.set(false);
   }
 
-  onCurrencyChange(event: any): void {
+  onCountryChange(code: string): void {
+    const country = ALL_COUNTRIES.find(country => country.code === code);
+    if (country) {
+      const currency = CURRENCIES.find(currency => currency.value === country.currency);
+      this.form.patchValue({ base_currency: country.currency, currency_symbol: currency?.symbol ?? country.currency });
+    }
+  }
+
+  onCurrencyChange(event: { value: string }): void {
     const match = CURRENCIES.find((c) => c.value === event.value);
     if (match) this.form.patchValue({ currency_symbol: match.symbol });
   }
@@ -343,9 +364,9 @@ export class AdminSettingsPage implements OnInit {
           this.saving.set(false);
           this.saved.set(true);
         },
-        error: () => {
+        error: (err: { error?: { error?: string } }) => {
           this.saving.set(false);
-          this.error.set(this.translateService.instant('errors.save_error'));
+          this.error.set(this.translateService.instant(err.error?.error ?? 'errors.save_error'));
         },
       });
   }

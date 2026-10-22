@@ -555,7 +555,8 @@
       "invalid_status": "Only pending expenses can be validated."
     },
     "tenant": {
-      "not_found": "Association not found."
+      "not_found": "Association not found.",
+      "currency_mismatch": "Select a valid local currency for the association country."
     }
   },
   "dashboard": {
@@ -1284,6 +1285,14 @@
     "no_activity": "No activity recorded"
   },
   "settings": {
+    "currency_checking": "Checking country, currency and provider coverage...",
+    "currency_consistent": "Currency consistent with the association country.",
+    "currency_covered": "Currency covered by Frankfurter. Availability of a recent rate is checked separately.",
+    "currency_not_covered": "Currency not covered by Frankfurter. You can save; exchange-rate estimates may be unavailable.",
+    "currency_unavailable": "Frankfurter verification unavailable. A valid local configuration can still be saved.",
+    "currency_check_failed": "Currency verification failed. Try again; the server will validate the configuration when saving.",
+    "currency_allowed": "Allowed currencies:",
+    "currency_verify": "Verify currency",
     "title": "Association settings",
     "subtitle": "General information and currency",
     "general": "General information",
@@ -1525,6 +1534,7 @@
     "RW": "Rwanda",
     "ST": "S\u00c3\u00a3o Tom\u00c3\u00a9 & Pr\u00c3\u00adncipe",
     "SN": "Senegal",
+    "RS": "Serbia",
     "SC": "Seychelles",
     "SL": "Sierra Leone",
     "SO": "Somalia",

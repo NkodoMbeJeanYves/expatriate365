@@ -5,6 +5,7 @@
 **Statut :** Lots 1 à 6 et première tranche de préparation à la production (PROD-0 à PROD-2) approuvés. Correctifs de cette tranche implémentés ; exécution MySQL en CI et décisions opérationnelles encore attendues. Aucune activation en production.
 **Mise à jour :** 22 octobre 2026.
 **Base de données cible :** MySQL uniquement. SQLite est retiré du périmètre sur décision produit du 22 octobre 2026 ; aucune implémentation ni validation SQLite n’est prévue.
+**Extension proposée :** parcours espèces et devise explicite par association, section 13, en attente d’approbation distincte.
 
 ### MFA optionnelle pour le MVP non transactionnel
 
@@ -695,3 +696,236 @@ La génération lit la configuration design-time et ne doit pas être confondue 
 - **MySQL non exécuté localement**, conformément au choix explicite de validation en CI. Le workflow est préparé, mais aucun résultat d’exécution GitHub n’est revendiqué avant son lancement après publication.
 - PROD-0 reste partiellement bloqué par les décisions métier/opérationnelles manquantes. PROD-1 reste à valider sur MySQL et sur un historique représentatif ; PROD-2 reste à confirmer par une CI verte.
 - Aucune migration appliquée sur une base partagée, aucun mouvement de fonds et aucune activation client/serveur effectués.
+
+## 13. Extension proposée — Espèces et devises par association
+
+**Statut :** plan CASH-0 à CASH-6 approuvé le 22 octobre 2026 ; implémentation en attente du « go ». L’ajout Frankfurter de la section 14 est soumis à approbation distincte. Aucun changement applicatif ni migration de cette extension n’est autorisé par sa rédaction.
+
+### 13.1 Objectif et périmètre
+
+Permettre à un membre sans compte bancaire de demander une assistance financée en espèces, dans la devise de son association, sans limiter le module à Maurice.
+
+- Association à Maurice : devise de remise `MUR`.
+- Association en Serbie : devise de remise `RSD`.
+- La devise de réception dépend de la destination et du canal externe ; elle peut être différente de la devise de remise.
+- La plateforme ne détient pas de fonds, ne fait pas de change et ne garantit pas l’exécution du prestataire. Le parcours réel de collecte/remise doit être validé juridiquement et accepté par le prestataire.
+- Premier incrément : une seule devise de remise par association, financement `cash`, bénéficiaire authentifié selon les règles existantes, canaux de réception existants. Pas de portefeuille, de caisse plateforme, de compensation, de cotation garantie ni de retrait espèces bénéficiaire. Une estimation indicative automatisée est proposée en section 14.
+
+### 13.2 Décisions de conception proposées pour approbation
+
+#### A. Source de la devise
+
+1. Réutiliser `Tenant.CountryCode` et `Tenant.BaseCurrency`, déjà présents, sans ajouter de configuration concurrente.
+2. Le pays propose la devise via un référentiel partagé pays/devises. `BaseCurrency`, explicitement confirmée dans les paramètres de l’association, est la source serveur de la devise de remise.
+3. Pour cette extension, autoriser uniquement une devise locale prise en charge pour le pays de l’association. Pour un pays à plusieurs devises, exiger un choix explicite dans cette liste ; aucun défaut arbitraire.
+4. Auditer les associations existantes avant activation : les valeurs par défaut historiques `FR`/`EUR` ne prouvent pas le pays réel. Une configuration absente, inconnue ou incohérente bloque les nouvelles demandes avec un message actionnable.
+5. Ne jamais déduire la devise du navigateur, de la langue, du serveur d’hébergement, du pays de destination ou d’une valeur `MUR` globale.
+6. Une modification du pays ne convertit pas automatiquement les montants et ne change pas silencieusement `BaseCurrency` ; elle impose une confirmation cohérente et auditée des paramètres.
+
+#### B. Montants explicites et historique stable
+
+Chaque demande conserve un instantané du pays de l’association et de sa devise de remise au moment de la création :
+
+| Champ proposé sur le contrat API | Signification |
+|---|---|
+| `funding_method` | Mode de financement, `cash` pour ce premier incrément |
+| `association_country_code` | Pays d’origine de l’association lors de la création ; défini par le serveur |
+| `funding_currency` | Code ISO 4217 de remise ; défini par le serveur |
+| `funding_amount` | Principal à confier, exprimé en devise de remise |
+| `fee_amount` | Frais annoncés, séparés du principal, dans la même devise |
+| `total_handover_amount` | Principal + frais ; calcul serveur, pas de total librement fourni par le client |
+| `receive_currency` | Devise attendue à destination, distincte de la devise de remise |
+| `receive_method` | Canal du bénéficiaire, indépendant de `funding_method` |
+
+- Pays et devise d’origine ne sont pas modifiables dans le corps de création ; ils sont retournés dans les DTO de lecture.
+- Après création, un changement des paramètres de l’association ne réécrit aucun dossier, y compris les brouillons. Un changement de devise d’un dossier nécessite une nouvelle demande ; aucune conversion implicite.
+- Les frais restent « à confirmer » tant que l’accord n’est pas établi ; absence de frais renseignés ne signifie pas zéro. Zéro doit être explicite. Aucune remise ne peut être confirmée avant l’accord des parties sur principal, frais et total.
+- Toute révision avant remise invalide les accords précédents. Après remise, corrections uniquement par le parcours d’incident audité.
+- Aucun montant à recevoir n’est obtenu en recopiant le montant de remise dans une autre devise. L’estimation indicative proposée en section 14 reste distincte d’un montant confirmé par le prestataire ; la cotation garantie est hors périmètre.
+- Utiliser des décimaux et la précision monétaire de la devise : ne pas imposer deux décimales à toutes les devises ; refuser les fractions non prises en charge plutôt que les arrondir silencieusement.
+- Afficher systématiquement le code ISO à côté des montants dans les écrans, confirmations, historiques, notifications et récapitulatifs. Le symbole seul ne suffit pas.
+
+#### C. Plafonds et agrégats
+
+- Remplacer les limites globales nommées `MinimumRequestAmountMur` et `MaximumRequestAmountMur` par des règles du module par association et devise, validées côté serveur.
+- Une limite de `10 000 MUR` ne devient jamais `10 000 RSD`. Toute devise nouvellement configurée exige un plafond approuvé ; absence de plafond = nouvelles demandes bloquées.
+- Les règles de montant et leur devise doivent rester cohérentes lors d’un changement de paramètres ; ne pas réutiliser un ancien plafond sous une nouvelle devise.
+- Revalider les limites applicables lors de la soumission et des étapes d’engagement définies au cadrage. Un changement de plafond ne doit ni réinterpréter une devise ni altérer une remise déjà effectuée ; prévoir une revue explicite des dossiers concernés.
+- Ne jamais additionner des montants de devises différentes : listes, tableaux de bord, exports et totaux regroupent par code devise. Pas de consolidation convertie sans futur mécanisme de change approuvé.
+
+### 13.3 Lots d’application backend et frontend
+
+| Lot | Travaux | Dépendances | Critère de sortie |
+|---|---|---|---|
+| CASH-0 | Valider le montage espèces, les responsabilités, frais, restitution, lieux, plafonds et source de devise ; vérifier les paramètres réels des associations | Approbation de la section 13 | Règles confirmées ; aucun compte bancaire exigé du demandeur |
+| CASH-1 | Réutiliser ou compléter le référentiel pays/devises ; valider les paramètres de l’association et exposer les paramètres monétaires nécessaires au formulaire | CASH-0 | Maurice/MUR et Serbie/RSD résolus côté serveur ; configuration incohérente explicitement bloquée |
+| CASH-2 | Ajouter les instantanés monétaires, principal/frais/total et financement ; adapter entités, DTO snake_case, validations, index pertinents et migrations MySQL ; remplacer les limites MUR | CASH-1 | Montants non ambigus et contrôles serveur cohérents ; historique préservé |
+| CASH-3 | Étendre rendez-vous et confirmations : accord sur montants, montant remis/reçu et attestation séparée du témoin ; divergence bloquante ; récapitulatif de suivi | CASH-2 | Les trois confirmations concernent le même accord et la même devise |
+| CASH-4 | Gérer refus du prestataire, délai après remise, restitution totale/partielle, confirmation indépendante du demandeur et litige | CASH-3 | Aucune clôture ordinaire avec remise/restitution contestée |
+| CASH-5 | Adapter formulaire, offres, suivi, confirmations PrimeNG, notifications, audit, exports et traductions FR/EN ; distinguer financement et réception | Contrats CASH-2 ; recette complète après CASH-4 | Parcours lisible sans compte bancaire, sans MUR codé en dur ni total multidevise trompeur |
+| CASH-6 | Tests unitaires, HTTP, MySQL, concurrence et navigateur ; migration représentative et pilote limité | CASH-1 à CASH-5 | Scénarios de la section 13.5 validés et accord d’ouverture obtenu |
+
+Les lots réutilisent les services, contrôles d’accès, événements et composants existants. Aucune refonte des autres domaines financiers de l’application n’est incluse ; seules les surfaces utilisant les données du transfert sont adaptées.
+
+### 13.4 Reprise des données et compatibilité
+
+1. Inventorier toutes les dépendances à `AmountMur`/`amount_mur`, aux limites MUR et aux libellés fixes : serveur, contrats, frontend, notifications, exemples API, exports et tests. Rechercher les helpers pays/devises existants avant d’ajouter un référentiel.
+2. Les anciens montants `amount_mur` restent historiquement en **MUR**, quel que soit le pays actuel de l’association. Renommer ou recopier le champ ne constitue jamais une conversion.
+3. Le pays historique n’est renseigné que si sa provenance est fiable ; ne pas inventer un pays mauricien à partir du seul code MUR. Une donnée inconnue reste explicitement identifiable.
+4. Ne pas attribuer rétroactivement `cash`, des frais nuls ou un montant effectivement remis à un dossier qui ne les a pas enregistrés. Définir une reprise contrôlée des dossiers ouverts ; conserver les dossiers clos en lecture historique avec leurs inconnues.
+5. Les dossiers ouverts incompatibles avec la nouvelle configuration font l’objet d’une revue avant poursuite, sans réécriture silencieuse des montants.
+6. Choisir une transition de contrat adaptée au déploiement client/API. Un ancien payload `amount_mur` ne peut être accepté que dans un contexte MUR explicitement vérifié ; il doit être rejeté pour RSD, jamais réinterprété. Documenter la dépréciation et le retrait du contrat historique.
+7. Tester les migrations sur MySQL 8.0.46 et données représentatives ; prévoir sauvegarde/restauration et contrôle des montants avant/après. Aucune migration de production sans validation préalable.
+
+### 13.5 Matrice minimale de validation
+
+- Maurice : principal `1 000 MUR`, frais `50 MUR`, total `1 050 MUR` ; réception mobile money en XAF sans montant XAF inventé.
+- Serbie : principal `10 000 RSD`, frais `200 RSD`, total `10 200 RSD` ; demandeur sans compte bancaire, canal de réception indépendant.
+- Configuration pays/devise absente ou incohérente, plafond manquant pour RSD : création/soumission bloquée avec erreur traduite.
+- Précision : devises prises en charge à zéro, deux ou trois décimales ; refus des fractions invalides et calcul exact du total.
+- Modification des paramètres de l’association : dossiers existants inchangés, nouvelles demandes dans la nouvelle devise approuvée, anciens plafonds non réutilisés.
+- Historique MUR appartenant aujourd’hui à une association configurée en RSD : toujours affiché MUR ; aucune conversion ni faux frais rétroactifs.
+- Contrat historique `amount_mur` refusé en contexte RSD ; client et API nouveaux cohérents.
+- Double confirmation, accord révisé, différence entre montants remis/reçus, témoin absent, refus prestataire, restitution partielle et litige.
+- Isolation inter-tenant : impossible d’emprunter la devise, le plafond ou le dossier d’une autre association.
+- Tableaux de bord, exports, notifications et audit : code devise explicite ; agrégats séparés MUR/RSD.
+- Parcours navigateur FR/EN, mobile et clavier avec comptes distincts, sans exigence de compte bancaire.
+
+### 13.6 Conditions d’approbation et articulation production
+
+L’approbation demandée porte sur **CASH-0 à CASH-6**, avec les choix proposés en section 13.2 : devise locale confirmée de l’association, une devise de remise par association, instantané immuable par dossier, plafonds par association/devise, financement cash explicite et aucune conversion automatique.
+
+Les montants des plafonds, frais autorisés, délais de restitution et modalités juridiques ne sont pas décidés par cette approbation technique : ils doivent être confirmés en CASH-0 avant les étapes qui en dépendent.
+
+La MFA reste optionnelle selon la décision précédente, sans affaiblir les autres contrôles. Le module reste désactivé tant que les prérequis de production ne sont pas levés.
+
+Cette extension complète PROD-0 à PROD-6 : sa migration, ses contrats et sa recette doivent être intégrés aux contrôles de production avant d’ouvrir le parcours cash. Elle n’autorise ni mouvement de fonds par la plateforme ni intégration financière du Lot 7.
+
+## 14. Ajout proposé — Estimation de réception avec Frankfurter v2
+
+**Statut :** implémentation autorisée uniquement pour la configuration pays/devise et la vérification de couverture (section 14.8), après clarification du périmètre le 22 octobre 2026. L’estimation de réception et le parcours cash restent hors de cette tranche.
+
+### 14.1 Fournisseur et limites
+
+- Utiliser [Frankfurter v2](https://frankfurter.dev/) pour obtenir des taux indicatifs. Sa documentation annonce une API gratuite sans clé et des taux mis à jour quotidiennement, pas des cotations temps réel.
+- Exemple de requête ciblée : `https://api.frankfurter.dev/v2/rates?base=MUR&quotes=XAF`. Le paramètre de filtrage est `quotes`, au pluriel ; la réponse est un tableau contenant notamment `date`, `base`, `quote`, `rate`.
+- Pour une association serbe : même appel avec `base=RSD`, sans branche métier spécifique à la Serbie.
+- Les taux sont agrégés par défaut à partir des sources du fournisseur ; ils ne sont pas le taux commercial ni la marge du prestataire de transfert. Vérifier les conditions d’utilisation et la couverture des paires retenues avant ouverture ; ne pas supposer un SLA de production.
+
+### 14.2 Résolution des devises
+
+1. Lors de la configuration de l’association, le pays propose sa devise locale ; l’administrateur confirme `BaseCurrency` conformément à CASH-1. Ne pas utiliser Frankfurter comme référentiel pays/devise.
+2. Pour une nouvelle demande, le serveur détermine la devise de remise depuis cette configuration validée ; le client ne peut pas imposer une autre devise d’origine.
+3. Pour un dossier existant, utiliser son instantané `funding_currency`, jamais la configuration actuelle de l’association.
+4. Déterminer séparément `receive_currency` selon la destination et les règles du canal. Cameroun : `XAF` ; ne pas confondre avec `XOF`.
+5. Envoyer au fournisseur uniquement la paire de codes devises normalisés. Aucun montant, identifiant utilisateur/tenant/dossier, bénéficiaire ou renseignement personnel ne doit lui être transmis.
+6. Une paire non couverte rend uniquement l’estimation indisponible, sans modifier les devises et sans interdire le parcours d’assistance autrement valide.
+
+### 14.3 Calcul, date et affichage
+
+- Calcul serveur en décimal : `estimated_receive_amount = funding_amount × exchange_rate`. Le principal est converti, pas le total principal + frais de remise.
+- Les frais du prestataire à destination et sa marge de change ne sont pas présumés connus ni déduits fictivement. L’estimation n’est pas un montant net garanti.
+- Exemple de test à partir du taux communiqué : `1 000 MUR × 12,3298 = 12 329,8 XAF`, affiché approximativement `12 330 XAF` si arrondi au franc le plus proche. Cet exemple n’est pas un taux actuel garanti.
+- Conserver la précision du taux pour le calcul et arrondir le résultat selon les décimales de réception ; documenter l’arrondi au plus proche, demi-unité à l’opposé de zéro.
+- Afficher les deux codes ISO, « Montant de réception estimé », la source Frankfurter, la date effective `date` et l’heure de récupération. Ne pas présenter l’heure de récupération comme la date du taux.
+- Si les devises sont identiques : taux `1`, calcul local, sans appel externe ; indiquer qu’aucune conversion n’est nécessaire, et non un taux obtenu de Frankfurter.
+- Présenter explicitement : « Estimation indicative. Le montant réel dépend du taux et des frais du prestataire. »
+- Séparer définitivement estimation, référence externe et montant effectivement reçu. Un changement du taux indicatif n’invalide pas les confirmations de remise et ne modifie pas l’accord sur principal/frais.
+
+### 14.4 Backend, cache et traitement des erreurs
+
+1. Ajouter un client HTTP typé Frankfurter dans Infrastructure, via les mécanismes existants et une interface applicative simple ; pas de framework multi-fournisseurs prématuré.
+2. Exposer un endpoint JWT du module, cloisonné par tenant et soumis aux permissions existantes, sous `/api/v1/transfer-requests`. Pour un dossier, vérifier ses droits d’accès et résoudre la devise depuis son instantané ; pour le formulaire, la résoudre depuis le tenant authentifié.
+3. Retourner un DTO snake_case avec montant principal, devises, taux, montant estimé, `rate_date`, `fetched_at`, source et caractère indicatif. Ne pas accepter un taux ni un montant estimé fourni par le navigateur comme source de vérité.
+4. Valider la réponse fournisseur : paire exacte attendue, un seul résultat pertinent, taux strictement positif, date valide non future, champs complets et calcul sans dépassement. Un tableau vide ou ambigu est une erreur explicite, jamais un taux `1` ou zéro de secours.
+5. Proposer un cache technique par paire de **6 heures** et un âge maximal du taux de **7 jours calendaires**, à approuver. Distinguer ces deux durées pour tolérer week-ends et jours sans publication. Un cache expiré déclenche une nouvelle consultation ; si elle échoue, afficher l’erreur plutôt qu’un ancien résultat présenté comme actuel.
+6. Mutualiser les requêtes simultanées d’une paire, borner les délais HTTP et les reprises transitoires, limiter les appels clients et respecter un éventuel `Retry-After`. Aucun appel fournisseur à chaque frappe ni boucle de retry non bornée.
+7. Retourner les indisponibilités avec le format d’erreur du dépôt `{ "error": "..." }`, des codes traduisibles et un statut HTTP documenté. Le frontend peut continuer la demande sans estimation ; aucun succès-shaped fallback.
+8. Journaliser les échecs, latences et taux périmés sans données de dossier ; documenter l’indisponibilité du service. L’URL fournisseur est une configuration contrôlée, jamais une URL arbitraire fournie par le client.
+
+### 14.5 Frontend et conservation
+
+- Afficher automatiquement l’estimation dès que le principal et la devise de réception sont valides ; utiliser les services HTTP dédiés.
+- Annuler les résultats obsolètes lorsque montant, destination, devise ou contexte de session change ; différer la saisie du montant de 1 000 ms et exploiter le cache backend.
+- Prévoir les états chargement, disponible, paire non couverte, taux trop ancien et panne ; effacer toute ancienne estimation dont les entrées ont changé.
+- Ajouter traductions FR/EN, formatage monétaire adapté à la devise et accessibilité du résultat.
+- Pour le simple aperçu du formulaire, aucun historique à chaque frappe. À la soumission, conserver séparément un instantané indicatif valide s’il existe : principal, paire, taux, date, récupération, résultat et source. Une estimation manquante ne bloque pas la soumission.
+- Ne pas recopier un aperçu périmé à la soumission : vérifier sa correspondance et sa fraîcheur côté serveur ; en cas d’indisponibilité, conserver explicitement l’absence d’estimation. Aucune estimation rétroactive fabriquée pour les anciens dossiers.
+- Toute estimation actualisée ultérieurement est présentée distinctement de l’instantané initial ; ne jamais réécrire silencieusement le montant estimé enregistré lors de la soumission.
+
+### 14.6 Lots et critères d’acceptation
+
+| Lot | Travaux | Dépendances | Validation |
+|---|---|---|---|
+| FX-0 | Confirmer Frankfurter, couverture, conditions, politique de fraîcheur/cache et arrondi | Approbation section 14 | Règles explicites ; aucune promesse de taux temps réel |
+| FX-1 | Client HTTP, validation fournisseur, cache, endpoint protégé et erreurs documentées | FX-0 et contrats CASH-1/CASH-2 | Tests déterministes avec réponses HTTP simulées ; aucune donnée personnelle envoyée |
+| FX-2 | Aperçu frontend, calcul serveur, traductions et instantané séparé à la soumission | FX-1 | Montants/devise/source/date cohérents, parcours utilisable sans estimation |
+| FX-3 | Tests HTTP, MySQL de l’instantané et recette multi-associations | FX-2 | CI et scénarios ci-dessous réussis avant ouverture |
+
+Scénarios obligatoires :
+
+- MUR → XAF : résultat et arrondi exacts sur la fixture fournie ; RSD → XAF : appel avec RSD et absence de MUR codé en dur.
+- Même devise : aucun appel externe ; XAF et XOF jamais substitués.
+- Association modifiée après création : estimation du dossier dans sa devise d’origine.
+- Taux du week-end encore admissible, taux âgé de plus de sept jours refusé, date future invalide ; horloge injectée dans les tests.
+- Timeout, HTTP 429/5xx, JSON invalide, résultat absent/ambigu, paire incorrecte, taux nul/négatif et dépassement décimal.
+- Calcul sur principal seul, frais séparés, précision des devises à zéro/deux/trois décimales.
+- Annulation des réponses périmées et changement de tenant ; refus d’accès au dossier d’une autre association.
+- Pas de blocage du workflow lors d’une panne Frankfurter ; absence d’estimation explicitement visible.
+- Instantané initial inchangé après actualisation ; dossiers historiques sans fausse estimation.
+- CI sans dépendance obligatoire à l’API publique : simulations pour les assertions exactes ; vérification réelle de couverture distincte, sans montant attendu figé.
+
+### 14.7 Approbation demandée
+
+Approuver l’ajout FX-0 à FX-3 au plan CASH, avec Frankfurter v2, base issue de l’association ou de l’instantané du dossier, devise de réception distincte, estimation non garantie, cache de six heures et fraîcheur maximale de sept jours proposés.
+
+Cette extension ne remplace pas les plafonds par association/devise et ne sert pas à convertir les limites de conformité. Elle n’autorise aucun transfert financier ni activation en production. L’implémentation attend une approbation puis un « go » explicite.
+
+### 14.8 Contrôle de la devise lors de la configuration de l’association
+
+**Amélioration soumise à approbation :** comparer la devise choisie par l’administrateur aux devises actuelles couvertes par Frankfurter, en complément du contrôle pays/devise de CASH-1.
+
+#### Deux contrôles distincts, sans confusion de responsabilité
+
+1. **Cohérence géographique :** le référentiel partagé pays/devises détermine les devises locales autorisées pour le pays. Maurice autorise MUR ; Serbie autorise RSD. Frankfurter n’est pas la source de ce lien.
+2. **Couverture fournisseur :** `GET https://api.frankfurter.dev/v2/currencies` fournit les devises disponibles ; `GET https://api.frankfurter.dev/v2/currency/MUR` fournit les détails de MUR et ses sources. Comparer le code ISO normalisé de la sélection au champ `iso_code`, pas au nom ni au symbole.
+3. Le détail MUR vérifié contient `iso_code`, `iso_numeric`, `name`, `symbol`, `start_date`, `end_date` et `providers`, mais pas de correspondance pays/devise. Les dates de couverture ne constituent pas à elles seules une preuve de cours légal ni de fraîcheur d’une paire.
+4. Une devise reconnue par Frankfurter ne devient donc pas autorisée pour tous les pays : EUR peut être couvert par le fournisseur tout en étant refusé pour une association configurée à Maurice dans le périmètre local retenu.
+5. Utiliser le catalogue courant par défaut, pas `scope=all` qui inclut des devises historiques. Le catalogue ne garantit pas qu’une paire donnée dispose d’un taux récent ; ce contrôle reste effectué au moment de l’estimation.
+
+#### Parcours administrateur proposé
+
+1. L’administrateur choisit le pays ; le formulaire propose les devises locales du référentiel.
+2. Il confirme la devise de base ; le backend contrôle sa cohérence géographique et consulte le catalogue Frankfurter en cache.
+3. Afficher séparément les résultats :
+   - « Devise cohérente avec le pays » ;
+   - « Devise couverte par Frankfurter — vérifiée le … » ;
+   - ou un avertissement explicite de couverture absente/non vérifiable.
+4. Une incohérence pays/devise bloque l’enregistrement de cette configuration monétaire, même si Frankfurter connaît le code. Aucun remplacement automatique par EUR ou MUR.
+5. Une devise locale valide mais non couverte par Frankfurter autorise l’enregistrement avec avertissement : l’assistance reste utilisable, mais l’estimation est indisponible pour les paires non couvertes. Ne pas créer une dépendance obligatoire à un service gratuit pour gérer une association.
+6. Une panne Frankfurter ne doit pas être assimilée à « devise inconnue ». Autoriser l’enregistrement géographiquement valide avec statut « vérification fournisseur indisponible », et permettre une nouvelle vérification explicite.
+7. Le changement de pays ou de devise efface immédiatement l’ancien résultat de validation et exige une nouvelle vérification. Il ne modifie ni les instantanés des dossiers ni les plafonds dans une autre devise.
+
+#### Application backend/frontend et tests
+
+- Réutiliser le client HTTP FX-1 pour le catalogue, avec cache proposé de **24 heures**, distinct du cache des taux de six heures ; mutualiser les appels et horodater la consultation.
+- Le serveur refait le contrôle lors de la sauvegarde ; les indicateurs du navigateur ne font pas autorité. Limiter cette action aux administrateurs disposant du droit existant de configuration de leur association.
+- Ne pas persister un simple booléen « devise validée pour toujours » : exposer statut, source et date, et réévaluer à l’expiration du cache. La disponibilité instantanée d’un taux est contrôlée séparément.
+- Ne transmettre que le code devise à Frankfurter, sans pays associé à un identifiant de tenant ni données personnelles.
+- Intégrer les contrôles à CASH-1 et FX-1/FX-2, les traductions FR/EN et les exemples API. Ne pas changer silencieusement les autres règles financières de l’association.
+- Ajouter des tests : Maurice/MUR accepté et couvert ; Serbie/RSD accepté si présent au catalogue ; Maurice/EUR refusé malgré sa couverture ; pays à plusieurs devises ; code normalisé ; devise historique ; devise locale non couverte ; panne/JSON invalide ; catalogue expiré ; résultats frontend obsolètes ; sauvegarde directe contournant l’interface ; maintien des dossiers et plafonds historiques.
+
+**Critère d’acceptation :** le pays détermine les choix monétaires autorisés, Frankfurter confirme uniquement leur couverture d’estimation, et l’administrateur voit une distinction claire entre incohérence, absence de couverture et panne du fournisseur.
+
+### 14.9 Réalisation de la tranche configuration
+
+- Contrôle serveur des devises locales pour les pays proposés dans l’application, avec ajout de la Serbie/RSD et prise en charge de choix locaux multiples pour Lesotho, Liberia, Namibie, Eswatini et Zimbabwe. Le code historique ZWL n’est plus proposé comme devise actuelle du Zimbabwe ; ZWG est proposé, sans réécrire les anciens enregistrements.
+- Création super-administrateur et mise à jour des paramètres : normalisation des codes, refus d’incohérence avec `errors.tenant.currency_mismatch`, contrôle avant mutation, et retour de `currency_validation` dans la réponse d’enregistrement monétaire. Un changement monétaire dans les paramètres est audité avec son auteur ; une mise à jour non monétaire ne réinterprète pas la configuration historique.
+- Endpoints protégés `POST /api/v1/tenant/currency-validation` (permission `settings.update`) et `POST /api/v1/superadmin/currency-validation` (super-administrateur uniquement). Les contrôles de sauvegarde ne dépendent pas d’un appel préalable du navigateur. Exemples dans [currency-validation.http](server/currency-validation.http).
+- Client Frankfurter côté serveur, catalogue courant `/v2/currencies`, cache de 24 heures par instance, appels concurrents mutualisés, délai HTTP de cinq secondes. En cas de panne, court délai de reprise d’une minute pour éviter une rafale d’appels ; aucun catalogue expiré présenté comme vérifié.
+- Statuts distincts `covered`, `not_covered`, `unavailable` et `not_checked`. Pas de taux ni de conversion dans cette tranche ; une devise couverte ne garantit pas l’existence d’un taux récent pour une paire.
+- Composant Angular partagé entre création et paramètres : vérification après 300 ms, source/date, avertissements FR/EN, bouton de nouvelle vérification, annulation des requêtes et effacement des résultats obsolètes. La sauvegarde d’une configuration locale valide reste possible sans couverture ou pendant une panne.
+- Aucun montant de transfert, plafond, devise de réception ou historique de dossier modifié. Aucune migration MySQL requise.
+- Le référentiel pays/devise doit être maintenu lorsque de nouveaux pays ou changements monétaires sont ajoutés ; la couverture Frankfurter ne remplace pas ce référentiel.
+- Validation de cette tranche : **96 tests backend hors MySQL réussis en Release**, dont 37 nouveaux cas de catalogue, cohérence, sauvegarde/création et audit ; **44 tests frontend réussis**, dont six pour la vérification réactive. Build production Angular et parité i18n réussis. Avertissements préexistants de budget initial (`706,25 kB` pour `500 kB`) et `CS9113` conservés.
+- Les réponses publiques du catalogue Frankfurter et du détail RSD ont été vérifiées ; les assertions automatisées utilisent des réponses simulées et ne dépendent pas du réseau public. Aucune recette navigateur ou validation HTTP bout en bout de cette tranche n’est revendiquée.

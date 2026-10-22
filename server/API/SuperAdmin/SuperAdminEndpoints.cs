@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
 using server.API.Extensions;
 using server.Application.SuperAdmin;
+using server.Application.TenantSettings;
 
 namespace server.API.SuperAdmin;
 
@@ -15,6 +16,25 @@ public static class SuperAdminEndpoints
         var group = app.MapGroup("/api/v1/superadmin")
             .WithTags("SuperAdmin")
             .RequireAuthorization();
+        group.MapPost("/currency-validation", async (HttpContext ctx, CurrencyValidationRequest body,
+            CurrencyValidationService service, CancellationToken ct) =>
+        {
+            if (!ctx.User.IsSuperAdmin()) return Results.Forbid();
+            return Results.Ok(await service.ValidateAsync(body, ct));
+        })
+        .WithName("ValidateNewTenantCurrency")
+        .WithSummary("Validate country/currency before association creation (super_admin only)")
+        .WithDescription("""
+            Example request: {"country_code":"RS","base_currency":"RSD"}.
+            Example response: {"country_code":"RS","base_currency":"RSD","is_consistent":true,
+            "allowed_currencies":["RSD"],"coverage_status":"covered","source":"Frankfurter",
+            "checked_at":"2026-10-22T00:00:00Z"}.
+            Local inconsistency returns is_consistent false; provider unavailability is an explicit
+            coverage_status, not a rejection of a geographically valid configuration.
+            """)
+        .Produces<CurrencyValidationResponse>()
+        .Produces(StatusCodes.Status401Unauthorized)
+        .Produces(StatusCodes.Status403Forbidden);
 
         group.MapGet("/tenants", async (HttpContext ctx, IMediator mediator) =>
         {
