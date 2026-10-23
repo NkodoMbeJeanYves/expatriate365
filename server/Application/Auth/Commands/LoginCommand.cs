@@ -23,19 +23,6 @@ public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginC
     : IRequestHandler<LoginCommand, ServiceResult<LoginResponse>>
 {
 
-    private async Task<(string? entityType, string? entityId)> ResolveEntityAsync(Guid userId, Guid? tenantId, string role, CancellationToken ct)
-    {
-        if (tenantId is null) return (role, userId.ToString());
-        var member = await db.Members.AsNoTracking()
-            .FirstOrDefaultAsync(m => m.UserId == userId && m.TenantId == tenantId && m.IsActive, ct);
-        if (member is null) return (role, userId.ToString());
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var isBoardMember = await db.BoardMembers.AnyAsync(
-            b => b.MemberId == member.Id && b.IsActive
-              && b.StartDate <= today && (b.EndDate == null || b.EndDate >= today), ct);
-        return (isBoardMember ? "board_member" : "member", member.Id.ToString());
-    }
-
     public async Task<ServiceResult<LoginResponse>> Handle(LoginCommand request, CancellationToken ct)
     {
         var dto = request.Dto;
@@ -68,7 +55,7 @@ public class LoginCommandHandler(AppDbContext db, JwtService jwt, ILogger<LoginC
         await db.SaveChangesAsync(ct);
 
         var permissions = await permissionResolver.ResolveAsync(user.Role, user.TenantId, ct);
-        var (entityType, entityId) = await ResolveEntityAsync(user.Id, user.TenantId, user.Role, ct);
+        var (entityType, entityId) = await AuthEntityResolver.ResolveAsync(db, user.Id, user.TenantId, user.Role, ct);
         log.LogInformation("Login success: {UserId} role={Role} entityType={EntityType}", user.Id, user.Role, entityType);
         return ServiceResult<LoginResponse>.Success(new LoginResponse(
             jwt.GenerateAccessToken(user, permissions, entityType, entityId),

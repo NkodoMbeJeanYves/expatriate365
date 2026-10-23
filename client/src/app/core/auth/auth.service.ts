@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
+import { finalize, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthStore } from './auth.store';
 import { LoginRequest, LoginResponse, MeResponse, PublicTenant } from './models/user.model';
@@ -105,8 +105,10 @@ export class AuthService {
   bootstrap(): Promise<void> {
     const token = this.store.accessToken();
     if (!token) return Promise.resolve();
+    this.store.setLoading(true);
     return new Promise((resolve) => {
-      this.me().subscribe({ next: () => resolve(), error: () => resolve() });
+      this.me().pipe(finalize(() => this.store.setLoading(false)))
+        .subscribe({ next: () => resolve(), error: () => resolve() });
     });
   }
 }

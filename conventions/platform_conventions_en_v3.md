@@ -15,16 +15,14 @@
 - Supported payment methods also include: cash.
 
 ## DB-CONF Convention — Database Provider Strategy
-- SQLite and MySQL are supported.
-- SQLite is the default provider.
-- The provider is selected through configuration files.
-- Switching from SQLite to MySQL must not require business code changes.
+- MySQL is the only supported provider following the product decision of 2026-10-22; SQLite is no longer part of the project.
+- Production target: MySQL 8.0.46 with `utf8mb4` and `utf8mb4_unicode_ci`.
+- Required SQL modes: `ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION`.
 - Domain and Application layers must remain database-agnostic.
-- EF Core migrations must remain compatible with SQLite and MySQL.
+- EF Core migrations must be tested on MySQL for fresh installations and upgrades with historical data.
 - Connection settings must be externalized.
 - Database-specific code must be isolated in the Infrastructure layer.
-- SQLite and MySQL packages may coexist in the solution, but only the configured provider can be activated at runtime.
-- The platform must be delivered with a fully functional SQLite configuration by default.
+- MySQL-specific persistence code must not leak into Domain or Application.
 
 ## Final Technical Conventions
 - All source code must be written exclusively in English.

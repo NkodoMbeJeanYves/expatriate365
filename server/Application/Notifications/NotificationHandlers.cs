@@ -116,7 +116,8 @@ public static class NotificationTypes
     public static readonly string[] All =
     [
         "charge_generated", "payment_confirmed", "payment_recorded",
-        "event_invite", "welfare_update", "meeting_invite", "election_open"
+        "event_invite", "welfare_update", "meeting_invite", "election_open",
+        .. server.Application.TransferAssistance.TransferAssistanceNotificationTypes.All,
     ];
 }
 
