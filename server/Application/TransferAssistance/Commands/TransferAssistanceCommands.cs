@@ -24,13 +24,16 @@ public class CreateTransferAssistanceRequestValidator
     public CreateTransferAssistanceRequestValidator()
     {
         RuleFor(x => x.RequesterMemberId).NotEmpty();
-        RuleFor(x => x.Request.BeneficiaryMemberId).NotEmpty();
+        RuleFor(x => x.Request.BeneficiaryMemberId)
+            .Must(id => id is null || id != Guid.Empty);
         RuleFor(x => x.Request.DestinationCountry).Length(2).Matches("^[A-Za-z]{2}$");
         RuleFor(x => x.Request.AmountMur).GreaterThan(0);
         RuleFor(x => x.Request.ReceiveCurrency).Length(3).Matches("^[A-Za-z]{3}$");
         RuleFor(x => x.Request.ReceiveMethod).Must(ReceiveMethods.Contains);
         RuleFor(x => x.Request.Purpose).NotEmpty().MaximumLength(500);
-        RuleFor(x => x.Request.BeneficiaryRelationship).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Request.BeneficiaryRelationship).MaximumLength(100);
+        RuleFor(x => x.Request.BeneficiaryRelationship).NotEmpty()
+            .When(x => x.Request.BeneficiaryMemberId is not null);
         RuleFor(x => x.Request.AvailableFrom)
             .Must(date => date >= DateOnly.FromDateTime(DateTime.UtcNow))
             .WithMessage("The availability start date cannot be in the past.");
@@ -102,20 +105,24 @@ public class CreateTransferAssistanceRequestHandler(
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The requester cannot be their own beneficiary.",
                 "errors.transfer_assistance.self_beneficiary_forbidden");
-        var beneficiary = await db.Members
-            .Include(m => m.User)
-            .FirstOrDefaultAsync(m =>
-                m.Id == request.BeneficiaryMemberId &&
-                m.TenantId == command.TenantId &&
-                m.IsActive &&
-                m.Status == "active" &&
-                m.User.IsActive &&
-                m.User.EmailVerifiedAt != null,
-                ct);
-        if (beneficiary is null)
-            return ServiceResult<TransferAssistanceRequestResponse>.Failure(
-                "The beneficiary must be an active, email-verified member of this tenant.",
-                "errors.transfer_assistance.beneficiary_not_eligible");
+        Member? beneficiary = null;
+        if (request.BeneficiaryMemberId is { } beneficiaryMemberId)
+        {
+            beneficiary = await db.Members
+                .Include(m => m.User)
+                .FirstOrDefaultAsync(m =>
+                    m.Id == beneficiaryMemberId &&
+                    m.TenantId == command.TenantId &&
+                    m.IsActive &&
+                    m.Status == "active" &&
+                    m.User.IsActive &&
+                    m.User.EmailVerifiedAt != null,
+                    ct);
+            if (beneficiary is null)
+                return ServiceResult<TransferAssistanceRequestResponse>.Failure(
+                    "The beneficiary must be an active, email-verified member of this tenant.",
+                    "errors.transfer_assistance.beneficiary_not_eligible");
+        }
 
         var entity = new TransferAssistanceRequest
         {
@@ -123,14 +130,16 @@ public class CreateTransferAssistanceRequestHandler(
             TenantId = command.TenantId,
             RequesterMemberId = command.RequesterMemberId,
             OpenRequestKey = $"{command.TenantId:N}:{command.RequesterMemberId:N}",
-            BeneficiaryMemberId = beneficiary.Id,
-            BeneficiaryName = beneficiary.User.FullName,
+            BeneficiaryMemberId = beneficiary?.Id,
+            BeneficiaryName = beneficiary?.User.FullName ?? string.Empty,
             DestinationCountry = request.DestinationCountry.ToUpperInvariant(),
             AmountMur = request.AmountMur,
             ReceiveCurrency = request.ReceiveCurrency.ToUpperInvariant(),
             ReceiveMethod = request.ReceiveMethod,
             Purpose = request.Purpose.Trim(),
-            BeneficiaryRelationship = request.BeneficiaryRelationship.Trim(),
+            BeneficiaryRelationship = beneficiary is null
+                ? string.Empty
+                : (request.BeneficiaryRelationship ?? string.Empty).Trim(),
             AvailableFrom = request.AvailableFrom,
             AvailableTo = request.AvailableTo,
             MeetingArea = request.MeetingArea.Trim(),
@@ -196,7 +205,9 @@ public class CreateTransferAssistanceRequestHandler(
         entity.TransferSentAt,
         entity.BeneficiaryConfirmation,
         entity.BeneficiaryConfirmedAt,
-        entity.DisputeReason);
+        entity.DisputeReason,
+        entity.BeneficiaryMemberId is null,
+        0);
 }
 
 public record UpdateTransferAssistanceDraftCommand(
@@ -236,23 +247,29 @@ public class UpdateTransferAssistanceDraftHandler(
         if (entity is null)
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "Only an owned draft can be edited.", "errors.transfer_assistance.invalid_transition");
-        var beneficiary = await db.Members.Include(m => m.User).FirstOrDefaultAsync(m =>
-            m.Id == command.Request.BeneficiaryMemberId && m.Id != command.MemberId &&
-            m.TenantId == command.TenantId && m.IsActive && m.Status == "active" &&
-            m.User.IsActive && m.User.EmailVerifiedAt != null, ct);
-        if (beneficiary is null)
-            return ServiceResult<TransferAssistanceRequestResponse>.Failure(
-                "The beneficiary must be an active, email-verified member of this tenant.",
-                "errors.transfer_assistance.beneficiary_not_eligible");
+        Member? beneficiary = null;
+        if (command.Request.BeneficiaryMemberId is { } beneficiaryMemberId)
+        {
+            beneficiary = await db.Members.Include(m => m.User).FirstOrDefaultAsync(m =>
+                m.Id == beneficiaryMemberId && m.Id != command.MemberId &&
+                m.TenantId == command.TenantId && m.IsActive && m.Status == "active" &&
+                m.User.IsActive && m.User.EmailVerifiedAt != null, ct);
+            if (beneficiary is null)
+                return ServiceResult<TransferAssistanceRequestResponse>.Failure(
+                    "The beneficiary must be an active, email-verified member of this tenant.",
+                    "errors.transfer_assistance.beneficiary_not_eligible");
+        }
 
-        entity.BeneficiaryMemberId = beneficiary.Id;
-        entity.BeneficiaryName = beneficiary.User.FullName;
+        entity.BeneficiaryMemberId = beneficiary?.Id;
+        entity.BeneficiaryName = beneficiary?.User.FullName ?? string.Empty;
         entity.DestinationCountry = command.Request.DestinationCountry.ToUpperInvariant();
         entity.AmountMur = command.Request.AmountMur;
         entity.ReceiveCurrency = command.Request.ReceiveCurrency.ToUpperInvariant();
         entity.ReceiveMethod = command.Request.ReceiveMethod;
         entity.Purpose = command.Request.Purpose.Trim();
-        entity.BeneficiaryRelationship = command.Request.BeneficiaryRelationship.Trim();
+        entity.BeneficiaryRelationship = beneficiary is null
+            ? string.Empty
+            : (command.Request.BeneficiaryRelationship ?? string.Empty).Trim();
         entity.AvailableFrom = command.Request.AvailableFrom;
         entity.AvailableTo = command.Request.AvailableTo;
         entity.MeetingArea = command.Request.MeetingArea.Trim();
@@ -449,6 +466,24 @@ public class ReviewTransferAssistanceRequestHandler(
             entity.Id.ToString(), entity.ReviewReason);
         TransferAssistanceWorkflowSupport.AddEvent(db, entity, command.ReviewerUserId,
             $"request_{command.Request.Decision}d", entity.ReviewReason);
+        var requesterUserId = await db.Members
+            .Where(m => m.Id == entity.RequesterMemberId)
+            .Select(m => (Guid?)m.UserId)
+            .FirstOrDefaultAsync(ct);
+        if (requesterUserId is { } requesterUser)
+        {
+            var (reviewType, reviewTitle, reviewBody, reviewEvent) = command.Request.Decision switch
+            {
+                "approve" => (TransferAssistanceNotificationTypes.Review, "Request approved",
+                    "Your request was approved and is now visible to potential helpers.", "review_approved"),
+                "reject" => (TransferAssistanceNotificationTypes.Review, "Request rejected",
+                    "Your request was rejected by a reviewer.", "review_rejected"),
+                _ => (TransferAssistanceNotificationTypes.CaseUpdate, "Request suspended",
+                    "A reviewer suspended your request.", "suspended")
+            };
+            await TransferAssistanceWorkflowSupport.AddNotificationAsync(db, command.TenantId, requesterUser,
+                reviewType, reviewTitle, reviewBody, entity.Id.ToString(), ct, options.Value, reviewEvent);
+        }
         try
         {
             await db.SaveChangesAsync(ct);
@@ -515,6 +550,7 @@ public class CancelTransferAssistanceRequestHandler(
             invitation.Status = TransferAssistanceWitnessInvitationStatuses.Declined;
             invitation.RespondedAt = DateTime.UtcNow;
         }
+        await TransferAssistanceWorkflowSupport.ClosePendingCandidatesAsync(db, entity.Id, ct);
         audit.Log("transfer_assistance.request.cancelled", command.UserId, command.TenantId,
             "transfer_assistance_request", entity.Id.ToString());
         TransferAssistanceWorkflowSupport.AddEvent(db, entity, command.UserId, "request_cancelled");

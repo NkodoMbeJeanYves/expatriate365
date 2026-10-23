@@ -279,6 +279,7 @@ public class TransferAssistanceRequestTests
         var handler = new ConfirmTransferAssistanceReceiptHandler(
             db,
             new AuditService(db),
+            Options.Create(new TransferAssistanceOptions()),
             NullLogger<ConfirmTransferAssistanceReceiptHandler>.Instance);
 
         var result = await handler.Handle(
@@ -305,6 +306,7 @@ public class TransferAssistanceRequestTests
         var handler = new ConfirmTransferAssistanceReceiptHandler(
             db,
             new AuditService(db),
+            Options.Create(new TransferAssistanceOptions()),
             NullLogger<ConfirmTransferAssistanceReceiptHandler>.Instance);
 
         var result = await handler.Handle(

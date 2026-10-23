@@ -37,11 +37,16 @@ internal static class TransferAssistanceWorkflowSupport
         string title,
         string body,
         string requestId,
-        CancellationToken ct)
+        CancellationToken ct,
+        TransferAssistanceOptions? emailOptions = null,
+        string? emailEvent = null)
     {
-        var preference = await db.NotificationPreferences.AsNoTracking().FirstOrDefaultAsync(p =>
-            p.TenantId == tenantId && p.UserId == userId && p.NotificationType == type, ct);
-        if (preference is { Enabled: false }) return;
+        var disabledTypes = await db.NotificationPreferences.AsNoTracking()
+            .Where(p => p.TenantId == tenantId && p.UserId == userId && !p.Enabled &&
+                        (p.NotificationType == type || p.NotificationType == TransferAssistanceNotificationTypes.EmailChannel))
+            .Select(p => p.NotificationType)
+            .ToListAsync(ct);
+        if (disabledTypes.Contains(type)) return;
         db.Notifications.Add(new Notification
         {
             TenantId = tenantId,
@@ -52,6 +57,47 @@ internal static class TransferAssistanceWorkflowSupport
             EntityType = "transfer_assistance_request",
             EntityId = requestId,
         });
+
+        if (emailOptions is not { EmailNotificationsEnabled: true } || emailEvent is null ||
+            disabledTypes.Contains(TransferAssistanceNotificationTypes.EmailChannel))
+            return;
+        var recipient = await db.Users.AsNoTracking()
+            .Where(u => u.Id == userId && u.IsActive)
+            .Select(u => new { u.ContactEmail, u.FirstName, u.LastName, u.PreferredLanguage })
+            .FirstOrDefaultAsync(ct);
+        if (string.IsNullOrWhiteSpace(recipient?.ContactEmail)) return;
+        var bucket = EmailOutbox.ThrottleBucket(DateTime.UtcNow, emailOptions.EmailThrottleMinutes);
+        await EmailOutbox.EnqueueAsync(db, tenantId, userId, recipient.ContactEmail,
+            $"{recipient.FirstName} {recipient.LastName}".Trim(), recipient.PreferredLanguage,
+            EmailOutboxTemplates.TransferAssistanceEvent,
+            new Dictionary<string, string> { ["event"] = emailEvent, ["request_id"] = requestId },
+            $"ta:{userId:N}:{emailEvent}:{requestId}:{bucket}", ct);
+    }
+
+    public static async Task NotifyParticipantsAsync(
+        AppDbContext db,
+        TransferAssistanceRequest request,
+        Guid? excludedUserId,
+        string type,
+        string title,
+        string body,
+        TransferAssistanceOptions options,
+        string emailEvent,
+        CancellationToken ct,
+        bool includeBeneficiary = true)
+    {
+        var memberIds = new List<Guid> { request.RequesterMemberId };
+        if (request.HelperMemberId is { } helper) memberIds.Add(helper);
+        if (request.WitnessMemberId is { } witness) memberIds.Add(witness);
+        if (includeBeneficiary && request.BeneficiaryMemberId is { } beneficiary) memberIds.Add(beneficiary);
+        var userIds = await db.Members.AsNoTracking()
+            .Where(m => memberIds.Contains(m.Id) && m.TenantId == request.TenantId)
+            .Select(m => m.UserId)
+            .Distinct()
+            .ToListAsync(ct);
+        foreach (var userId in userIds.Where(id => id != excludedUserId))
+            await AddNotificationAsync(db, request.TenantId, userId, type, title, body,
+                request.Id.ToString(), ct, options, emailEvent);
     }
 
     public static async Task<bool> SaveWorkflowAsync(
@@ -74,6 +120,20 @@ internal static class TransferAssistanceWorkflowSupport
 
     public static TransferAssistanceRequestResponse ToResponse(TransferAssistanceRequest request) =>
         CreateTransferAssistanceRequestHandler.ToResponse(request);
+
+    public static async Task<int> ClosePendingCandidatesAsync(
+        AppDbContext db,
+        Guid requestId,
+        CancellationToken ct)
+    {
+        var pending = await db.TransferAssistanceBeneficiaryCandidates
+            .Where(c => c.RequestId == requestId &&
+                        c.Status == TransferAssistanceBeneficiaryCandidateStatuses.Pending)
+            .ToListAsync(ct);
+        foreach (var candidate in pending)
+            candidate.Status = TransferAssistanceBeneficiaryCandidateStatuses.Declined;
+        return pending.Count;
+    }
 
     public static string? ValidateText(string? value, int maximumLength)
     {
@@ -181,6 +241,14 @@ public class SubmitTransferAssistanceOfferHandler(
             return ServiceResult<TransferAssistanceOfferResponse>.Failure(
                 "Request participants cannot offer to assist their own request.",
                 "errors.transfer_assistance.conflict_of_interest");
+        var hasPendingCandidacy = await db.TransferAssistanceBeneficiaryCandidates.AnyAsync(c =>
+            c.TenantId == command.TenantId && c.RequestId == request.Id &&
+            c.MemberId == command.HelperMemberId &&
+            c.Status == TransferAssistanceBeneficiaryCandidateStatuses.Pending, ct);
+        if (hasPendingCandidacy)
+            return ServiceResult<TransferAssistanceOfferResponse>.Failure(
+                "A beneficiary candidate cannot also offer to assist the same request.",
+                "errors.transfer_assistance.beneficiary_candidate_conflict");
 
         var existing = await db.TransferAssistanceOffers.FirstOrDefaultAsync(o =>
             o.TenantId == command.TenantId && o.RequestId == request.Id &&
@@ -209,8 +277,9 @@ public class SubmitTransferAssistanceOfferHandler(
             "transfer_assistance_request", request.Id.ToString());
         TransferAssistanceWorkflowSupport.AddEvent(db, request, command.UserId, "offer_submitted");
         await TransferAssistanceWorkflowSupport.AddNotificationAsync(db, command.TenantId,
-            request.RequesterMember.UserId, "transfer_assistance.offer", "New assistance offer",
-            "A verified member has offered to help with your request.", request.Id.ToString(), ct);
+            request.RequesterMember.UserId, TransferAssistanceNotificationTypes.Offer, "New assistance offer",
+            "A verified member has offered to help with your request.", request.Id.ToString(), ct,
+            options.Value, "offer");
         try
         {
             await db.SaveChangesAsync(ct);
@@ -324,14 +393,23 @@ public class SelectTransferAssistanceOfferHandler(
         var otherOffers = await db.TransferAssistanceOffers.Where(o => o.RequestId == request.Id &&
             o.Id != offer.Id && o.Status == TransferAssistanceOfferStatuses.Pending).ToListAsync(ct);
         foreach (var other in otherOffers) other.Status = TransferAssistanceOfferStatuses.Declined;
+        var declinedHelperIds = otherOffers.Select(o => o.HelperMemberId).ToList();
+        var declinedHelperUserIds = await db.Members.AsNoTracking()
+            .Where(m => declinedHelperIds.Contains(m.Id))
+            .Select(m => m.UserId).ToListAsync(ct);
+        foreach (var declinedUserId in declinedHelperUserIds)
+            await TransferAssistanceWorkflowSupport.AddNotificationAsync(db, command.TenantId, declinedUserId,
+                TransferAssistanceNotificationTypes.OfferDeclined, "Offer not selected",
+                "Another helper was selected for a request you offered to assist. Thank you.",
+                request.Id.ToString(), ct);
 
         audit.Log("transfer_assistance.offer.selected", command.UserId, command.TenantId,
             "transfer_assistance_request", request.Id.ToString());
         TransferAssistanceWorkflowSupport.AddEvent(db, request, command.UserId, "helper_selected");
         await TransferAssistanceWorkflowSupport.AddNotificationAsync(db, command.TenantId,
-            offer.HelperMember.UserId, "transfer_assistance.assignment", "Your offer was selected",
+            offer.HelperMember.UserId, TransferAssistanceNotificationTypes.Assignment, "Your offer was selected",
             "You have been selected to assist with a community transfer assistance request.",
-            request.Id.ToString(), ct);
+            request.Id.ToString(), ct, options.Value, "assignment");
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",
@@ -369,6 +447,10 @@ public class InviteTransferAssistanceWitnessHandler(
             return ServiceResult<TransferAssistanceWitnessInvitationResponse>.Failure(
                 "A selected helper is required before inviting a witness.",
                 "errors.transfer_assistance.invalid_transition");
+        if (request.BeneficiaryMemberId is null)
+            return ServiceResult<TransferAssistanceWitnessInvitationResponse>.Failure(
+                "A beneficiary must be designated before inviting a witness.",
+                "errors.transfer_assistance.beneficiary_required_before_witness");
         var witness = await db.Members.Include(m => m.User).FirstOrDefaultAsync(m =>
             m.Id == command.Request.WitnessMemberId && m.TenantId == command.TenantId && m.IsActive &&
             m.Status == "active" && m.User.IsActive && m.User.Role != "org_admin" &&
@@ -414,9 +496,9 @@ public class InviteTransferAssistanceWitnessHandler(
             "transfer_assistance_request", request.Id.ToString());
         TransferAssistanceWorkflowSupport.AddEvent(db, request, command.UserId, "witness_invited");
         await TransferAssistanceWorkflowSupport.AddNotificationAsync(db, command.TenantId,
-            witness.UserId, "transfer_assistance.witness_invitation", "Witness invitation",
+            witness.UserId, TransferAssistanceNotificationTypes.WitnessInvitation, "Witness invitation",
             "You have been invited to witness a community assistance handover.",
-            request.Id.ToString(), ct);
+            request.Id.ToString(), ct, options.Value, "witness_invitation");
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceWitnessInvitationResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",
@@ -530,9 +612,14 @@ public class RespondTransferAssistanceWitnessInvitationHandler(
             command.Request.ConflictDeclared ? "witness_conflict_declared" : "witness_declined");
         if (command.Request.Accept)
             await TransferAssistanceWorkflowSupport.AddNotificationAsync(db, command.TenantId,
-                request.RequesterMember.UserId, "transfer_assistance.witness_accepted",
+                request.RequesterMember.UserId, TransferAssistanceNotificationTypes.WitnessAccepted,
                 "Witness accepted", "The invited witness accepted the assignment.",
-                request.Id.ToString(), ct);
+                request.Id.ToString(), ct, options.Value, "witness_accepted");
+        else
+            await TransferAssistanceWorkflowSupport.AddNotificationAsync(db, command.TenantId,
+                request.RequesterMember.UserId, TransferAssistanceNotificationTypes.WitnessDeclined,
+                "Witness declined", "The invited witness declined. You can invite another witness.",
+                request.Id.ToString(), ct, options.Value, "witness_declined");
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceWitnessInvitationResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",
@@ -555,6 +642,7 @@ public record ScheduleTransferAssistanceMeetingCommand(
 public class ScheduleTransferAssistanceMeetingHandler(
     AppDbContext db,
     AuditService audit,
+    IOptions<TransferAssistanceOptions> options,
     ILogger<ScheduleTransferAssistanceMeetingHandler> log)
     : IRequestHandler<ScheduleTransferAssistanceMeetingCommand, ServiceResult<TransferAssistanceRequestResponse>>
 {
@@ -592,6 +680,9 @@ public class ScheduleTransferAssistanceMeetingHandler(
         audit.Log("transfer_assistance.meeting.scheduled", command.UserId, command.TenantId,
             "transfer_assistance_request", request.Id.ToString());
         TransferAssistanceWorkflowSupport.AddEvent(db, request, command.UserId, "meeting_scheduled");
+        await TransferAssistanceWorkflowSupport.NotifyParticipantsAsync(db, request, command.UserId,
+            TransferAssistanceNotificationTypes.Meeting, "Meeting scheduled",
+            "A handover meeting has been scheduled.", options.Value, "meeting", ct, includeBeneficiary: false);
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",
@@ -774,9 +865,9 @@ public class SubmitTransferAssistanceEvidenceHandler(
         if (request.BeneficiaryMember is not null)
             await TransferAssistanceWorkflowSupport.AddNotificationAsync(db, command.TenantId,
                 request.BeneficiaryMember.UserId,
-                "transfer_assistance.beneficiary_confirmation", "Transfer awaiting your confirmation",
+                TransferAssistanceNotificationTypes.BeneficiaryConfirmation, "Transfer awaiting your confirmation",
                 "Please confirm whether you received the expected transfer.",
-                request.Id.ToString(), ct);
+                request.Id.ToString(), ct, options.Value, "beneficiary_confirmation");
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",
@@ -798,6 +889,7 @@ public record ConfirmTransferAssistanceReceiptCommand(
 public class ConfirmTransferAssistanceReceiptHandler(
     AppDbContext db,
     AuditService audit,
+    IOptions<TransferAssistanceOptions> options,
     ILogger<ConfirmTransferAssistanceReceiptHandler> log)
     : IRequestHandler<ConfirmTransferAssistanceReceiptCommand, ServiceResult<TransferAssistanceRequestResponse>>
 {
@@ -851,6 +943,13 @@ public class ConfirmTransferAssistanceReceiptHandler(
             "transfer_assistance_request", request.Id.ToString(), reason);
         TransferAssistanceWorkflowSupport.AddEvent(db, request, command.UserId,
             outcome == "full" ? "beneficiary_confirmed_full" : $"beneficiary_confirmed_{outcome}", reason);
+        await TransferAssistanceWorkflowSupport.NotifyParticipantsAsync(db, request, command.UserId,
+            TransferAssistanceNotificationTypes.CaseUpdate,
+            outcome == "full" ? "Receipt confirmed" : "A dispute was opened",
+            outcome == "full"
+                ? "The beneficiary confirmed receipt. The case is closed."
+                : "The beneficiary reported a partial or missing receipt. A dispute was opened.",
+            options.Value, outcome == "full" ? "receipt_confirmed" : "dispute_opened", ct);
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",
@@ -873,6 +972,7 @@ public record OpenTransferAssistanceDisputeCommand(
 public class OpenTransferAssistanceDisputeHandler(
     AppDbContext db,
     AuditService audit,
+    IOptions<TransferAssistanceOptions> options,
     ILogger<OpenTransferAssistanceDisputeHandler> log)
     : IRequestHandler<OpenTransferAssistanceDisputeCommand, ServiceResult<TransferAssistanceRequestResponse>>
 {
@@ -913,6 +1013,9 @@ public class OpenTransferAssistanceDisputeHandler(
         audit.Log("transfer_assistance.dispute.opened", command.UserId, command.TenantId,
             "transfer_assistance_request", request.Id.ToString(), reason);
         TransferAssistanceWorkflowSupport.AddEvent(db, request, command.UserId, "dispute_opened", reason);
+        await TransferAssistanceWorkflowSupport.NotifyParticipantsAsync(db, request, command.UserId,
+            TransferAssistanceNotificationTypes.CaseUpdate, "A dispute was opened",
+            "A participant opened a dispute on this request.", options.Value, "dispute_opened", ct);
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",
@@ -933,6 +1036,7 @@ public record ResolveTransferAssistanceDisputeCommand(
 public class ResolveTransferAssistanceDisputeHandler(
     AppDbContext db,
     AuditService audit,
+    IOptions<TransferAssistanceOptions> options,
     ILogger<ResolveTransferAssistanceDisputeHandler> log)
     : IRequestHandler<ResolveTransferAssistanceDisputeCommand, ServiceResult<TransferAssistanceRequestResponse>>
 {
@@ -976,6 +1080,9 @@ public class ResolveTransferAssistanceDisputeHandler(
             command.TenantId, "transfer_assistance_request", request.Id.ToString(), reason);
         TransferAssistanceWorkflowSupport.AddEvent(db, request, command.ReviewerUserId,
             $"dispute_resolved_{resolution}", reason);
+        await TransferAssistanceWorkflowSupport.NotifyParticipantsAsync(db, request, command.ReviewerUserId,
+            TransferAssistanceNotificationTypes.CaseUpdate, "Dispute resolved",
+            "A reviewer resolved the dispute on this request.", options.Value, "dispute_resolved", ct);
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",
@@ -997,6 +1104,7 @@ public record SuspendTransferAssistanceRequestCommand(
 public class SuspendTransferAssistanceRequestHandler(
     AppDbContext db,
     AuditService audit,
+    IOptions<TransferAssistanceOptions> options,
     ILogger<SuspendTransferAssistanceRequestHandler> log)
     : IRequestHandler<SuspendTransferAssistanceRequestCommand, ServiceResult<TransferAssistanceRequestResponse>>
 {
@@ -1022,6 +1130,7 @@ public class SuspendTransferAssistanceRequestHandler(
 
         request.SuspendedFromStatus = request.Status;
         request.Status = TransferAssistanceStatuses.Suspended;
+        await TransferAssistanceWorkflowSupport.ClosePendingCandidatesAsync(db, request.Id, ct);
         request.ReviewReason = reason;
         request.ReviewedBy = command.ReviewerUserId;
         request.ReviewedAt = DateTime.UtcNow;
@@ -1029,6 +1138,9 @@ public class SuspendTransferAssistanceRequestHandler(
         audit.Log("transfer_assistance.request.suspended", command.ReviewerUserId,
             command.TenantId, "transfer_assistance_request", request.Id.ToString(), reason);
         TransferAssistanceWorkflowSupport.AddEvent(db, request, command.ReviewerUserId, "request_suspended", reason);
+        await TransferAssistanceWorkflowSupport.NotifyParticipantsAsync(db, request, command.ReviewerUserId,
+            TransferAssistanceNotificationTypes.CaseUpdate, "Request suspended",
+            "A reviewer suspended this request.", options.Value, "suspended", ct);
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",
@@ -1049,6 +1161,7 @@ public record ResumeTransferAssistanceRequestCommand(
 public class ResumeTransferAssistanceRequestHandler(
     AppDbContext db,
     AuditService audit,
+    IOptions<TransferAssistanceOptions> options,
     ILogger<ResumeTransferAssistanceRequestHandler> log)
     : IRequestHandler<ResumeTransferAssistanceRequestCommand, ServiceResult<TransferAssistanceRequestResponse>>
 {
@@ -1080,6 +1193,9 @@ public class ResumeTransferAssistanceRequestHandler(
         audit.Log("transfer_assistance.request.resumed", command.ReviewerUserId,
             command.TenantId, "transfer_assistance_request", request.Id.ToString(), reason);
         TransferAssistanceWorkflowSupport.AddEvent(db, request, command.ReviewerUserId, "request_resumed", reason);
+        await TransferAssistanceWorkflowSupport.NotifyParticipantsAsync(db, request, command.ReviewerUserId,
+            TransferAssistanceNotificationTypes.CaseUpdate, "Request resumed",
+            "A reviewer resumed this request.", options.Value, "resumed", ct);
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",

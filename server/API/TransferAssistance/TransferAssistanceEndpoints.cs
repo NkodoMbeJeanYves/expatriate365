@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using MediatR;
 using server.Application.Common;
 using server.Application.TransferAssistance.Commands;
@@ -99,6 +100,139 @@ public static class TransferAssistanceEndpoints
             .RequireAuthorization(Permissions.TransferAssistanceViewAvailable)
             .WithSummary("List anonymized matching requests available to verified helpers")
             .Produces<IReadOnlyList<TransferAssistanceAvailableRequestResponse>>();
+
+        requests.MapGet("/sync-state", async (ClaimsPrincipal principal, HttpContext http, IMediator mediator) =>
+            {
+                var tenantId = GetTenantId(principal);
+                if (tenantId is null) return Results.Unauthorized();
+                http.Response.Headers.CacheControl = "no-store";
+                return Results.Ok(await mediator.Send(new GetTransferAssistanceSyncStateQuery(
+                    tenantId.Value, GetMemberId(principal), GetPermissions(principal))));
+            })
+            .WithSummary("Get lightweight change tokens for the transfer assistance sections visible to the caller")
+            .WithDescription("""
+                Poll this endpoint and reload only the sections whose token changed.
+                Sections the caller is not permitted to see are omitted.
+                Sample response: {"version":"9f1c2a7b0d3e4f51","sections":{"mine":"a1b2c3d4e5f60718","available":"0f9e8d7c6b5a4932","assignments":"5e4d3c2b1a0f9e8d","witness_invitations":"1a2b3c4d5e6f7081","beneficiary_open":"c0ffee1234567890"},"server_time":"2026-10-23T08:15:00Z"}
+                """)
+            .Produces<TransferAssistanceSyncStateResponse>();
+
+        requests.MapGet("/beneficiary-open", async (ClaimsPrincipal principal, IMediator mediator) =>
+            {
+                var tenantId = GetTenantId(principal);
+                var memberId = GetMemberId(principal);
+                if (tenantId is null) return Results.Unauthorized();
+                if (memberId is null) return Results.Forbid();
+                return Results.Ok(await mediator.Send(
+                    new ListBeneficiaryOpenTransferAssistanceRequestsQuery(tenantId.Value, memberId.Value)));
+            })
+            .RequireAuthorization(Permissions.TransferAssistanceReadOwn)
+            .WithSummary("List anonymized requests still looking for a beneficiary")
+            .WithDescription("""
+                The requester identity is never exposed. my_candidate_status is null when the caller has not applied.
+                Sample response: [{"id":"3f0e…","destination_country":"CM","amount_mur":15000,"receive_currency":"XAF","receive_method":"mobile_money","purpose":"Hospital fees","available_from":"2026-10-24","available_to":"2026-10-31","expires_at":"2026-10-30T10:00:00Z","my_candidate_status":"pending","my_candidate_id":"8a1d…"}]
+                """)
+            .Produces<IReadOnlyList<TransferAssistanceBeneficiaryOpenRequestResponse>>();
+
+        requests.MapPost("/{id:guid}/beneficiary-candidates", async (
+                Guid id,
+                ClaimsPrincipal principal,
+                IMediator mediator,
+                ApplyTransferAssistanceBeneficiaryRequest? request) =>
+            {
+                var tenantId = GetTenantId(principal);
+                var memberId = GetMemberId(principal);
+                var userId = GetUserId(principal);
+                if (tenantId is null) return Results.Unauthorized();
+                if (memberId is null || userId is null) return Results.Forbid();
+                var result = await mediator.Send(new ApplyTransferAssistanceBeneficiaryCommand(
+                    tenantId.Value, memberId.Value, userId.Value, id,
+                    request ?? new ApplyTransferAssistanceBeneficiaryRequest(null)));
+                return WorkflowResult(result);
+            })
+            .RequireAuthorization(Permissions.TransferAssistanceReadOwn)
+            .WithSummary("Apply to become the beneficiary of a request without a beneficiary")
+            .WithDescription("""
+                Idempotent while the candidacy is pending; a withdrawn candidacy can be renewed.
+                Sample response: {"id":"8a1d…","request_id":"3f0e…","member_id":"77c2…","member_name":"Marie Ngo","message":"I can receive the funds for the hospital.","status":"pending","created_at":"2026-10-23T08:15:00Z"}
+                Sample error: {"error":"errors.transfer_assistance.beneficiary_candidate_conflict"}
+                """)
+            .Produces<TransferAssistanceBeneficiaryCandidateResponse>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        requests.MapDelete("/{id:guid}/beneficiary-candidates/me", async (
+                Guid id,
+                ClaimsPrincipal principal,
+                IMediator mediator) =>
+            {
+                var tenantId = GetTenantId(principal);
+                var memberId = GetMemberId(principal);
+                var userId = GetUserId(principal);
+                if (tenantId is null) return Results.Unauthorized();
+                if (memberId is null || userId is null) return Results.Forbid();
+                var result = await mediator.Send(new WithdrawTransferAssistanceBeneficiaryCommand(
+                    tenantId.Value, memberId.Value, userId.Value, id));
+                return result.IsSuccess ? Results.NoContent() : WorkflowResult(result);
+            })
+            .RequireAuthorization(Permissions.TransferAssistanceReadOwn)
+            .WithSummary("Withdraw the caller's pending beneficiary candidacy")
+            .WithDescription("""
+                Returns 204 No Content. Sample error: {"error":"errors.transfer_assistance.invalid_transition"}
+                """)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        requests.MapGet("/{id:guid}/beneficiary-candidates", async (
+                Guid id,
+                ClaimsPrincipal principal,
+                IMediator mediator) =>
+            {
+                var tenantId = GetTenantId(principal);
+                var memberId = GetMemberId(principal);
+                if (tenantId is null) return Results.Unauthorized();
+                if (memberId is null) return Results.Forbid();
+                var result = await mediator.Send(new ListTransferAssistanceBeneficiaryCandidatesQuery(
+                    tenantId.Value, memberId.Value, id));
+                return WorkflowResult(result);
+            })
+            .RequireAuthorization(Permissions.TransferAssistanceReadOwn)
+            .WithSummary("List beneficiary candidates for a request owned by the caller, oldest first")
+            .WithDescription("""
+                Sample response: [{"id":"8a1d…","request_id":"3f0e…","member_id":"77c2…","member_name":"Marie Ngo","message":null,"status":"pending","created_at":"2026-10-23T08:15:00Z"}]
+                """)
+            .Produces<IReadOnlyList<TransferAssistanceBeneficiaryCandidateResponse>>()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        requests.MapPost("/{id:guid}/beneficiary", async (
+                Guid id,
+                ClaimsPrincipal principal,
+                IMediator mediator,
+                DesignateTransferAssistanceBeneficiaryRequest request) =>
+            {
+                var tenantId = GetTenantId(principal);
+                var memberId = GetMemberId(principal);
+                var userId = GetUserId(principal);
+                if (tenantId is null) return Results.Unauthorized();
+                if (memberId is null || userId is null) return Results.Forbid();
+                var result = await mediator.Send(new DesignateTransferAssistanceBeneficiaryCommand(
+                    tenantId.Value, memberId.Value, userId.Value, id, request));
+                return WorkflowResult(result);
+            })
+            .RequireAuthorization(Permissions.TransferAssistanceReadOwn)
+            .WithSummary("Designate the beneficiary of an owned request from a candidate or a member")
+            .WithDescription("""
+                Provide exactly one of candidate_id or member_id. Idempotent for the same member.
+                Sample request: {"candidate_id":"8a1d…","beneficiary_relationship":"Friend"}
+                Sample response: the updated transfer request with beneficiary_pending=false.
+                Sample error: {"error":"errors.transfer_assistance.beneficiary_already_designated"}
+                """)
+            .Produces<TransferAssistanceRequestResponse>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         requests.MapGet("/assignments", async (ClaimsPrincipal principal, IMediator mediator) =>
             {
@@ -735,7 +869,15 @@ public static class TransferAssistanceEndpoints
         return Guid.TryParse(value, out var id) ? id : null;
     }
 
-    private static IResult WorkflowResult(ServiceResult<TransferAssistanceRequestResponse> result) =>
+    private static IReadOnlyCollection<string> GetPermissions(ClaimsPrincipal principal)
+    {
+        var claim = principal.FindFirstValue("permissions");
+        if (string.IsNullOrWhiteSpace(claim)) return [];
+        try { return JsonSerializer.Deserialize<string[]>(claim) ?? []; }
+        catch (JsonException) { return []; }
+    }
+
+    private static IResult WorkflowResult<T>(ServiceResult<T> result) =>
         result.IsSuccess
             ? Results.Ok(result.Data)
             : result.ErrorCode == "errors.transfer_assistance.not_found" ||

@@ -69,4 +69,5 @@ public class TransferAssistanceRequest
     public Member? WitnessMember { get; set; }
     public ICollection<TransferAssistanceOffer> Offers { get; set; } = new List<TransferAssistanceOffer>();
     public ICollection<TransferAssistanceWitnessInvitation> WitnessInvitations { get; set; } = new List<TransferAssistanceWitnessInvitation>();
+    public ICollection<TransferAssistanceBeneficiaryCandidate> BeneficiaryCandidates { get; set; } = new List<TransferAssistanceBeneficiaryCandidate>();
 }

@@ -94,6 +94,10 @@ try
         builder.Configuration.GetSection("Email"));
     builder.Services.AddScoped<server.Infrastructure.Services.IEmailService,
         server.Infrastructure.Services.SmtpEmailService>();
+    builder.Services.Configure<server.Infrastructure.Services.EmailOutboxOptions>(
+        builder.Configuration.GetSection("EmailOutbox"));
+    builder.Services.AddScoped<server.Infrastructure.Services.EmailOutboxProcessor>();
+    builder.Services.AddHostedService<server.Infrastructure.BackgroundServices.EmailOutboxDispatcher>();
 
     builder.Services.AddHostedService<ChargeGenerationBackgroundService>();
     builder.Services.Configure<TransferAssistanceOptions>(

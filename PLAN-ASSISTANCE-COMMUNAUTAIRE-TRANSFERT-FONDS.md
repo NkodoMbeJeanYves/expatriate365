@@ -989,3 +989,259 @@ Un membre comprend, sans contacter le bureau, s’il peut être aidant ou témoi
 - Backend : `TransferAssistanceRulesQueries.cs`, DTO `TransferAssistanceRulesResponse` / `TransferAssistanceMyEligibility`, endpoint `/api/v1/transfer-assistance/rules` (monté uniquement si `Features:TransferAssistanceEnabled`). Les fenêtres sont bornées (offres 1–90 jours, invitation 1–30 jours) ; `requests_open` est faux tant que le plafond configuré vaut 0.
 - Frontend : page d’information, route, liens d’accès, service `getRules()`, modèles TypeScript, 56 clés i18n FR/EN.
 - Validation : **120 tests backend hors MySQL réussis en Release** (9 nouveaux), **50 tests frontend réussis** (6 nouveaux), build Angular réussi (seul l’avertissement préexistant de budget initial subsiste), parité i18n vérifiée.
+
+## 16. Ajout proposé — Suivi en temps quasi réel et demande à bénéficiaire ouvert
+
+**Statut :** proposé, en attente d’approbation.
+
+### 16.1 Constat
+
+1. **Statut figé** : la page charge toutes ses données en un seul `forkJoin` au démarrage et après chaque action de l’utilisateur. Les changements faits par d’autres acteurs (revue, offre d’un aidant, réponse d’un témoin, preuve de transfert, confirmation du bénéficiaire) ne sont visibles qu’après avoir quitté puis rouvert la page.
+2. **Bénéficiaire obligatoire** : la création exige un `beneficiary_member_id` (validateur, handler, formulaire Angular). Un membre qui doit, par exemple, régler les frais d’hospitalisation d’un ami au pays ne connaît pas toujours, au moment de la demande, le membre qui recevra les fonds à destination.
+
+### 16.2 Partie A — Pattern de vérification et de mise à jour (SYNC)
+
+**Pattern retenu : « jeton de version + polling adaptatif + rafraîchissement ciblé ».** Pas de WebSocket dans cette tranche : aucune infrastructure temps réel n’existe (ni SignalR, ni SSE), les proxys nginx devraient être adaptés, et le volume (quelques dossiers par association) ne le justifie pas. Le contrat est conçu pour pouvoir être remplacé plus tard par SSE/SignalR sans changer l’interface.
+
+**Serveur**
+
+- Nouvel endpoint léger `GET /api/v1/transfer-requests/sync-state` (permission du module, cloisonné par tenant et par membre) qui renvoie, sans charger les listes :
+
+```json
+{
+  "version": "b3f1c2…",
+  "sections": {
+    "mine": "9a…",
+    "available": "41…",
+    "assignments": "c0…",
+    "witness_invitations": "77…",
+    "beneficiary_open": "e2…",
+    "review_queue": "5d…"
+  },
+  "server_time": "2026-10-23T07:30:00Z"
+}
+```
+
+- Chaque jeton de section est un hachage court de `(nombre d’éléments, max(updated_at/created_at))` des lignes visibles par l’appelant (demandes, offres, invitations, candidatures), calculé par une requête agrégée indexée. Les sections non autorisées pour l’appelant sont absentes.
+- Garantir que toute transition met à jour `updated_at` de la demande (y compris offre, invitation, candidature) afin que le jeton change toujours.
+- Réponse `Cache-Control: no-store`, log Serilog au niveau Debug uniquement (éviter le bruit), documentation OpenAPI avec exemple.
+
+**Client**
+
+- `TransferAssistanceSyncService` : `timer` + `switchMap` vers `sync-state`, comparaison avec le dernier jeton connu, puis rechargement **uniquement des sections modifiées** (refactorisation de `load()` en chargeurs par section).
+- Intervalle adaptatif :
+  - 15 s lorsqu’un dossier de l’utilisateur est dans un état actif (`submitted` → `transfer_sent`) ou qu’une invitation/candidature est en attente ;
+  - 60 s sinon ;
+  - suspendu quand l’onglet est masqué (`document.visibilitychange`), rafraîchissement immédiat au retour sur l’onglet et à la reprise du réseau (`online`) ;
+  - backoff exponentiel plafonné (15 s → 2 min) après une erreur, sans message d’erreur bloquant ; arrêt sur 401/403.
+- Ne pas écraser un formulaire en cours d’édition : si la demande éditée a changé, afficher un bandeau « Cette demande a été mise à jour — recharger » au lieu de remplacer les valeurs.
+- Indication discrète « Mis à jour il y a X s » et bouton « Actualiser » manuel (accessible, `aria-live="polite"` pour annoncer un changement de statut).
+- Nettoyage via `takeUntilDestroyed` ; aucun polling si le module est désactivé.
+
+**Lots SYNC**
+
+| Lot | Contenu |
+|---|---|
+| SYNC-0 | Endpoint `sync-state`, calcul des jetons par section, mise à jour systématique de `updated_at`, tests (jeton stable sans changement, jeton modifié après offre/invitation/transition, cloisonnement tenant/membre, sections selon permissions). |
+| SYNC-1 | Découpage de `load()` en chargeurs par section ; service de synchronisation avec intervalle adaptatif, visibilité, backoff. |
+| SYNC-2 | Protection du formulaire en édition, horodatage « mis à jour », bouton Actualiser, annonce `aria-live`, i18n FR/EN. |
+| SYNC-3 | Tests Vitest avec horloge simulée (intervalle actif/inactif, onglet masqué, rechargement ciblé, backoff, absence d’écrasement du formulaire). |
+
+### 16.3 Partie B — Demande à bénéficiaire ouvert (OPEN)
+
+**Décisions recueillies :** le bénéficiaire devient **facultatif à la création** ; il est **désigné ensuite par le demandeur**, qui **garde la validation** (aucune attribution automatique). Les membres peuvent se proposer comme bénéficiaire ; le demandeur voit les candidatures dans l’ordre d’arrivée et choisit.
+
+**Parcours**
+
+1. Le demandeur crée une demande en choisissant « Bénéficiaire à désigner plus tard ». Il décrit le besoin (ex. « frais d’hospitalisation d’un proche à Douala »), le pays de destination, le montant, la devise et le mode de réception. Le lien avec le bénéficiaire devient facultatif.
+2. Après revue et passage en `matching`, la demande apparaît, en plus de la liste des aidants, dans une nouvelle liste **« Demandes cherchant un bénéficiaire »** visible par tous les membres actifs à e-mail vérifié du tenant (sauf le demandeur). Contenu anonymisé : pays, montant, devise, mode de réception, motif, période ; identité du demandeur masquée jusqu’à la désignation.
+3. Un membre clique sur **« Je peux recevoir au pays »** (message facultatif). Il peut retirer sa candidature tant qu’il n’est pas désigné.
+4. Le demandeur voit les candidatures triées par ordre d’arrivée (la première est mise en avant) et **désigne** l’une d’elles ; il peut aussi désigner directement un membre via la recherche existante.
+5. À la désignation : les autres candidatures passent à `declined`, les candidats et le bénéficiaire sont notifiés, la demande disparaît de la liste ouverte, et le parcours existant reprend (témoin, remise, transfert, confirmation de réception par le bénéficiaire).
+
+**Règles métier**
+
+| Code | Règle |
+|---|---|
+| RG-TA-OPEN-001 | Le bénéficiaire est facultatif à la création et à la modification d’un brouillon ; s’il est fourni, les contrôles actuels s’appliquent. |
+| RG-TA-OPEN-002 | Le bénéficiaire doit être désigné **avant l’invitation d’un témoin** (l’indépendance du témoin vis-à-vis du bénéficiaire doit pouvoir être vérifiée) et donc avant toute remise ou transfert. |
+| RG-TA-OPEN-003 | Bénéficiaire désigné : membre actif, compte actif, e-mail vérifié, même tenant ; différent du demandeur, de l’aidant sélectionné et de tout témoin invité. |
+| RG-TA-OPEN-004 | Un membre ne peut pas être à la fois candidat bénéficiaire et aidant ayant une offre active sur la même demande. |
+| RG-TA-OPEN-005 | Une seule candidature active par membre et par demande (index unique) ; candidatures fermées dès la désignation, l’annulation, l’expiration ou la suspension. |
+| RG-TA-OPEN-006 | La désignation est réservée au demandeur, idempotente et protégée contre la concurrence (jeton de concurrence sur la demande) ; une fois un témoin invité, le bénéficiaire ne peut plus être changé, sauf par résolution d’un litige. |
+| RG-TA-OPEN-007 | Sans bénéficiaire à la fin de la fenêtre de mise en relation, la demande suit la règle d’expiration existante et le demandeur est notifié. |
+| RG-TA-OPEN-008 | Le candidat bénéficiaire ne voit ni l’identité ni les coordonnées du demandeur avant sa désignation ; les relecteurs voient la mention « Bénéficiaire à désigner ». |
+
+**Données**
+
+- `transfer_assistance_requests.beneficiary_member_id` est déjà nullable : pas de changement de colonne. `beneficiary_name` et `beneficiary_relationship` restent vides tant qu’il n’y a pas de désignation.
+- Nouvelle table `transfer_assistance_beneficiary_candidates` : `id`, `tenant_id`, `request_id`, `member_id`, `message` (≤ 300), `status` (`pending`/`selected`/`declined`/`withdrawn`), `is_active`, `created_at`, `updated_at` ; index unique (`request_id`, `member_id`) ; index (`tenant_id`, `member_id`, `status`). Migration EF compatible MySQL (`utf8mb4` / `utf8mb4_unicode_ci`).
+- Événements d’audit : `beneficiary_candidate_submitted`, `beneficiary_candidate_withdrawn`, `beneficiary_designated`.
+
+**API**
+
+```text
+GET    /api/v1/transfer-requests/beneficiary-open                       (liste anonymisée, paginée)
+POST   /api/v1/transfer-requests/{id}/beneficiary-candidates            (se proposer)
+DELETE /api/v1/transfer-requests/{id}/beneficiary-candidates/me         (retirer sa candidature)
+GET    /api/v1/transfer-requests/{id}/beneficiary-candidates            (demandeur uniquement)
+POST   /api/v1/transfer-requests/{id}/beneficiary                       (désignation : { "candidate_id" } ou { "member_id" })
+```
+
+- DTO : `beneficiary_member_id` devient `Guid?` / `string | null` ; ajout de `beneficiary_pending: boolean` et `beneficiary_candidate_count` (demandeur).
+- Erreurs : `errors.transfer_assistance.beneficiary_required_before_witness`, `beneficiary_already_designated`, `beneficiary_candidate_exists`, `beneficiary_candidate_conflict`, `beneficiary_not_eligible` (existant).
+
+**Client**
+
+- Formulaire : option « Bénéficiaire à désigner plus tard » qui masque la recherche et rend le lien facultatif.
+- Carte de la demande : badge « Bénéficiaire à désigner », liste des candidatures (ordre d’arrivée, mise en avant de la première), bouton « Désigner » avec confirmation PrimeNG, recherche directe d’un membre.
+- Nouvelle section « Demandes cherchant un bénéficiaire » avec action « Je peux recevoir au pays » / « Retirer ma candidature ».
+- Le bouton « Inviter un témoin » est désactivé tant que le bénéficiaire n’est pas désigné, avec explication.
+- Section `beneficiary_open` intégrée au jeton de synchronisation (partie A) pour que le demandeur voie arriver les candidatures sans recharger.
+- Page d’information (§15) : ajout d’un paragraphe « Bénéficiaire à désigner ».
+
+**Lots OPEN**
+
+| Lot | Contenu |
+|---|---|
+| OPEN-0 | Entité, configuration EF, migration MySQL, statuts de candidature. |
+| OPEN-1 | Création/modification sans bénéficiaire, règle RG-TA-OPEN-002 sur l’invitation du témoin, conflits aidant/candidat, DTO nullable. |
+| OPEN-2 | Endpoints liste ouverte, candidature, retrait, consultation et désignation ; audit, notifications, OpenAPI avec exemples, logs Serilog. |
+| OPEN-3 | Client : formulaire, carte demandeur, liste ouverte, actions candidat, garde témoin. |
+| OPEN-4 | i18n FR/EN (`transfer_assistance.*`), page d’information mise à jour. |
+| OPEN-5 | Tests backend (création sans bénéficiaire, visibilité/anonymisation, unicité, conflits, désignation concurrente, gardes témoin/remise, expiration, cloisonnement) et frontend (formulaire, désignation, liste ouverte). |
+
+### 16.4 Partie C — Extension des notifications par e-mail (MAIL)
+
+**Constat**
+
+- Le module crée uniquement des notifications in-app (`TransferAssistanceWorkflowSupport.AddNotificationAsync`), en respectant les préférences existantes par type.
+- L’adresse « e-mail de notification » d’un membre est `users.contact_email` (adresse personnelle saisie au profil). L’e-mail de connexion `users.email` est une adresse d’association générée : il ne doit pas servir de destinataire.
+- `SmtpEmailService.SendAsync` journalise et absorbe les erreurs, sans résultat exploitable : impossible de réessayer un envoi échoué. Les autres modules envoient en « fire-and-forget » avec un `DbContext` de requête, ce qui n’est pas fiable.
+
+**Principe retenu : « notification in-app + e-mail différé via une file sortante (outbox) »**
+
+1. Chaque notification du module reste créée in-app, dans la même transaction que la transition métier (comportement actuel).
+2. Si le destinataire a un `contact_email` renseigné et n’a pas désactivé le canal e-mail, une ligne est ajoutée **dans la même transaction** à une file d’envoi persistante. Aucun e-mail n’est donc envoyé pour une transition annulée ou en conflit de concurrence.
+3. Un service d’arrière-plan dépile la file, envoie l’e-mail et réessaie en cas d’échec. L’utilisateur n’attend jamais le serveur SMTP.
+4. Sans `contact_email`, sans SMTP configuré ou avec le canal désactivé : notification in-app seule, sans erreur pour l’utilisateur.
+
+**Destinataires et événements**
+
+| Événement | Destinataire(s) | In-app | E-mail |
+|---|---|---|---|
+| Demande approuvée / rejetée par la revue | Demandeur | oui | oui |
+| Nouvelle offre d’aide | Demandeur | oui | oui (regroupé, voir anti-spam) |
+| Offre retenue | Aidant retenu | oui | oui |
+| Offre non retenue | Autres aidants | oui | non |
+| Invitation de témoin | Témoin invité | oui | oui |
+| Témoin accepte / refuse | Demandeur | oui | oui |
+| Rendez-vous planifié | Demandeur, aidant, témoin | oui | oui |
+| Preuve de transfert déposée, confirmation attendue | Bénéficiaire | oui | oui |
+| Réception confirmée / litige ouvert / résolu | Parties du dossier | oui | oui |
+| Suspension / reprise | Parties du dossier | oui | oui |
+| Expiration imminente (24 h) / expiration | Demandeur ; invité en attente | oui | oui |
+| **Nouvelle candidature bénéficiaire** (partie B) | Demandeur | oui | oui (regroupé) |
+| **Bénéficiaire désigné** (partie B) | Membre désigné | oui | oui |
+| **Candidature non retenue** (partie B) | Autres candidats | oui | oui |
+| **Nouvelle demande cherchant un bénéficiaire** (partie B) | Membres éligibles | non | non (visible via la liste et la synchronisation ; évite un envoi massif) |
+
+**Préférences**
+
+- Ajout des types `transfer_assistance.*` existants et nouveaux à `NotificationTypes.All` pour qu’ils apparaissent dans les préférences ; activés par défaut.
+- Ajout d’un type de préférence de canal `transfer_assistance.email` (activé par défaut) : le désactiver coupe tous les e-mails du module tout en conservant l’in-app. Pas de modification de schéma de `notification_preferences`.
+- Désactiver un type coupe à la fois l’in-app et l’e-mail de ce type (règle actuelle conservée).
+
+**Contenu et confidentialité**
+
+- E-mail court, bilingue selon `users.preferred_language` (FR par défaut), via le gabarit commun `EmailTemplates.Wrap` ; textes encodés HTML.
+- Contenu minimal : type d’événement, nom de l’association et lien vers `/transfer-assistance` (ou `/transfer-assistance/info`). **Aucun** montant, nom du bénéficiaire, du demandeur ou de l’aidant, lieu de rencontre, coordonnée ni preuve dans l’e-mail ; le détail reste dans l’application après authentification.
+- Mention de bas de page : « Vous recevez cet e-mail car votre adresse de notification est renseignée ; gérez vos préférences dans votre profil ».
+
+**Anti-spam et regroupement**
+
+- Clé d’unicité par (`user_id`, `notification_type`, `request_id`, fenêtre de regroupement) : au maximum un e-mail par type et par dossier toutes les `EmailThrottleMinutes` (10 par défaut). Exemple : plusieurs offres ou candidatures en 10 minutes donnent un seul e-mail « Vous avez de nouvelles réponses ».
+- Les notifications in-app restent unitaires.
+
+**Données**
+
+- Nouvelle table générique `email_outbox` (réutilisable par les autres modules plus tard) : `id`, `tenant_id`, `user_id`, `to_email`, `to_name`, `language`, `template`, `payload_json`, `dedup_key` (unique), `status` (`pending`/`sent`/`failed`/`skipped`), `attempts`, `next_attempt_at`, `last_error` (tronquée, sans données personnelles), `created_at`, `sent_at`. Index (`status`, `next_attempt_at`). Migration MySQL `utf8mb4` / `utf8mb4_unicode_ci`.
+- L’adresse est relue au moment de l’envoi : si l’utilisateur l’a supprimée ou modifiée entre-temps, on utilise la valeur courante, ou on passe à `skipped`.
+- Purge des lignes `sent`/`skipped` après 30 jours.
+
+**Infrastructure**
+
+- `IEmailService` : ajout de `TrySendAsync(...)` qui renvoie un résultat (succès, échec temporaire, non configuré) ; `SendAsync` reste inchangé pour les modules existants.
+- `EmailOutboxDispatcher` (`BackgroundService`, scope DI par cycle) : lot de 20, toutes les 15 s ; 5 tentatives maximum avec backoff (1, 5, 15, 60 min) puis `failed` ; verrou optimiste pour éviter un double envoi si plusieurs instances tournent.
+- Configuration `TransferAssistance:EmailNotificationsEnabled` (true), `TransferAssistance:EmailThrottleMinutes` (10), `EmailOutbox:BatchSize`, `EmailOutbox:PollSeconds`, `EmailOutbox:MaxAttempts`. Logs Serilog sans contenu de l’e-mail (adresse masquée `j***@domaine`).
+
+**Client**
+
+- Sur la page du module et la page d’information : si l’utilisateur n’a pas de `contact_email`, bandeau discret « Ajoutez un e-mail de notification pour être prévenu hors de l’application » avec lien vers le profil.
+- Préférences de notification : libellés FR/EN des nouveaux types et du canal `transfer_assistance.email`.
+
+**Lots MAIL**
+
+| Lot | Contenu |
+|---|---|
+| MAIL-0 | Entité et migration `email_outbox`, `TrySendAsync`, dispatcher d’arrière-plan avec retries et purge ; options et validation de configuration. |
+| MAIL-1 | Extension de `AddNotificationAsync` : décision de canal (préférences, `contact_email`, flag), mise en file transactionnelle, déduplication et regroupement. |
+| MAIL-2 | Gabarits FR/EN minimaux et sujets dans `EmailTemplates` ; branchement sur tous les événements du tableau, y compris ceux de la partie B. |
+| MAIL-3 | Types de préférences, libellés i18n, bandeau « e-mail de notification manquant », mention dans la page d’information. |
+| MAIL-4 | Tests : pas d’e-mail sans `contact_email`, canal désactivé, type désactivé, pas d’envoi si la transaction échoue, regroupement, retries et `failed`, SMTP non configuré → `skipped`, contenu sans données sensibles, langue, dispatcher idempotent. |
+| MAIL-5 | Correctif transversal de `NotificationService.NotifyWithEmailAsync` : destinataire = `users.contact_email` (et non l’e-mail de connexion généré `users.email`) ; aucun e-mail si `contact_email` est vide ; envoi via la file `email_outbox` (retries, pas de blocage) au lieu d’un appel SMTP direct ; adresse masquée dans les logs. Aucun appelant actuel : le correctif prévient la régression le jour où la méthode est utilisée. Tests dédiés. |
+
+### 16.5 Ordre proposé
+
+SYNC-0 → SYNC-1 → MAIL-0 → MAIL-5 → MAIL-1 → OPEN-0 → OPEN-1 → OPEN-2 → MAIL-2 → OPEN-3 → SYNC-2 → OPEN-4 / MAIL-3 → SYNC-3 / OPEN-5 / MAIL-4. Le découpage de `load()` (SYNC-1) précède l’interface OPEN pour que la nouvelle section soit directement synchronisée ; la file e-mail (MAIL-0/1) précède les nouveaux événements OPEN pour qu’ils soient notifiés par e-mail dès leur création.
+
+### 16.6 Hors périmètre
+
+- WebSocket/SSE et notifications push (évolution possible en réutilisant le contrat `sync-state`).
+- Bénéficiaire externe non membre (ami, hôpital) : le destinataire final reste décrit dans le motif ; la confirmation de réception reste faite par un membre.
+- Attribution automatique au premier candidat.
+- Partage d’une demande entre plusieurs bénéficiaires ou plusieurs aidants.
+- SMS / WhatsApp ; vérification par code de l’adresse `contact_email` (recommandée ultérieurement).
+- Migration des autres modules (réunions, événements, cotisations) vers la file `email_outbox` : à traiter séparément. (Le correctif de `NotificationService.NotifyWithEmailAsync` est désormais inclus, lot MAIL-5.)
+
+### 16.7 Critères d’acceptation
+
+- Un changement de statut fait par un autre acteur apparaît sur la page ouverte en ≤ 15 s lorsqu’un dossier est actif, sans quitter la page et sans perdre une saisie en cours.
+- Un membre peut créer une demande sans bénéficiaire ; les autres membres la voient et peuvent se proposer ; le demandeur désigne un candidat ; aucun témoin ne peut être invité avant cette désignation.
+- Toute personne concernée par un événement du tableau 16.4 reçoit une notification in-app et, si elle a un e-mail de notification et n’a pas désactivé le canal, un e-mail sans donnée sensible, au plus un par type et par dossier toutes les 10 minutes ; une panne SMTP ne bloque ni ne fait échouer aucune action et l’envoi est réessayé.
+
+### 16.8 R?alisation et validation ? 23 octobre 2026
+
+**Backend**
+- MAIL-0/1/2 : table `email_outbox` et traitement en arri?re-plan, avec nouvelles tentatives et statuts `sent`, `skipped` et `failed`. Les e-mails partent uniquement vers `users.contact_email`, sans donn?es sensibles. Au plus un e-mail par type et par dossier toutes les 10 minutes. Le canal `transfer_assistance.email` est d?sactivable.
+- MAIL-5 : `NotificationService.NotifyWithEmailAsync` ?crit d?sormais ? `contact_email`, et non plus ? l?e-mail de connexion.
+- OPEN-0/1/2 :
+  - `beneficiary_member_id` est facultatif ? la cr?ation.
+  - Table `transfer_assistance_beneficiary_candidates`.
+  - Routes `GET /beneficiary-open` (liste anonymis?e), `POST`/`DELETE /{id}/beneficiary-candidates[/me]`, `GET /{id}/beneficiary-candidates` et `POST /{id}/beneficiary`.
+  - Garde-fou `beneficiary_required_before_witness` : aucun t?moin ne peut ?tre invit? avant la d?signation.
+  - Un m?me membre ne peut pas ?tre ? la fois aidant et candidat b?n?ficiaire.
+  - Les candidatures sont cl?tur?es en cas d?annulation ou d?expiration.
+- SYNC-0 : `GET /transfer-requests/sync-state` renvoie un jeton par section, limit? aux sections autoris?es par les permissions (`Cache-Control: no-store`).
+- Migration `20261023043422_TransferAssistanceOpenBeneficiaryAndEmailOutbox`.
+
+**Frontend**
+- SYNC-1/2 : `TransferAssistanceSyncService` interroge `sync-state` toutes les 15 s si un dossier est actif, sinon toutes les 60 s.
+  - Pause lorsque l?onglet est masqu? ; reprise sur `visibilitychange` et `online`.
+  - D?lai d?attente progressif apr?s une erreur, plafonn? ? 2 min ; arr?t sur 401/403.
+  - Seules les sections modifi?es sont recharg?es, sans toucher aux saisies en cours.
+  - Heure de derni?re mise ? jour, bouton ? Actualiser ? et annonce `aria-live`.
+- OPEN-3/4 :
+  - Case ? B?n?ficiaire ? d?signer plus tard ?.
+  - Badge et liste des candidats ; le premier candidat est mis en ?vidence ; d?signation apr?s confirmation.
+  - Section ? Demandes cherchant un b?n?ficiaire ? avec candidature et retrait.
+  - Invitation de t?moin masqu?e tant qu?aucun b?n?ficiaire n?est d?sign?.
+- MAIL-3 :
+  - Banni?re lorsque `contact_email` est absent.
+  - Libell?s FR/EN des 15 types de pr?f?rences `transfer_assistance.*`.
+  - Paragraphe ajout? ? la page d?information.
+
+**Validation**
+- Tests backend : 137/137 OK (hors `MySqlIntegration`), dont 17 nouveaux dans `TransferAssistanceOpenBeneficiaryTests`.
+- Vitest : 66/66 OK, dont 7 tests du service de synchronisation et 9 nouveaux tests de la page.
+- Build Angular OK et parit? i18n FR/EN OK.

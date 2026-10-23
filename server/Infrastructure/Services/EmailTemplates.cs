@@ -224,4 +224,123 @@ public static class EmailTemplates
                 </table>
                 <p>Merci pour votre r&egrave;glement.</p>
                 """);
+
+    // ── Community transfer assistance ────────────────────────────────────────
+
+    private static readonly Dictionary<string, (string TitleFr, string BodyFr, string TitleEn, string BodyEn)>
+        TransferAssistanceTexts = new()
+        {
+            ["review_approved"] = ("Votre demande d'assistance a été approuvée",
+                "Votre demande est désormais visible par les membres accrédités.",
+                "Your assistance request was approved",
+                "Your request is now visible to accredited members."),
+            ["review_rejected"] = ("Votre demande d'assistance n'a pas été approuvée",
+                "Consultez l'application pour connaître le motif.",
+                "Your assistance request was not approved",
+                "Open the application to read the reason."),
+            ["offer"] = ("Nouvelles réponses à votre demande",
+                "Un ou plusieurs membres vérifiés ont proposé leur aide.",
+                "New responses to your request",
+                "One or more verified members offered to help."),
+            ["assignment"] = ("Votre proposition d'aide a été retenue",
+                "Vous avez été choisi(e) pour accompagner une demande d'assistance.",
+                "Your offer was selected",
+                "You have been selected to assist with a request."),
+            ["witness_invitation"] = ("Invitation à être témoin",
+                "Vous êtes invité(e) à être témoin d'une remise dans le cadre de l'entraide.",
+                "Witness invitation",
+                "You have been invited to witness a community assistance handover."),
+            ["witness_accepted"] = ("Le témoin a accepté",
+                "Le témoin invité a accepté sa mission.",
+                "The witness accepted",
+                "The invited witness accepted the assignment."),
+            ["witness_declined"] = ("Le témoin a décliné",
+                "Le témoin invité a décliné l'invitation. Vous pouvez en inviter un autre.",
+                "The witness declined",
+                "The invited witness declined. You can invite another witness."),
+            ["meeting"] = ("Rendez-vous planifié",
+                "Un rendez-vous de remise a été planifié.",
+                "Meeting scheduled",
+                "A handover meeting has been scheduled."),
+            ["beneficiary_confirmation"] = ("Confirmation de réception attendue",
+                "Merci d'indiquer si vous avez bien reçu le transfert attendu.",
+                "Receipt confirmation required",
+                "Please confirm whether you received the expected transfer."),
+            ["receipt_confirmed"] = ("Réception confirmée",
+                "Le bénéficiaire a confirmé la réception. Le dossier est clôturé.",
+                "Receipt confirmed",
+                "The beneficiary confirmed receipt. The case is closed."),
+            ["dispute_opened"] = ("Un litige a été ouvert",
+                "Un litige a été ouvert sur un dossier auquel vous participez.",
+                "A dispute was opened",
+                "A dispute was opened on a case you take part in."),
+            ["dispute_resolved"] = ("Litige résolu",
+                "Le litige sur votre dossier a été traité.",
+                "Dispute resolved",
+                "The dispute on your case has been handled."),
+            ["suspended"] = ("Dossier suspendu",
+                "Un dossier auquel vous participez a été suspendu pour vérification.",
+                "Case suspended",
+                "A case you take part in was suspended for review."),
+            ["resumed"] = ("Dossier repris",
+                "Un dossier auquel vous participez a repris son cours.",
+                "Case resumed",
+                "A case you take part in has resumed."),
+            ["expiring_soon"] = ("Échéance proche",
+                "Un dossier auquel vous participez arrive à échéance dans moins de 24 heures.",
+                "Deadline approaching",
+                "A case you take part in expires in less than 24 hours."),
+            ["expired"] = ("Dossier expiré",
+                "Le délai d'un dossier auquel vous participiez est écoulé.",
+                "Case expired",
+                "The deadline of a case you took part in has elapsed."),
+            ["beneficiary_candidate"] = ("Nouvelles candidatures de bénéficiaire",
+                "Un ou plusieurs membres se sont proposés pour recevoir les fonds.",
+                "New beneficiary candidates",
+                "One or more members offered to receive the funds."),
+            ["beneficiary_designated"] = ("Vous avez été désigné(e) bénéficiaire",
+                "Vous avez été désigné(e) pour recevoir les fonds d'une demande d'assistance.",
+                "You were designated as beneficiary",
+                "You have been designated to receive the funds of an assistance request."),
+            ["beneficiary_candidate_declined"] = ("Candidature non retenue",
+                "Un autre membre a été désigné comme bénéficiaire. Merci pour votre disponibilité.",
+                "Candidacy not selected",
+                "Another member was designated as beneficiary. Thank you for your availability."),
+        };
+
+    public static bool IsKnownTransferAssistanceEvent(string eventKey) => TransferAssistanceTexts.ContainsKey(eventKey);
+
+    public static (string Subject, string Html) TransferAssistanceEvent(
+        string eventKey, string associationName, string link, string lang = "fr")
+    {
+        var english = lang == "en";
+        (string TitleFr, string BodyFr, string TitleEn, string BodyEn) texts =
+            TransferAssistanceTexts.TryGetValue(eventKey, out var found)
+            ? found
+            : ("Mise à jour de votre dossier d'assistance", "Un dossier auquel vous participez a été mis à jour.",
+               "Update on your assistance case", "A case you take part in has been updated.");
+        var title = english ? texts.TitleEn : texts.TitleFr;
+        var body = english ? texts.BodyEn : texts.BodyFr;
+        var association = System.Net.WebUtility.HtmlEncode(associationName);
+        var href = System.Net.WebUtility.HtmlEncode(link);
+        var subject = $"[{associationName}] {title}";
+        var html = Wrap(System.Net.WebUtility.HtmlEncode(title),
+            english
+                ? $"""
+                  <p>{System.Net.WebUtility.HtmlEncode(body)}</p>
+                  <p>Association: <strong>{association}</strong></p>
+                  <p>Details are available in the application after signing in.</p>
+                  <a href="{href}" style="{BtnStyle}">Open community assistance</a>
+                  <p style="color:#94a3b8;font-size:.82rem;margin-top:16px">You receive this email because your notification address is set. Manage your preferences in your profile.</p>
+                  """
+                : $"""
+                  <p>{System.Net.WebUtility.HtmlEncode(body)}</p>
+                  <p>Association : <strong>{association}</strong></p>
+                  <p>Le d&eacute;tail est disponible dans l&rsquo;application apr&egrave;s connexion.</p>
+                  <a href="{href}" style="{BtnStyle}">Ouvrir l&rsquo;entraide</a>
+                  <p style="color:#94a3b8;font-size:.82rem;margin-top:16px">Vous recevez cet e-mail car votre adresse de notification est renseign&eacute;e ; g&eacute;rez vos pr&eacute;f&eacute;rences dans votre profil.</p>
+                  """,
+            english ? "en" : "fr");
+        return (subject, html);
+    }
 }

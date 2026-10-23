@@ -4,11 +4,15 @@ import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import {
   CreateTransferAssistanceRequest,
+  DesignateTransferAssistanceBeneficiary,
   PagedTransferAssistanceRequests,
   PagedTransferAssistanceProfiles,
   ReviewTransferAssistanceProfile,
   ReviewTransferAssistanceRequest,
+  TransferAssistanceBeneficiaryCandidate,
+  TransferAssistanceBeneficiaryOpenRequest,
   TransferAssistanceBeneficiaryOption,
+  TransferAssistanceSyncState,
   TransferAssistanceAvailableRequest,
   TransferAssistanceOffer,
   SubmitTransferAssistanceOffer,
@@ -116,6 +120,31 @@ export class TransferAssistanceApiService {
 
   selectOffer(id: string, offerId: string): Observable<TransferAssistanceRequest> {
     return this.http.post<TransferAssistanceRequest>(`${this.requestsUrl}/${id}/select-offer`, { offer_id: offerId });
+  }
+
+  getSyncState(): Observable<TransferAssistanceSyncState> {
+    return this.http.get<TransferAssistanceSyncState>(`${this.requestsUrl}/sync-state`);
+  }
+
+  getBeneficiaryOpenRequests(): Observable<TransferAssistanceBeneficiaryOpenRequest[]> {
+    return this.http.get<TransferAssistanceBeneficiaryOpenRequest[]>(`${this.requestsUrl}/beneficiary-open`);
+  }
+
+  applyAsBeneficiary(id: string, message?: string): Observable<TransferAssistanceBeneficiaryCandidate> {
+    return this.http.post<TransferAssistanceBeneficiaryCandidate>(
+      `${this.requestsUrl}/${id}/beneficiary-candidates`, { message: message || null });
+  }
+
+  withdrawBeneficiaryCandidacy(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.requestsUrl}/${id}/beneficiary-candidates/me`);
+  }
+
+  getBeneficiaryCandidates(id: string): Observable<TransferAssistanceBeneficiaryCandidate[]> {
+    return this.http.get<TransferAssistanceBeneficiaryCandidate[]>(`${this.requestsUrl}/${id}/beneficiary-candidates`);
+  }
+
+  designateBeneficiary(id: string, request: DesignateTransferAssistanceBeneficiary): Observable<TransferAssistanceRequest> {
+    return this.http.post<TransferAssistanceRequest>(`${this.requestsUrl}/${id}/beneficiary`, request);
   }
 
   inviteWitness(id: string, witnessMemberId: string): Observable<unknown> {

@@ -9,7 +9,13 @@ import { AuthStore } from '@core/auth/auth.store';
 import { MeResponse } from '@core/auth/models/user.model';
 import { TransferAssistancePage } from './transfer-assistance.page';
 import { TransferAssistanceApiService } from './transfer-assistance-api.service';
-import { TransferAssistanceOffer, TransferAssistanceRequest } from '@models/transfer-assistance.model';
+import { TransferAssistanceSyncService } from './transfer-assistance-sync.service';
+import {
+  TransferAssistanceBeneficiaryCandidate,
+  TransferAssistanceBeneficiaryOpenRequest,
+  TransferAssistanceOffer,
+  TransferAssistanceRequest,
+} from '@models/transfer-assistance.model';
 
 vi.mock('@env/environment', () => ({
   environment: { features: { transferAssistance: true } },
@@ -33,6 +39,18 @@ describe('TransferAssistancePage session context', () => {
   const attestWitness = vi.fn();
   const searchWitnesses = vi.fn();
   const updateProfile = vi.fn();
+  const create = vi.fn();
+  const submit = vi.fn();
+  const getAvailableRequests = vi.fn();
+  const getBeneficiaryOpenRequests = vi.fn();
+  const getBeneficiaryCandidates = vi.fn();
+  const designateBeneficiary = vi.fn();
+  const applyAsBeneficiary = vi.fn();
+  const withdrawBeneficiaryCandidacy = vi.fn();
+  const sync = {
+    start: vi.fn(), stop: vi.fn(), setActiveCase: vi.fn(),
+    lastSyncedAt: signal<Date | null>(null), stopped: signal(false),
+  };
   const offer: TransferAssistanceOffer = {
     id: 'offer-a', request_id: 'request-a', helper_member_id: 'helper-a', helper_name: 'Test Helper',
     availability: 'Tomorrow', message: 'I can help', status: 'pending', created_at: '2026-10-20T00:00:00Z',
@@ -67,6 +85,17 @@ describe('TransferAssistancePage session context', () => {
     instant.mockClear();
     confirm.mockReset();
     close.mockReset();
+    create.mockReset().mockReturnValue(of(request));
+    submit.mockReset().mockReturnValue(of(request));
+    getAvailableRequests.mockReset().mockReturnValue(of([]));
+    getBeneficiaryOpenRequests.mockReset().mockReturnValue(of([]));
+    getBeneficiaryCandidates.mockReset().mockReturnValue(of([]));
+    designateBeneficiary.mockReset().mockReturnValue(of(request));
+    applyAsBeneficiary.mockReset().mockReturnValue(of({}));
+    withdrawBeneficiaryCandidacy.mockReset().mockReturnValue(of(undefined));
+    sync.start.mockReset();
+    sync.stop.mockReset();
+    sync.setActiveCase.mockReset();
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthStore, useValue: {
@@ -75,8 +104,10 @@ describe('TransferAssistancePage session context', () => {
         } },
         { provide: TransferAssistanceApiService, useValue: {
           getMine, cancel, selectOffer, confirmHandover, attestWitness, searchWitnesses, updateProfile,
-          getProfile: () => of(null),
+          getProfile: () => of(null), create, submit, getAvailableRequests, getBeneficiaryOpenRequests,
+          getBeneficiaryCandidates, designateBeneficiary, applyAsBeneficiary, withdrawBeneficiaryCandidacy,
         } },
+        { provide: TransferAssistanceSyncService, useValue: sync },
         { provide: ConfirmationService, useValue: { confirm, close } },
         { provide: TranslateService, useValue: {
           instant, onLangChange: new Subject(),
@@ -285,5 +316,109 @@ describe('TransferAssistancePage session context', () => {
     expect(page.canCreateRequest()).toBe(false);
     expect(page.requests()).toEqual([]);
     expect(getMine).toHaveBeenCalledTimes(2);
+  });
+
+  function fillValidForm(): void {
+    page.form.patchValue({
+      destination_country: 'CM', amount_mur: 1000, receive_currency: 'XAF', receive_method: 'mobile_money',
+      purpose: 'Hospital fees', available_from: '2026-10-24', available_to: '2026-10-30', meeting_area: 'Ebene',
+    });
+  }
+
+  it('creates a request without beneficiary when "designate later" is checked', () => {
+    fillValidForm();
+    expect(page.form.valid).toBe(false);
+    page.form.controls.beneficiary_later.setValue(true);
+    expect(page.form.controls.beneficiary_member_id.disabled).toBe(true);
+    expect(page.form.valid).toBe(true);
+    page.createAndSubmit();
+    expect(create).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      beneficiary_member_id: null, beneficiary_relationship: '',
+    }));
+    expect(create.mock.calls[0][0]).not.toHaveProperty('beneficiary_later');
+    expect(submit).toHaveBeenCalledWith(request.id);
+  });
+
+  it('restores beneficiary validators when "designate later" is unchecked', () => {
+    page.form.controls.beneficiary_later.setValue(true);
+    page.form.controls.beneficiary_later.setValue(false);
+    expect(page.form.controls.beneficiary_member_id.enabled).toBe(true);
+    expect(page.form.controls.beneficiary_relationship.hasError('required')).toBe(true);
+  });
+
+  it('designates a candidate only after confirmation', () => {
+    const candidate: TransferAssistanceBeneficiaryCandidate = {
+      id: 'candidate-a', request_id: request.id, member_id: 'member-b', member_name: 'Candidate',
+      status: 'pending', created_at: '2026-10-21T00:00:00Z',
+    };
+    page.designateCandidate({ ...request, status: 'matching', beneficiary_pending: true }, candidate);
+    expect(designateBeneficiary).not.toHaveBeenCalled();
+    expect(instant).toHaveBeenCalledWith('transfer_assistance.confirm_designate_beneficiary', { name: 'Candidate' });
+    confirm.mock.calls[0][0].accept?.();
+    expect(designateBeneficiary).toHaveBeenCalledExactlyOnceWith(request.id, { candidate_id: 'candidate-a' });
+    expect(getMine).toHaveBeenCalledTimes(2);
+  });
+
+  it('applies and withdraws a beneficiary candidacy after confirmation', () => {
+    const open: TransferAssistanceBeneficiaryOpenRequest = {
+      id: 'open-a', destination_country: 'CM', amount_mur: 1000, receive_currency: 'XAF',
+      receive_method: 'mobile_money', purpose: 'Hospital fees', available_from: '2026-10-24', available_to: '2026-10-30',
+    };
+    page.candidacyMessages.set({ 'open-a': '  I am the friend  ' });
+    page.applyAsBeneficiary(open);
+    confirm.mock.calls[0][0].accept?.();
+    expect(applyAsBeneficiary).toHaveBeenCalledExactlyOnceWith('open-a', 'I am the friend');
+    page.withdrawCandidacy({ ...open, my_candidate_status: 'pending' });
+    confirm.mock.calls[1][0].accept?.();
+    expect(withdrawBeneficiaryCandidacy).toHaveBeenCalledExactlyOnceWith('open-a');
+  });
+
+  it('loads open beneficiary requests and starts sync after the initial load', () => {
+    expect(getBeneficiaryOpenRequests).not.toHaveBeenCalled();
+    user.set(member({ permissions: ['transfer_assistance.create', 'transfer_assistance.read_own'] }));
+    TestBed.tick();
+    expect(getBeneficiaryOpenRequests).toHaveBeenCalledTimes(1);
+    expect(sync.start).toHaveBeenCalled();
+    expect(sync.stop).toHaveBeenCalled();
+  });
+
+  it('reloads only the sections reported as changed', () => {
+    user.set(member({ permissions: [
+      'transfer_assistance.create', 'transfer_assistance.read_own',
+      'transfer_assistance.view_available', 'transfer_assistance.offer',
+    ] }));
+    TestBed.tick();
+    getMine.mockClear();
+    getAvailableRequests.mockClear();
+    getBeneficiaryOpenRequests.mockClear();
+    getMine.mockReturnValue(of({ data: [{ ...request, status: 'matching' }] }));
+
+    page.reloadSections(['mine']);
+
+    expect(getMine).toHaveBeenCalledTimes(1);
+    expect(getAvailableRequests).not.toHaveBeenCalled();
+    expect(getBeneficiaryOpenRequests).not.toHaveBeenCalled();
+    expect(page.requests()[0].status).toBe('matching');
+    expect(page.syncAnnouncement()).toBe('transfer_assistance.sync.updated');
+  });
+
+  it('keeps current data when a background section reload fails', () => {
+    page.requests.set([request]);
+    getMine.mockReturnValue(throwError(() => new Error('offline')));
+    page.reloadSections(['mine']);
+    expect(page.requests()).toEqual([request]);
+    expect(page.error()).toBe('');
+  });
+
+  it('reports an active case to the sync service', () => {
+    page.requests.set([{ ...request, status: 'matching' }]);
+    TestBed.tick();
+    expect(sync.setActiveCase).toHaveBeenLastCalledWith(true);
+  });
+
+  it('flags a missing contact email', () => {
+    expect(page.hasContactEmail()).toBe(false);
+    user.set(member({ contact_email: 'contact@example.test' }));
+    expect(page.hasContactEmail()).toBe(true);
   });
 });

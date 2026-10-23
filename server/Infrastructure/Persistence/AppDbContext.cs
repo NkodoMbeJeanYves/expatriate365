@@ -20,6 +20,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<TransferAssistanceOffer> TransferAssistanceOffers => Set<TransferAssistanceOffer>();
     public DbSet<TransferAssistanceWitnessInvitation> TransferAssistanceWitnessInvitations => Set<TransferAssistanceWitnessInvitation>();
     public DbSet<TransferAssistanceEvent> TransferAssistanceEvents => Set<TransferAssistanceEvent>();
+    public DbSet<TransferAssistanceBeneficiaryCandidate> TransferAssistanceBeneficiaryCandidates => Set<TransferAssistanceBeneficiaryCandidate>();
+    public DbSet<EmailOutboxMessage> EmailOutbox => Set<EmailOutboxMessage>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
     public DbSet<Communication> Communications => Set<Communication>();

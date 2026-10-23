@@ -7,4 +7,6 @@ public sealed class TransferAssistanceOptions
     public decimal MaximumRequestAmountMur { get; set; }
     public int MatchingWindowDays { get; set; } = 14;
     public int InvitationWindowDays { get; set; } = 5;
+    public bool EmailNotificationsEnabled { get; set; } = true;
+    public int EmailThrottleMinutes { get; set; } = 10;
 }
