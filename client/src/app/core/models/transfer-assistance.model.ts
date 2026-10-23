@@ -47,6 +47,8 @@ export interface TransferAssistanceRequest {
   beneficiary_confirmation?: 'full' | 'partial' | 'not_received';
   beneficiary_confirmed_at?: string;
   dispute_reason?: string;
+  beneficiary_pending?: boolean;
+  beneficiary_candidate_count?: number;
   created_at: string;
   updated_at?: string;
 }
@@ -57,7 +59,7 @@ export interface PagedTransferAssistanceRequests {
 }
 
 export interface CreateTransferAssistanceRequest {
-  beneficiary_member_id: string;
+  beneficiary_member_id: string | null;
   destination_country: string;
   amount_mur: number;
   receive_currency: string;
@@ -214,4 +216,50 @@ export interface ReviewTransferAssistanceProfile {
   participant_role: 'helper' | 'witness';
   decision: 'verify' | 'reject';
   reason?: string;
+}
+
+export type TransferAssistanceSyncSection =
+  | 'mine'
+  | 'available'
+  | 'assignments'
+  | 'witness_invitations'
+  | 'beneficiary_open'
+  | 'review_queue';
+
+export interface TransferAssistanceSyncState {
+  version: string;
+  sections: Partial<Record<TransferAssistanceSyncSection, string>>;
+  server_time: string;
+}
+
+export type TransferAssistanceBeneficiaryCandidateStatus = 'pending' | 'selected' | 'declined' | 'withdrawn';
+
+export interface TransferAssistanceBeneficiaryCandidate {
+  id: string;
+  request_id: string;
+  member_id: string;
+  member_name: string;
+  message?: string | null;
+  status: TransferAssistanceBeneficiaryCandidateStatus;
+  created_at: string;
+}
+
+export interface TransferAssistanceBeneficiaryOpenRequest {
+  id: string;
+  destination_country: string;
+  amount_mur: number;
+  receive_currency: string;
+  receive_method: TransferAssistanceReceiveMethod;
+  purpose: string;
+  available_from: string;
+  available_to: string;
+  expires_at?: string;
+  my_candidate_status?: TransferAssistanceBeneficiaryCandidateStatus | null;
+  my_candidate_id?: string | null;
+}
+
+export interface DesignateTransferAssistanceBeneficiary {
+  candidate_id?: string;
+  member_id?: string;
+  beneficiary_relationship?: string;
 }

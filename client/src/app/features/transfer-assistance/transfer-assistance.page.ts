@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, OnInit, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -9,7 +9,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
-import { forkJoin, Observable, of, Subject, Subscription, timer } from 'rxjs';
+import { catchError, forkJoin, map, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
 import { finalize, switchMap, takeUntil } from 'rxjs/operators';
 import { AuthStore } from '@core/auth/auth.store';
 import { COUNTRIES } from '@core/data/countries';
@@ -26,8 +26,12 @@ import {
   TransferAssistanceEvent,
   TransferAssistanceReceiveMethod,
   TransferAssistanceRequest,
+  TransferAssistanceBeneficiaryCandidate,
+  TransferAssistanceBeneficiaryOpenRequest,
+  TransferAssistanceSyncSection,
 } from '@models/transfer-assistance.model';
 import { TransferAssistanceApiService } from './transfer-assistance-api.service';
+import { TransferAssistanceSyncService } from './transfer-assistance-sync.service';
 
 const REVIEW_PERMISSION = 'transfer_assistance.review';
 const CREATE_PERMISSION = 'transfer_assistance.create';
@@ -40,20 +44,36 @@ const RECEIPT_PERMISSION = 'transfer_assistance.confirm_receipt';
 const DISPUTE_PERMISSION = 'transfer_assistance.open_dispute';
 const RESOLVE_PERMISSION = 'transfer_assistance.resolve_dispute';
 const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
+const READ_OWN_PERMISSION = 'transfer_assistance.read_own';
+const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending', 'meeting_scheduled', 'transfer_in_progress', 'transfer_sent', 'disputed']);
 
 @Component({
   selector: 'app-transfer-assistance-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink, TranslatePipe, DatePipe, ButtonModule, InputTextModule, SelectModule, ConfirmDialog],
-  providers: [ConfirmationService],
+  providers: [ConfirmationService, TransferAssistanceSyncService],
   template: `
     <p-confirmdialog />
     <main class="min-h-full space-y-6 bg-gray-50 p-4 md:p-8">
-      <header>
-        <h1 class="text-2xl font-bold text-gray-900">{{ 'transfer_assistance.title' | translate }}</h1>
-        <p class="mt-1 max-w-3xl text-sm text-gray-600">{{ 'transfer_assistance.disclaimer' | translate }}</p>
+      <header class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">{{ 'transfer_assistance.title' | translate }}</h1>
+          <p class="mt-1 max-w-3xl text-sm text-gray-600">{{ 'transfer_assistance.disclaimer' | translate }}</p>
+        </div>
+        @if (featureEnabled && !sessionLoading()) {
+          <div class="flex items-center gap-2 text-xs text-gray-500">
+            @if (sync.lastSyncedAt(); as syncedAt) {
+              <span data-testid="sync-last-updated">{{ 'transfer_assistance.sync.last_updated' | translate: { time: (syncedAt | date:'mediumTime') } }}</span>
+            }
+            <p-button icon="pi pi-refresh" [text]="true" size="small" data-testid="sync-refresh"
+              [ariaLabel]="'transfer_assistance.sync.refresh' | translate"
+              [label]="'transfer_assistance.sync.refresh' | translate"
+              [disabled]="loading()" (onClick)="refresh()" />
+          </div>
+        }
       </header>
+      <p class="sr-only" aria-live="polite" data-testid="sync-announcement">{{ syncAnnouncement() | translate }}</p>
 
       @if (!featureEnabled) {
         <p role="status" class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
@@ -74,12 +94,28 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
         <p role="status">{{ 'transfer_assistance.create_permission_required' | translate }}</p>
       }
 
+      @if (!sessionLoading() && hasMemberEntity() && !hasContactEmail()) {
+        <p role="status" data-testid="contact-email-banner"
+          class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+          <i class="pi pi-envelope mr-1" aria-hidden="true"></i>{{ 'transfer_assistance.contact_email_missing' | translate }}
+          <a routerLink="/profile" class="ml-1 font-medium underline">{{ 'transfer_assistance.contact_email_link' | translate }}</a>
+        </p>
+      }
+
       @if (!sessionLoading() && canCreateRequest()) {
         <section class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
           <h2 class="text-lg font-semibold text-gray-900">{{ 'transfer_assistance.new_request' | translate }}</h2>
           <p class="mt-1 text-sm text-gray-500">{{ 'transfer_assistance.no_financial_details' | translate }}</p>
 
           <form class="mt-5 grid gap-4 md:grid-cols-2" [formGroup]="form" (ngSubmit)="createAndSubmit()">
+            <label class="flex items-start gap-2 text-sm text-gray-700 md:col-span-2">
+              <input type="checkbox" formControlName="beneficiary_later" data-testid="beneficiary-later" class="mt-1" />
+              <span>
+                <span class="font-medium">{{ 'transfer_assistance.beneficiary_later' | translate }}</span>
+                <span class="block text-xs text-gray-500">{{ 'transfer_assistance.beneficiary_later_hint' | translate }}</span>
+              </span>
+            </label>
+            @if (!beneficiaryLater()) {
             <div class="grid gap-1 text-sm text-gray-700">
               <label for="beneficiary-search">{{ 'transfer_assistance.beneficiary_search' | translate }}</label>
               <input id="beneficiary-search" pInputText
@@ -93,6 +129,7 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
                 appendTo="body"
                 styleClass="w-full" />
             </div>
+            }
             <div class="flex flex-col gap-1 text-sm text-gray-700">
               <label for="destination-country">{{ 'transfer_assistance.destination_country' | translate }}</label>
               <p-select inputId="destination-country" formControlName="destination_country"
@@ -130,10 +167,12 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
                 </ng-template>
               </p-select>
             </label>
+            @if (!beneficiaryLater()) {
             <label class="grid gap-1 text-sm text-gray-700">
               {{ 'transfer_assistance.beneficiary_relationship' | translate }}
               <input pInputText formControlName="beneficiary_relationship" maxlength="100" />
             </label>
+            }
             <label class="grid gap-1 text-sm text-gray-700">
               {{ 'transfer_assistance.available_from' | translate }}
               <input pInputText type="date" formControlName="available_from" />
@@ -215,6 +254,48 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
                   <p class="text-sm text-gray-600">
                     {{ request.receive_currency }} · {{ ('transfer_assistance.' + request.receive_method) | translate }}
                   </p>
+                  @if (request.beneficiary_pending) {
+                    <p class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800"
+                      data-testid="beneficiary-pending-badge">
+                      <i class="pi pi-user-plus" aria-hidden="true"></i>
+                      {{ 'transfer_assistance.beneficiary_pending' | translate: { count: request.beneficiary_candidate_count ?? 0 } }}
+                    </p>
+                    @if (canDesignateStatus(request.status)) {
+                      <button type="button" (click)="loadCandidates(request)" data-testid="view-candidates"
+                        class="mt-2 block rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+                        {{ 'transfer_assistance.view_candidates' | translate }}
+                      </button>
+                      @if (hasLoadedCandidates(request.id)) {
+                        @for (candidate of candidatesFor(request.id); track candidate.id; let first = $first) {
+                          <div class="mt-2 rounded-lg border p-3 text-sm"
+                            [class.border-emerald-300]="first && candidate.status === 'pending'"
+                            [class.bg-emerald-50]="first && candidate.status === 'pending'"
+                            [class.border-gray-200]="!(first && candidate.status === 'pending')">
+                            <p class="font-medium">
+                              {{ candidate.member_name }}
+                              @if (first && candidate.status === 'pending') {
+                                <span class="ml-1 text-xs text-emerald-700">{{ 'transfer_assistance.first_candidate' | translate }}</span>
+                              }
+                            </p>
+                            <p class="text-xs text-gray-500">{{ candidate.created_at | date:'short' }}</p>
+                            @if (candidate.message) {
+                              <p class="text-gray-600">{{ candidate.message }}</p>
+                            }
+                            @if (candidate.status === 'pending') {
+                              <button type="button" (click)="designateCandidate(request, candidate)"
+                                class="mt-2 rounded-lg bg-emerald-700 px-3 py-2 text-white" [disabled]="saving()">
+                                {{ 'transfer_assistance.designate_beneficiary' | translate }}
+                              </button>
+                            } @else {
+                              <p class="text-xs text-gray-500">{{ ('transfer_assistance.candidate_status_' + candidate.status) | translate }}</p>
+                            }
+                          </div>
+                        } @empty {
+                          <p class="mt-2 text-sm text-gray-500">{{ 'transfer_assistance.no_candidates' | translate }}</p>
+                        }
+                      }
+                    }
+                  }
                   @if (request.review_reason) {
                     <p class="mt-2 text-sm text-red-700">{{ request.review_reason }}</p>
                   }
@@ -251,7 +332,12 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
                       }
                     }
                   }
-                  @if (request.status === 'witness_pending') {
+                  @if (request.status === 'witness_pending' && !request.beneficiary_member_id) {
+                    <p class="mt-3 text-sm text-amber-800" data-testid="witness-requires-beneficiary">
+                      {{ 'transfer_assistance.beneficiary_required_before_witness' | translate }}
+                    </p>
+                  }
+                  @if (request.status === 'witness_pending' && request.beneficiary_member_id) {
                     <div class="mt-3 grid gap-2 md:max-w-lg">
                       <label class="grid gap-1 text-sm">
                         {{ 'transfer_assistance.search_witness' | translate }}
@@ -346,7 +432,7 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
                 <article class="space-y-3 p-5">
                   <div class="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p class="font-medium text-gray-900">{{ request.beneficiary_name }}</p>
+                      <p class="font-medium text-gray-900">{{ request.beneficiary_name || ('transfer_assistance.beneficiary_to_designate' | translate) }}</p>
                       <p class="text-sm text-gray-600">
                         {{ request.destination_country }} · {{ request.amount_mur }} MUR ·
                         {{ ('transfer_assistance.' + request.receive_method) | translate }}
@@ -377,6 +463,50 @@ const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
                       {{ 'transfer_assistance.suspend_request' | translate }}
                     </button>
                   </div>
+                </article>
+              }
+            </div>
+          }
+        </section>
+      }
+
+      @if (canBrowseBeneficiaryOpen()) {
+        <section class="rounded-2xl border border-gray-100 bg-white shadow-sm" data-testid="beneficiary-open-section">
+          <div class="border-b border-gray-100 p-5">
+            <h2 class="text-lg font-semibold">{{ 'transfer_assistance.beneficiary_open_title' | translate }}</h2>
+            <p class="mt-1 text-sm text-gray-500">{{ 'transfer_assistance.beneficiary_open_hint' | translate }}</p>
+          </div>
+          @if (!beneficiaryOpenRequests().length) {
+            <p class="p-5 text-sm text-gray-500">{{ 'transfer_assistance.no_beneficiary_open' | translate }}</p>
+          } @else {
+            <div class="divide-y divide-gray-100">
+              @for (open of beneficiaryOpenRequests(); track open.id) {
+                <article class="space-y-2 p-5">
+                  <p class="font-medium">{{ open.destination_country }} · {{ open.amount_mur }} MUR</p>
+                  <p class="text-sm text-gray-600">{{ open.receive_currency }} ·
+                    {{ ('transfer_assistance.' + open.receive_method) | translate }}</p>
+                  <p class="text-sm">{{ open.purpose }}</p>
+                  @if (open.expires_at) {
+                    <p class="text-xs text-gray-500">{{ 'transfer_assistance.expires_at' | translate: { date: (open.expires_at | date:'short') } }}</p>
+                  }
+                  @if (open.my_candidate_status === 'pending') {
+                    <p class="text-sm text-emerald-700">{{ 'transfer_assistance.candidate_status_pending' | translate }}</p>
+                    <button type="button" (click)="withdrawCandidacy(open)" [disabled]="saving()"
+                      class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700">
+                      {{ 'transfer_assistance.withdraw_candidacy' | translate }}
+                    </button>
+                  } @else {
+                    <label class="grid gap-1 text-sm">
+                      {{ 'transfer_assistance.candidacy_message' | translate }}
+                      <input class="rounded-lg border border-gray-300 px-3 py-2" maxlength="300"
+                        [value]="candidacyMessageFor(open.id)"
+                        (input)="onCandidacyMessageInput(open.id, $event)" />
+                    </label>
+                    <button type="button" (click)="applyAsBeneficiary(open)" [disabled]="saving()"
+                      class="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white">
+                      {{ 'transfer_assistance.apply_as_beneficiary' | translate }}
+                    </button>
+                  }
                 </article>
               }
             </div>
@@ -667,6 +797,13 @@ export class TransferAssistancePage implements OnInit {
   private readonly witnessSearch = new Subject<{ requestId: string; value: string }>();
   private loadSubscription?: Subscription;
   private readonly contextChanged = new Subject<void>();
+  readonly sync = inject(TransferAssistanceSyncService);
+  private sectionSubscription?: Subscription;
+
+  readonly beneficiaryOpenRequests = signal<TransferAssistanceBeneficiaryOpenRequest[]>([]);
+  readonly candidatesByRequest = signal<Record<string, TransferAssistanceBeneficiaryCandidate[]>>({});
+  readonly candidacyMessages = signal<Record<string, string>>({});
+  readonly syncAnnouncement = signal('');
 
   readonly beneficiaryOptions = signal<TransferAssistanceBeneficiaryOption[]>([]);
   readonly beneficiarySearchValue = signal('');
@@ -721,8 +858,15 @@ export class TransferAssistancePage implements OnInit {
   readonly canCreateRequest = computed(() => this.hasMemberEntity() && this.auth.hasPermission(CREATE_PERMISSION));
   readonly canResolveCases = computed(() => this.auth.hasPermission(RESOLVE_PERMISSION));
   readonly canSuspend = computed(() => this.auth.hasPermission(SUSPEND_PERMISSION));
+  readonly canBrowseBeneficiaryOpen = computed(() => !this.isOrgAdmin() && this.hasMemberEntity() &&
+    this.auth.hasPermission(READ_OWN_PERMISSION));
+  readonly hasContactEmail = computed(() => !!this.auth.user()?.contact_email?.trim());
+  readonly hasActiveCase = computed(() =>
+    this.requests().some(request => ACTIVE_CASE_STATUSES.has(request.status)) ||
+    this.assignments().length > 0 || this.witnessInvitations().length > 0);
   readonly featureEnabled = environment.features.transferAssistance;
   readonly form = this.fb.nonNullable.group({
+    beneficiary_later: [false],
     beneficiary_member_id: ['', Validators.required],
     destination_country: ['', [Validators.required, Validators.pattern(/^[a-zA-Z]{2}$/)]],
     amount_mur: [0, [Validators.required, Validators.min(0.01)]],
@@ -734,8 +878,13 @@ export class TransferAssistancePage implements OnInit {
     available_to: ['', Validators.required],
     meeting_area: ['', [Validators.required, Validators.maxLength(200)]],
   });
+  readonly beneficiaryLater = toSignal(this.form.controls.beneficiary_later.valueChanges, { initialValue: false });
 
   constructor() {
+    this.form.controls.beneficiary_later.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(later => this.applyBeneficiaryMode(later));
+    effect(() => this.sync.setActiveCase(this.hasActiveCase()));
     let previousContext = '';
     effect(() => {
       const user = this.auth.user();
@@ -748,12 +897,16 @@ export class TransferAssistancePage implements OnInit {
       untracked(() => {
         this.contextChanged.next();
         this.loadSubscription?.unsubscribe();
+        this.sectionSubscription?.unsubscribe();
+        this.sync.stop();
         this.clearContext();
         if (user && !this.sessionLoading()) this.load();
       });
     });
     this.destroyRef.onDestroy(() => {
       this.loadSubscription?.unsubscribe();
+      this.sectionSubscription?.unsubscribe();
+      this.sync.stop();
       this.confirmation.close();
     });
   }
@@ -770,6 +923,10 @@ export class TransferAssistancePage implements OnInit {
     this.assignments.set([]);
     this.witnessInvitations.set([]);
     this.reviewCases.set([]);
+    this.beneficiaryOpenRequests.set([]);
+    this.candidatesByRequest.set({});
+    this.candidacyMessages.set({});
+    this.syncAnnouncement.set('');
     this.beneficiaryOptions.set([]);
     this.beneficiarySearchValue.set('');
     this.witnessOptions.set([]);
@@ -787,7 +944,7 @@ export class TransferAssistancePage implements OnInit {
     this.conflicts.set({});
     this.profile.set(null);
     this.editingRequestId.set(null);
-    this.form.reset({ receive_method: 'mobile_money', amount_mur: 0 });
+    this.form.reset({ receive_method: 'mobile_money', amount_mur: 0, beneficiary_later: false });
     this.error.set('');
     this.beneficiarySearch.next('');
     this.witnessSearch.next({ requestId: '', value: '' });
@@ -866,8 +1023,8 @@ export class TransferAssistancePage implements OnInit {
     this.saving.set(true);
     const editingId = this.editingRequestId();
     const save$ = editingId
-      ? this.api.updateDraft(editingId, this.form.getRawValue())
-      : this.api.create(this.form.getRawValue());
+      ? this.api.updateDraft(editingId, this.buildPayload())
+      : this.api.create(this.buildPayload());
     save$
       .pipe(
         switchMap(request => this.api.submit(request.id)),
@@ -892,8 +1049,8 @@ export class TransferAssistancePage implements OnInit {
       this.error.set('');
       const editingId = this.editingRequestId();
       const save$ = editingId
-        ? this.api.updateDraft(editingId, this.form.getRawValue())
-        : this.api.create(this.form.getRawValue());
+        ? this.api.updateDraft(editingId, this.buildPayload())
+        : this.api.create(this.buildPayload());
       save$.pipe(finalize(() => this.saving.set(false))).pipe(takeUntil(this.contextChanged), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: request => {
           this.editingRequestId.set(null);
@@ -906,14 +1063,17 @@ export class TransferAssistancePage implements OnInit {
   }
 
   editDraft(request: TransferAssistanceRequest): void {
-      if (!request.beneficiary_member_id) return;
       this.editingRequestId.set(request.id);
-      this.beneficiaryOptions.update(options => [
-        ...options.filter(option => option.member_id !== request.beneficiary_member_id),
-        { member_id: request.beneficiary_member_id!, member_name: request.beneficiary_name },
-      ]);
+      const later = !request.beneficiary_member_id;
+      if (!later) {
+        this.beneficiaryOptions.update(options => [
+          ...options.filter(option => option.member_id !== request.beneficiary_member_id),
+          { member_id: request.beneficiary_member_id!, member_name: request.beneficiary_name },
+        ]);
+      }
       this.form.patchValue({
-        beneficiary_member_id: request.beneficiary_member_id,
+        beneficiary_later: later,
+        beneficiary_member_id: request.beneficiary_member_id ?? '',
         destination_country: request.destination_country,
         amount_mur: request.amount_mur,
         receive_currency: COUNTRIES.find(country => country.code === request.destination_country)?.currency
@@ -1002,6 +1162,7 @@ export class TransferAssistancePage implements OnInit {
       invitations: this.canParticipate() ? this.api.getMyWitnessInvitations() : of(null),
       disputes: this.canResolveCases() ? this.api.getReviewCases('disputed') : of(null),
       suspensions: this.canSuspend() ? this.api.getReviewCases('suspended') : of(null),
+      beneficiaryOpen: this.canBrowseBeneficiaryOpen() ? this.api.getBeneficiaryOpenRequests() : of(null),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .pipe(takeUntil(this.contextChanged), takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -1017,10 +1178,155 @@ export class TransferAssistancePage implements OnInit {
             ...(result.disputes?.data ?? []),
             ...(result.suspensions?.data ?? []),
           ]);
+          this.beneficiaryOpenRequests.set(result.beneficiaryOpen ?? []);
+          this.refreshLoadedCandidates();
           this.error.set('');
+          this.startOrAcknowledgeSync();
         },
         error: () => this.error.set('transfer_assistance.load_failed'),
       });
+  }
+
+  refresh(): void {
+    this.load();
+  }
+
+  private startOrAcknowledgeSync(): void {
+    this.sync.start(sections => this.reloadSections(sections));
+  }
+
+  /** Reloads only the sections reported as changed by the sync service; form inputs are kept untouched. */
+  reloadSections(sections: TransferAssistanceSyncSection[]): void {
+    const loaders: Observable<unknown>[] = [];
+    const ignoreErrors = <T>(source: Observable<T>) => source.pipe(catchError(() => of(null)));
+    if (sections.includes('mine') && this.hasMemberEntity()) {
+      loaders.push(ignoreErrors(this.api.getMine()).pipe(map(result => {
+        if (result) this.requests.set(result.data);
+        this.refreshLoadedCandidates();
+      })));
+    }
+    if (sections.includes('available') && this.canBrowseAvailable()) {
+      loaders.push(ignoreErrors(this.api.getAvailableRequests()).pipe(map(result => {
+        if (result) this.availableRequests.set(result);
+      })));
+    }
+    if (sections.includes('assignments') && this.canParticipate()) {
+      loaders.push(ignoreErrors(this.api.getAssignments()).pipe(map(result => {
+        if (result) this.assignments.set(result);
+      })));
+    }
+    if (sections.includes('witness_invitations') && this.canParticipate()) {
+      loaders.push(ignoreErrors(this.api.getMyWitnessInvitations()).pipe(map(result => {
+        if (result) this.witnessInvitations.set(result);
+      })));
+    }
+    if (sections.includes('beneficiary_open') && this.canBrowseBeneficiaryOpen()) {
+      loaders.push(ignoreErrors(this.api.getBeneficiaryOpenRequests()).pipe(map(result => {
+        if (result) this.beneficiaryOpenRequests.set(result);
+      })));
+    }
+    if (sections.includes('review_queue') && this.canReview()) {
+      loaders.push(ignoreErrors(this.api.getReviewQueue()).pipe(map(result => {
+        if (result) this.reviewQueue.set(result.data);
+      })));
+    }
+    if (sections.includes('review_queue') && (this.canResolveCases() || this.canSuspend())) {
+      loaders.push(ignoreErrors(forkJoin({
+        disputes: this.canResolveCases() ? this.api.getReviewCases('disputed') : of(null),
+        suspensions: this.canSuspend() ? this.api.getReviewCases('suspended') : of(null),
+      })).pipe(map(result => {
+        if (result) this.reviewCases.set([...(result.disputes?.data ?? []), ...(result.suspensions?.data ?? [])]);
+      })));
+    }
+    if (!loaders.length) return;
+    this.syncAnnouncement.set('');
+    this.sectionSubscription?.unsubscribe();
+    this.sectionSubscription = merge(...loaders)
+      .pipe(takeUntil(this.contextChanged), takeUntilDestroyed(this.destroyRef))
+      .subscribe({ complete: () => this.syncAnnouncement.set('transfer_assistance.sync.updated') });
+  }
+
+  private refreshLoadedCandidates(): void {
+    const loaded = this.candidatesByRequest();
+    for (const request of this.requests()) {
+      if (loaded[request.id] && request.beneficiary_pending && this.canDesignateStatus(request.status)) {
+        this.loadCandidates(request);
+      }
+    }
+  }
+
+  private applyBeneficiaryMode(later: boolean): void {
+    const member = this.form.controls.beneficiary_member_id;
+    const relationship = this.form.controls.beneficiary_relationship;
+    if (later) {
+      member.setValue('');
+      member.disable({ emitEvent: false });
+      relationship.setValue('');
+      relationship.setValidators([Validators.maxLength(100)]);
+    } else {
+      member.enable({ emitEvent: false });
+      relationship.setValidators([Validators.required, Validators.maxLength(100)]);
+    }
+    relationship.updateValueAndValidity();
+  }
+
+  private buildPayload() {
+    const { beneficiary_later, ...value } = this.form.getRawValue();
+    return {
+      ...value,
+      beneficiary_member_id: beneficiary_later ? null : value.beneficiary_member_id,
+      beneficiary_relationship: beneficiary_later ? '' : value.beneficiary_relationship,
+    };
+  }
+
+  canDesignateStatus(status: TransferAssistanceRequest['status']): boolean {
+    return status === 'matching' || status === 'witness_pending';
+  }
+
+  loadCandidates(request: TransferAssistanceRequest): void {
+    this.api.getBeneficiaryCandidates(request.id)
+      .pipe(takeUntil(this.contextChanged), takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: candidates => this.candidatesByRequest.update(current => ({ ...current, [request.id]: candidates })),
+        error: () => this.error.set('transfer_assistance.load_failed'),
+      });
+  }
+
+  candidatesFor(requestId: string): TransferAssistanceBeneficiaryCandidate[] {
+    return this.candidatesByRequest()[requestId] ?? [];
+  }
+
+  hasLoadedCandidates(requestId: string): boolean {
+    return requestId in this.candidatesByRequest();
+  }
+
+  designateCandidate(request: TransferAssistanceRequest, candidate: TransferAssistanceBeneficiaryCandidate): void {
+    this.confirmAction(this.translate.instant('transfer_assistance.confirm_designate_beneficiary', {
+      name: candidate.member_name,
+    }), () => this.runAction(this.api.designateBeneficiary(request.id, { candidate_id: candidate.id }),
+      'transfer_assistance.workflow_failed'));
+  }
+
+  candidacyMessageFor(requestId: string): string {
+    return this.candidacyMessages()[requestId] ?? '';
+  }
+
+  onCandidacyMessageInput(requestId: string, event: Event): void {
+    const target = event.target;
+    if (target instanceof HTMLInputElement) {
+      this.candidacyMessages.update(current => ({ ...current, [requestId]: target.value }));
+    }
+  }
+
+  applyAsBeneficiary(open: TransferAssistanceBeneficiaryOpenRequest): void {
+    const message = this.candidacyMessageFor(open.id).trim();
+    this.confirmAction(this.translate.instant('transfer_assistance.confirm_apply_beneficiary'),
+      () => this.runAction(this.api.applyAsBeneficiary(open.id, message || undefined),
+        'transfer_assistance.workflow_failed'));
+  }
+
+  withdrawCandidacy(open: TransferAssistanceBeneficiaryOpenRequest): void {
+    this.confirmAction(this.translate.instant('transfer_assistance.confirm_withdraw_candidacy'),
+      () => this.runAction(this.api.withdrawBeneficiaryCandidacy(open.id), 'transfer_assistance.workflow_failed'));
   }
 
   changeAccreditation(role: 'helper' | 'witness', action: 'request' | 'cancel'): void {

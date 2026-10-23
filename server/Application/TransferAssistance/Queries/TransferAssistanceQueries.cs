@@ -40,7 +40,9 @@ public class ListMyTransferAssistanceRequestsHandler(AppDbContext db)
                 r.CreatedAt, r.UpdatedAt, r.HelperMemberId, r.WitnessMemberId, r.MeetingAt, r.ExpiresAt,
                 r.RequesterHandoverConfirmed, r.HelperHandoverConfirmed, r.WitnessAttested,
                 r.TransferProvider, r.TransferEvidenceReference, r.TransferSentAt,
-                r.BeneficiaryConfirmation, r.BeneficiaryConfirmedAt, r.DisputeReason))
+                r.BeneficiaryConfirmation, r.BeneficiaryConfirmedAt, r.DisputeReason,
+                r.BeneficiaryMemberId == null,
+                r.BeneficiaryCandidates.Count(c => c.Status == TransferAssistanceBeneficiaryCandidateStatuses.Pending)))
             .ToListAsync(ct);
         return PagedResult<TransferAssistanceRequestResponse>.Create(data, page, limit, total);
     }
@@ -78,7 +80,9 @@ public class ListTransferAssistanceReviewQueueHandler(AppDbContext db)
                 r.CreatedAt, r.UpdatedAt, r.HelperMemberId, r.WitnessMemberId, r.MeetingAt, r.ExpiresAt,
                 r.RequesterHandoverConfirmed, r.HelperHandoverConfirmed, r.WitnessAttested,
                 r.TransferProvider, r.TransferEvidenceReference, r.TransferSentAt,
-                r.BeneficiaryConfirmation, r.BeneficiaryConfirmedAt, r.DisputeReason))
+                r.BeneficiaryConfirmation, r.BeneficiaryConfirmedAt, r.DisputeReason,
+                r.BeneficiaryMemberId == null,
+                r.BeneficiaryCandidates.Count(c => c.Status == TransferAssistanceBeneficiaryCandidateStatuses.Pending)))
             .ToListAsync(ct);
         return PagedResult<TransferAssistanceRequestResponse>.Create(data, page, limit, total);
     }
@@ -106,7 +110,9 @@ public class GetMyTransferAssistanceRequestHandler(AppDbContext db)
                 r.CreatedAt, r.UpdatedAt, r.HelperMemberId, r.WitnessMemberId, r.MeetingAt, r.ExpiresAt,
                 r.RequesterHandoverConfirmed, r.HelperHandoverConfirmed, r.WitnessAttested,
                 r.TransferProvider, r.TransferEvidenceReference, r.TransferSentAt,
-                r.BeneficiaryConfirmation, r.BeneficiaryConfirmedAt, r.DisputeReason))
+                r.BeneficiaryConfirmation, r.BeneficiaryConfirmedAt, r.DisputeReason,
+                r.BeneficiaryMemberId == null,
+                r.BeneficiaryCandidates.Count(c => c.Status == TransferAssistanceBeneficiaryCandidateStatuses.Pending)))
             .FirstOrDefaultAsync(ct);
 }
 

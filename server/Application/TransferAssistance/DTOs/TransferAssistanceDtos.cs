@@ -1,7 +1,7 @@
 namespace server.Application.TransferAssistance.DTOs;
 
 public sealed record CreateTransferAssistanceRequest(
-    Guid BeneficiaryMemberId,
+    Guid? BeneficiaryMemberId,
     string DestinationCountry,
     decimal AmountMur,
     string ReceiveCurrency,
@@ -46,7 +46,9 @@ public sealed record TransferAssistanceRequestResponse(
     DateTime? TransferSentAt = null,
     string? BeneficiaryConfirmation = null,
     DateTime? BeneficiaryConfirmedAt = null,
-    string? DisputeReason = null);
+    string? DisputeReason = null,
+    bool BeneficiaryPending = false,
+    int BeneficiaryCandidateCount = 0);
 
 public sealed record TransferAssistanceBeneficiaryOption(Guid MemberId, string MemberName);
 
@@ -157,3 +159,37 @@ public sealed record TransferAssistanceEventResponse(
     string EventType,
     string? Details,
     DateTime CreatedAt);
+
+public sealed record ApplyTransferAssistanceBeneficiaryRequest(string? Message);
+
+public sealed record DesignateTransferAssistanceBeneficiaryRequest(
+    Guid? CandidateId,
+    Guid? MemberId,
+    string? BeneficiaryRelationship);
+
+public sealed record TransferAssistanceBeneficiaryCandidateResponse(
+    Guid Id,
+    Guid RequestId,
+    Guid MemberId,
+    string MemberName,
+    string? Message,
+    string Status,
+    DateTime CreatedAt);
+
+public sealed record TransferAssistanceBeneficiaryOpenRequestResponse(
+    Guid Id,
+    string DestinationCountry,
+    decimal AmountMur,
+    string ReceiveCurrency,
+    string ReceiveMethod,
+    string Purpose,
+    DateOnly AvailableFrom,
+    DateOnly AvailableTo,
+    DateTime? ExpiresAt,
+    string? MyCandidateStatus,
+    Guid? MyCandidateId);
+
+public sealed record TransferAssistanceSyncStateResponse(
+    string Version,
+    IReadOnlyDictionary<string, string> Sections,
+    DateTime ServerTime);

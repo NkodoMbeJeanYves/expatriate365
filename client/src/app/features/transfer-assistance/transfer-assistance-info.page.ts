@@ -167,6 +167,10 @@ type CheckItem = { key: string; ok: boolean };
               }
             </div>
           }
+          <div class="mt-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-700" data-testid="open-beneficiary-info">
+            <h3 class="font-medium text-gray-900">{{ 'transfer_assistance.info.open_beneficiary_title' | translate }}</h3>
+            <p class="mt-1">{{ 'transfer_assistance.info.open_beneficiary_desc' | translate }}</p>
+          </div>
         </section>
 
         <section class="rounded-2xl border border-amber-100 bg-amber-50 p-5">
