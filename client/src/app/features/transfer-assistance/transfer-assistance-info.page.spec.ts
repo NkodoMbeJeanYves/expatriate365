@@ -55,6 +55,10 @@ describe('TransferAssistanceInfoPage', () => {
     expect(page.loading()).toBe(false);
     expect(page.rules()?.verifier_roles).toEqual(['org_admin', 'auditor']);
     expect(page.profile()?.helper_verification_status).toBe('verified');
+    expect(page.steps).toEqual([
+      'accreditation', 'validation', 'matching', 'beneficiary',
+      'witness', 'meeting', 'transfer', 'receipt',
+    ]);
   });
 
   it('omits the MFA check and shows it as optional when not required', () => {

@@ -11,6 +11,7 @@ import { TransferAssistancePage } from './transfer-assistance.page';
 import { TransferAssistanceApiService } from './transfer-assistance-api.service';
 import { TransferAssistanceSyncService } from './transfer-assistance-sync.service';
 import {
+  TransferAssistanceAssignment,
   TransferAssistanceBeneficiaryCandidate,
   TransferAssistanceBeneficiaryOpenRequest,
   TransferAssistanceOffer,
@@ -129,6 +130,59 @@ describe('TransferAssistancePage session context', () => {
     expect(page.canBrowseAvailable()).toBe(false);
     page.changeAccreditation('helper', 'request');
     expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it('shows the requester next action for the matching and witness stages', () => {
+    expect(page.nextActionForRequest({ ...request, status: 'matching' }))
+      .toBe('transfer_assistance.next_action_matching');
+    expect(page.nextActionForRequest({
+      ...request, status: 'witness_pending', beneficiary_member_id: null,
+    })).toBe('transfer_assistance.next_action_designate_beneficiary');
+    expect(page.nextActionForRequest({
+      ...request, status: 'witness_pending', witness_member_id: 'witness-a',
+    })).toBe('transfer_assistance.next_action_schedule_meeting');
+  });
+
+  it('shows role-specific next actions for helper, witness, and beneficiary assignments', () => {
+    const assignment: TransferAssistanceAssignment = {
+      request_id: 'request-a', role: 'helper', status: 'transfer_in_progress',
+      destination_country: 'CM', amount_mur: 1000, receive_currency: 'XAF',
+      receive_method: 'mobile_money', purpose: 'Family support',
+      available_from: '2026-10-20', available_to: '2026-10-23', meeting_area: 'Ebene',
+      requester_handover_confirmed: true, helper_handover_confirmed: true, witness_attested: true,
+    };
+    expect(page.nextActionForAssignment(assignment))
+      .toBe('transfer_assistance.next_helper_submit_evidence');
+    expect(page.nextActionForAssignment({
+      ...assignment, role: 'witness', status: 'meeting_scheduled',
+      meeting_at: new Date(Date.now() - 60_000).toISOString(), witness_attested: false,
+    })).toBe('transfer_assistance.next_witness_attest');
+    expect(page.nextActionForAssignment({
+      ...assignment, role: 'beneficiary', status: 'transfer_sent',
+    })).toBe('transfer_assistance.next_beneficiary_confirm_receipt');
+  });
+
+  it('waits until the scheduled meeting time before offering handover confirmations', () => {
+    const meetingAt = new Date(Date.now() + 60_000).toISOString();
+    const assignment: TransferAssistanceAssignment = {
+      request_id: 'request-a', role: 'helper', status: 'meeting_scheduled',
+      destination_country: 'CM', amount_mur: 1000, receive_currency: 'XAF',
+      receive_method: 'mobile_money', purpose: 'Family support',
+      available_from: '2026-10-20', available_to: '2026-10-23', meeting_area: 'Ebene',
+      meeting_at: meetingAt, requester_handover_confirmed: false,
+      helper_handover_confirmed: false, witness_attested: false,
+    };
+
+    expect(page.nextActionForRequest({
+      ...request, status: 'meeting_scheduled', meeting_at: meetingAt,
+    })).toBe('transfer_assistance.next_action_wait_meeting_time');
+    expect(page.nextActionForAssignment(assignment))
+      .toBe('transfer_assistance.next_action_wait_meeting_time');
+    expect(page.nextActionForAssignment({
+      ...assignment, role: 'witness',
+    })).toBe('transfer_assistance.next_action_wait_meeting_time');
+    expect(page.isMeetingTimeReached(meetingAt)).toBe(false);
+    expect(page.isMeetingTimeReached(new Date(Date.now() - 60_000).toISOString())).toBe(true);
   });
 
   it('requests only the selected accreditation and prevents another pending request', () => {

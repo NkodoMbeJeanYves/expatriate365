@@ -371,7 +371,7 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                     <p class="mt-2 text-sm text-gray-600">
                       {{ 'transfer_assistance.meeting_time' | translate }}: {{ request.meeting_at | date:'medium' }}
                     </p>
-                    @if (!request.requester_handover_confirmed) {
+                    @if (!request.requester_handover_confirmed && isMeetingTimeReached(request.meeting_at)) {
                       <button type="button" (click)="confirmHandover(request.id)"
                         class="mt-2 rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white">
                         {{ 'transfer_assistance.confirm_handover' | translate }}
@@ -410,6 +410,9 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                     </ol>
                   }
                 </div>
+                <p class="mt-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-900" data-testid="request-next-action">
+                  {{ nextActionForRequest(request) | translate }}
+                </p>
                 <span class="h-fit rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800">
                   {{ ('transfer_assistance.status_' + request.status) | translate }}
                 </span>
@@ -611,6 +614,9 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                   {{ ('transfer_assistance.' + assignment.receive_method) | translate }} · {{ assignment.meeting_area }}</p>
                 <p class="text-sm">{{ assignment.purpose }}</p>
                 <p class="text-sm font-semibold">{{ ('transfer_assistance.status_' + assignment.status) | translate }}</p>
+                <p class="rounded-lg bg-blue-50 p-3 text-sm text-blue-900" data-testid="assignment-next-action">
+                  {{ nextActionForAssignment(assignment) | translate }}
+                </p>
                 @if (assignment.meeting_at) {
                   <p class="text-sm">{{ 'transfer_assistance.meeting_time' | translate }}: {{ assignment.meeting_at | date:'medium' }}</p>
                 }
@@ -627,14 +633,14 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                   </button>
                 }
                 @if (assignment.role === 'helper' && assignment.status === 'meeting_scheduled' &&
-                     !assignment.helper_handover_confirmed) {
+                     !assignment.helper_handover_confirmed && isMeetingTimeReached(assignment.meeting_at)) {
                   <button type="button" (click)="confirmHandover(assignment.request_id)"
                     class="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white">
                     {{ 'transfer_assistance.confirm_handover' | translate }}
                   </button>
                 }
                 @if (assignment.role === 'witness' && assignment.status === 'meeting_scheduled' &&
-                     !assignment.witness_attested) {
+                     !assignment.witness_attested && isMeetingTimeReached(assignment.meeting_at)) {
                   <button type="button" (click)="attestWitness(assignment.request_id)"
                     class="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white">
                     {{ 'transfer_assistance.attest_handover' | translate }}
@@ -1419,6 +1425,87 @@ export class TransferAssistancePage implements OnInit {
 
   hasLoadedOffers(requestId: string): boolean {
     return this.loadedOffers()[requestId] ?? false;
+  }
+
+  isMeetingTimeReached(meetingAt?: string): boolean {
+    const meetingTime = Date.parse(meetingAt ?? '');
+    return Number.isFinite(meetingTime) && meetingTime <= Date.now();
+  }
+
+  nextActionForRequest(request: TransferAssistanceRequest): string {
+    switch (request.status) {
+      case 'draft':
+        return 'transfer_assistance.next_action_draft';
+      case 'submitted':
+        return 'transfer_assistance.next_action_submitted';
+      case 'matching':
+        return 'transfer_assistance.next_action_matching';
+      case 'witness_pending':
+        if (!request.beneficiary_member_id) return 'transfer_assistance.next_action_designate_beneficiary';
+        return request.witness_member_id
+          ? 'transfer_assistance.next_action_schedule_meeting'
+          : 'transfer_assistance.next_action_invite_witness';
+      case 'meeting_scheduled':
+        if (!request.requester_handover_confirmed && !this.isMeetingTimeReached(request.meeting_at)) {
+          return 'transfer_assistance.next_action_wait_meeting_time';
+        }
+        return request.requester_handover_confirmed
+          ? 'transfer_assistance.next_action_wait_handover'
+          : 'transfer_assistance.next_action_confirm_handover';
+      case 'transfer_in_progress':
+        return 'transfer_assistance.next_action_wait_transfer_evidence';
+      case 'transfer_sent':
+        return 'transfer_assistance.next_action_wait_receipt';
+      case 'disputed':
+        return 'transfer_assistance.next_action_disputed';
+      case 'suspended':
+        return 'transfer_assistance.next_action_suspended';
+      default:
+        return 'transfer_assistance.next_action_closed';
+    }
+  }
+
+  nextActionForAssignment(assignment: TransferAssistanceAssignment): string {
+    if (assignment.status === 'disputed') return 'transfer_assistance.next_action_disputed';
+    if (assignment.status === 'suspended') return 'transfer_assistance.next_action_suspended';
+    if (assignment.status === 'completed' || assignment.status === 'cancelled' ||
+        assignment.status === 'rejected' || assignment.status === 'expired') {
+      return 'transfer_assistance.next_action_closed';
+    }
+
+    if (assignment.role === 'helper') {
+      if (assignment.status === 'witness_pending') return 'transfer_assistance.next_helper_wait_witness';
+      if (assignment.status === 'meeting_scheduled') {
+        if (!assignment.helper_handover_confirmed && !this.isMeetingTimeReached(assignment.meeting_at)) {
+          return 'transfer_assistance.next_action_wait_meeting_time';
+        }
+        return assignment.helper_handover_confirmed
+          ? 'transfer_assistance.next_action_wait_handover'
+          : 'transfer_assistance.next_action_confirm_handover';
+      }
+      if (assignment.status === 'transfer_in_progress') return 'transfer_assistance.next_helper_submit_evidence';
+      if (assignment.status === 'transfer_sent') return 'transfer_assistance.next_helper_wait_receipt';
+    }
+
+    if (assignment.role === 'witness') {
+      if (assignment.status === 'witness_pending') return 'transfer_assistance.next_witness_wait_meeting';
+      if (assignment.status === 'meeting_scheduled') {
+        if (!assignment.witness_attested && !this.isMeetingTimeReached(assignment.meeting_at)) {
+          return 'transfer_assistance.next_action_wait_meeting_time';
+        }
+        return assignment.witness_attested
+          ? 'transfer_assistance.next_action_wait_handover'
+          : 'transfer_assistance.next_witness_attest';
+      }
+    }
+
+    if (assignment.role === 'beneficiary' && assignment.status === 'transfer_sent') {
+      return assignment.beneficiary_confirmation
+        ? 'transfer_assistance.next_action_closed'
+        : 'transfer_assistance.next_beneficiary_confirm_receipt';
+    }
+
+    return 'transfer_assistance.next_action_wait';
   }
 
   selectOffer(request: TransferAssistanceRequest, offer: TransferAssistanceOffer): void {

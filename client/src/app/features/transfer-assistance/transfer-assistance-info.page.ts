@@ -148,7 +148,7 @@ type CheckItem = { key: string; ok: boolean };
           <h2 class="text-lg font-semibold text-gray-900">{{ 'transfer_assistance.info.steps_title' | translate }}</h2>
           <ol class="mt-3 space-y-3">
             @for (step of steps; track step; let i = $index) {
-              <li class="flex gap-3 text-sm text-gray-700">
+              <li class="flex gap-3 text-sm text-gray-700" [attr.data-testid]="'workflow-step-' + step">
                 <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">{{ i + 1 }}</span>
                 <span>{{ ('transfer_assistance.info.step_' + step) | translate }}</span>
               </li>
@@ -188,7 +188,10 @@ export class TransferAssistanceInfoPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly featureEnabled = environment.features.transferAssistance;
-  readonly steps = ['accreditation', 'validation', 'matching', 'handover', 'confirmation'] as const;
+  readonly steps = [
+    'accreditation', 'validation', 'matching', 'beneficiary', 'witness',
+    'meeting', 'transfer', 'receipt',
+  ] as const;
   readonly loading = signal(true);
   readonly rules = signal<TransferAssistanceRules | null>(null);
   readonly profile = signal<TransferAssistanceProfile | null>(null);
