@@ -15,6 +15,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ContributionCharge> ContributionCharges => Set<ContributionCharge>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<WelfareRequest> WelfareRequests => Set<WelfareRequest>();
+    public DbSet<TransferAssistanceRequest> TransferAssistanceRequests => Set<TransferAssistanceRequest>();
+    public DbSet<TransferAssistanceProfile> TransferAssistanceProfiles => Set<TransferAssistanceProfile>();
+    public DbSet<TransferAssistanceOffer> TransferAssistanceOffers => Set<TransferAssistanceOffer>();
+    public DbSet<TransferAssistanceWitnessInvitation> TransferAssistanceWitnessInvitations => Set<TransferAssistanceWitnessInvitation>();
+    public DbSet<TransferAssistanceEvent> TransferAssistanceEvents => Set<TransferAssistanceEvent>();
+    public DbSet<TransferAssistanceBeneficiaryCandidate> TransferAssistanceBeneficiaryCandidates => Set<TransferAssistanceBeneficiaryCandidate>();
+    public DbSet<EmailOutboxMessage> EmailOutbox => Set<EmailOutboxMessage>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
     public DbSet<Communication> Communications => Set<Communication>();

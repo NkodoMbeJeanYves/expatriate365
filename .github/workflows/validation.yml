@@ -1,0 +1,124 @@
+name: Delivery validation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore server/server.Tests/server.Tests.csproj
+      - name: Backend tests without MySQL integration
+        run: >-
+          dotnet test server/server.Tests/server.Tests.csproj
+          --configuration Release --no-restore
+          --filter "Category!=MySqlIntegration"
+          --logger trx --results-directory TestResults/backend
+      - run: dotnet tool restore
+      - name: Generate deployment SQL for review
+        working-directory: server
+        run: >-
+          dotnet ef migrations script --idempotent
+          --configuration Release --no-build
+          --output ../TestResults/backend/migrations.sql
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: TestResults/backend
+          retention-days: 7
+
+  mysql:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0.46
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ github.run_id }}-${{ github.run_attempt }}-test
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Configure production SQL mode and character set
+        env:
+          MYSQL_PWD: ${{ github.run_id }}-${{ github.run_attempt }}-test
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: |
+          docker exec -e MYSQL_PWD "$MYSQL_CONTAINER" mysql -uroot -e "
+            SET GLOBAL sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+            SET GLOBAL character_set_server = 'utf8mb4';
+            SET GLOBAL collation_server = 'utf8mb4_unicode_ci';"
+      - run: dotnet restore server/server.Tests/server.Tests.csproj
+      - name: MySQL migration and persistence tests
+        env:
+          TRANSFER_ASSISTANCE_TEST_MYSQL: Server=127.0.0.1;Port=${{ job.services.mysql.ports['3306'] }};User ID=root;Password=${{ github.run_id }}-${{ github.run_attempt }}-test;
+        run: >-
+          dotnet test server/server.Tests/server.Tests.csproj
+          --configuration Release --no-restore
+          --filter "Category=MySqlIntegration"
+          --logger trx --results-directory TestResults/mysql
+      - name: Require executed MySQL tests, not skipped results
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          reports = list(Path("TestResults/mysql").glob("*.trx"))
+          assert reports, "Missing MySQL TRX results"
+          total = passed = executed = 0
+          for report in reports:
+              counters = ET.parse(report).getroot().find(".//{*}Counters")
+              assert counters is not None, "Missing MySQL test counters"
+              total += int(counters.attrib["total"])
+              passed += int(counters.attrib["passed"])
+              executed += int(counters.attrib["executed"])
+          assert total >= 6 and passed == executed == total, "MySQL tests failed, were skipped, or were not discovered"
+          print(f"Validated {passed} MySQL tests without skips")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mysql-test-results
+          path: TestResults/mysql
+          retention-days: 7
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npm run lint:i18n
+      - name: Frontend tests
+        run: npm test -- --maxWorkers 1 --reporter default --reporter junit --outputFile.junit=TestResults/frontend.xml
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-test-results
+          path: client/TestResults
+          retention-days: 7

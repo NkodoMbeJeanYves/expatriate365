@@ -1,4 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
+import { CurrencyValidationResponse } from '@models/currency-validation.model';
 
 export interface TenantSettings {
   name: string;
@@ -9,6 +10,7 @@ export interface TenantSettings {
   logo_url?: string;
   subscription_tier: string;
   subscription_status: string;
+  currency_validation?: CurrencyValidationResponse | null;
 }
 
 const STORAGE_KEY = 'exp365_tenant';

@@ -3,6 +3,7 @@ using server.Application.Payments.Commands;
 using server.Application.Payments.DTOs;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
+using server.Infrastructure.Services;
 
 namespace server.Tests;
 
@@ -45,7 +46,7 @@ public class RecordPaymentCommandTests
     public async Task Handle_ReturnsFailed_WhenAmountExceedsBalance()
     {
         var (db, charge) = SeedCharge(totalDue: 10_000, alreadyPaid: 6_000);
-        var handler = new RecordPaymentCommandHandler(db, NullLogger<RecordPaymentCommandHandler>.Instance);
+        var handler = new RecordPaymentCommandHandler(db, NullLogger<RecordPaymentCommandHandler>.Instance, new TestNotificationService());
 
         var cmd = new RecordPaymentCommand(TenantId,
             new RecordPaymentRequest(charge.Id.ToString(), 5_000, "cash", DateTime.Today.ToString("yyyy-MM-dd"), null));
@@ -60,7 +61,7 @@ public class RecordPaymentCommandTests
     public async Task Handle_ReturnsSuccess_WhenAmountEqualsBalance()
     {
         var (db, charge) = SeedCharge(totalDue: 10_000, alreadyPaid: 0);
-        var handler = new RecordPaymentCommandHandler(db, NullLogger<RecordPaymentCommandHandler>.Instance);
+        var handler = new RecordPaymentCommandHandler(db, NullLogger<RecordPaymentCommandHandler>.Instance, new TestNotificationService());
 
         var cmd = new RecordPaymentCommand(TenantId,
             new RecordPaymentRequest(charge.Id.ToString(), 10_000, "cash", DateTime.Today.ToString("yyyy-MM-dd"), null));
@@ -74,7 +75,7 @@ public class RecordPaymentCommandTests
     public async Task Handle_ReturnsFailed_WhenChargeAlreadySettled()
     {
         var (db, charge) = SeedCharge(totalDue: 10_000, alreadyPaid: 10_000);
-        var handler = new RecordPaymentCommandHandler(db, NullLogger<RecordPaymentCommandHandler>.Instance);
+        var handler = new RecordPaymentCommandHandler(db, NullLogger<RecordPaymentCommandHandler>.Instance, new TestNotificationService());
 
         var cmd = new RecordPaymentCommand(TenantId,
             new RecordPaymentRequest(charge.Id.ToString(), 1_000, "cash", DateTime.Today.ToString("yyyy-MM-dd"), null));
@@ -89,7 +90,7 @@ public class RecordPaymentCommandTests
     public async Task Handle_ReturnsFailed_WhenPaymentMethodInvalid()
     {
         var (db, charge) = SeedCharge(totalDue: 10_000);
-        var handler = new RecordPaymentCommandHandler(db, NullLogger<RecordPaymentCommandHandler>.Instance);
+        var handler = new RecordPaymentCommandHandler(db, NullLogger<RecordPaymentCommandHandler>.Instance, new TestNotificationService());
 
         var cmd = new RecordPaymentCommand(TenantId,
             new RecordPaymentRequest(charge.Id.ToString(), 1_000, "bitcoin", DateTime.Today.ToString("yyyy-MM-dd"), null));
@@ -98,5 +99,17 @@ public class RecordPaymentCommandTests
 
         Assert.False(result.IsSuccess);
         Assert.Contains("Méthode de paiement", result.ErrorMessage);
+    }
+
+    private sealed class TestNotificationService : INotificationService
+    {
+        public Task NotifyAsync(Guid tenantId, Guid userId, string type, string title, string body,
+            CancellationToken ct = default, string? entityType = null, string? entityId = null)
+            => Task.CompletedTask;
+
+        public Task NotifyWithEmailAsync(Guid tenantId, Guid userId, string type, string title, string body,
+            string emailSubject, string emailHtml, CancellationToken ct = default,
+            string? entityType = null, string? entityId = null)
+            => throw new NotSupportedException("Payment recording must not send email directly.");
     }
 }

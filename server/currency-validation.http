@@ -1,0 +1,23 @@
+@baseUrl = http://localhost:5000
+@token = replace-with-jwt
+
+### Association administrator: local consistency and catalogue coverage
+POST {{baseUrl}}/api/v1/tenant/currency-validation
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"country_code":"MU","base_currency":"MUR"}
+
+### Geographical mismatch, regardless of Frankfurter coverage
+POST {{baseUrl}}/api/v1/tenant/currency-validation
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"country_code":"MU","base_currency":"EUR"}
+
+### Super administrator: verify before creating an association
+POST {{baseUrl}}/api/v1/superadmin/currency-validation
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"country_code":"RS","base_currency":"RSD"}
