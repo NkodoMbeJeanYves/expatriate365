@@ -57,7 +57,7 @@ describe('TransferAssistanceInfoPage', () => {
     expect(page.profile()?.helper_verification_status).toBe('verified');
     expect(page.steps).toEqual([
       'accreditation', 'validation', 'matching', 'beneficiary',
-      'witness', 'meeting', 'transfer', 'receipt',
+      'intermediary', 'meeting', 'transfer', 'receipt',
     ]);
   });
 

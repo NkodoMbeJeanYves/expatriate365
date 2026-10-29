@@ -19,7 +19,10 @@ internal static class TransferAssistanceBeneficiarySupport
         db.TransferAssistanceRequests.Where(r => r.TenantId == tenantId && r.IsActive &&
             r.BeneficiaryMemberId == null && r.ExpiresAt > now &&
             (r.Status == TransferAssistanceStatuses.Matching ||
-             r.Status == TransferAssistanceStatuses.WitnessPending));
+             r.Status == TransferAssistanceStatuses.IntermediaryAssigned ||
+             r.Status == TransferAssistanceStatuses.MeetingScheduled ||
+             r.Status == TransferAssistanceStatuses.WitnessPending ||
+             r.Status == TransferAssistanceStatuses.TransferInProgress));
 
     public static async Task<bool> HasActiveOfferAsync(AppDbContext db, Guid requestId, Guid memberId, CancellationToken ct) =>
         await db.TransferAssistanceOffers.AnyAsync(o => o.RequestId == requestId && o.HelperMemberId == memberId &&
@@ -118,7 +121,7 @@ public class ApplyTransferAssistanceBeneficiaryHandler(
             return Failure("Request participants cannot apply as beneficiary.",
                 "errors.transfer_assistance.conflict_of_interest");
         if (await TransferAssistanceBeneficiarySupport.HasActiveOfferAsync(db, request.Id, member.Id, ct))
-            return Failure("A helper with an active offer cannot apply as beneficiary of the same request.",
+            return Failure("An intermediary with an active offer cannot apply as beneficiary of the same request.",
                 "errors.transfer_assistance.beneficiary_candidate_conflict");
 
         var candidate = await db.TransferAssistanceBeneficiaryCandidates.FirstOrDefaultAsync(c =>
@@ -297,7 +300,11 @@ public class DesignateTransferAssistanceBeneficiaryHandler(
                 "errors.transfer_assistance.beneficiary_already_designated");
         }
 
-        if (request.Status is not (TransferAssistanceStatuses.Matching or TransferAssistanceStatuses.WitnessPending) ||
+        if (request.Status is not (TransferAssistanceStatuses.Matching or
+                TransferAssistanceStatuses.IntermediaryAssigned or
+                TransferAssistanceStatuses.MeetingScheduled or
+                TransferAssistanceStatuses.WitnessPending or
+                TransferAssistanceStatuses.TransferInProgress) ||
             request.ExpiresAt <= DateTime.UtcNow)
             return Failure("A beneficiary can no longer be designated for this request.",
                 "errors.transfer_assistance.invalid_transition");
@@ -305,7 +312,7 @@ public class DesignateTransferAssistanceBeneficiaryHandler(
             i.RequestId == request.Id &&
             (i.Status == TransferAssistanceWitnessInvitationStatuses.Pending ||
              i.Status == TransferAssistanceWitnessInvitationStatuses.Accepted), ct);
-        if (witnessInvited)
+        if (request.Status == TransferAssistanceStatuses.WitnessPending && witnessInvited)
             return Failure("A beneficiary cannot be designated after a witness has been invited.",
                 "errors.transfer_assistance.invalid_transition");
         if (candidate is not null && candidate.Status != TransferAssistanceBeneficiaryCandidateStatuses.Pending)
@@ -320,7 +327,7 @@ public class DesignateTransferAssistanceBeneficiaryHandler(
         if (beneficiary.Id == request.RequesterMemberId || beneficiary.Id == request.HelperMemberId ||
             beneficiary.Id == request.WitnessMemberId ||
             await TransferAssistanceBeneficiarySupport.HasActiveOfferAsync(db, request.Id, beneficiary.Id, ct))
-            return Failure("The beneficiary must be independent from the requester, helper, and witness.",
+            return Failure("The beneficiary must be independent from the requester, intermediary, and witness.",
                 "errors.transfer_assistance.conflict_of_interest");
 
         request.BeneficiaryMemberId = beneficiary.Id;

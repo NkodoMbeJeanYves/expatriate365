@@ -6,6 +6,7 @@ public static class TransferAssistanceStatuses
     public const string Submitted = "submitted";
     public const string Matching = "matching";
     public const string WitnessPending = "witness_pending";
+    public const string IntermediaryAssigned = "intermediary_assigned";
     public const string MeetingScheduled = "meeting_scheduled";
     public const string TransferInProgress = "transfer_in_progress";
     public const string TransferSent = "transfer_sent";

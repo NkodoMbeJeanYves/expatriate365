@@ -24,7 +24,7 @@ public sealed class TransferAssistanceMySqlTests
     private const string Repair = "20261022060000_RepairTransferAssistanceOpenRequestKeys";
     private static readonly string[] OpenStatuses =
     [
-        "draft", "submitted", "matching", "witness_pending", "meeting_scheduled",
+        "draft", "submitted", "matching", "witness_pending", "intermediary_assigned", "meeting_scheduled",
         "transfer_in_progress", "transfer_sent", "disputed", "suspended"
     ];
 

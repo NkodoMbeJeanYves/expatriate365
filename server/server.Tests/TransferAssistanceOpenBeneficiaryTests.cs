@@ -183,6 +183,28 @@ public class TransferAssistanceOpenBeneficiaryTests
     }
 
     [Fact]
+    public async Task BeneficiaryCanBeDesignatedAfterIntermediaryConfirmsHandover()
+    {
+        await using var db = TestDbFactory.Create();
+        var seed = await SeedAsync(db);
+        seed.Request.HelperMemberId = seed.Helper.Id;
+        seed.Request.Status = TransferAssistanceStatuses.TransferInProgress;
+        await db.SaveChangesAsync();
+
+        var openRequest = Assert.Single(await new ListBeneficiaryOpenTransferAssistanceRequestsHandler(
+                db, NullLogger<ListBeneficiaryOpenTransferAssistanceRequestsHandler>.Instance)
+            .Handle(new(seed.TenantId, seed.CandidateA.Id), default));
+        Assert.Equal(seed.Request.Id, openRequest.Id);
+        var candidacy = await ApplyAsync(db, seed, seed.CandidateA);
+        Assert.True(candidacy.IsSuccess, candidacy.ErrorCode);
+
+        var designated = await DesignateAsync(db, seed, new(candidacy.Data!.Id, null, "Friend"));
+
+        Assert.True(designated.IsSuccess, designated.ErrorCode);
+        Assert.Equal(seed.CandidateA.Id, seed.Request.BeneficiaryMemberId);
+    }
+
+    [Fact]
     public async Task Withdraw_ThenReapply_ReusesCandidacy()
     {
         await using var db = TestDbFactory.Create();

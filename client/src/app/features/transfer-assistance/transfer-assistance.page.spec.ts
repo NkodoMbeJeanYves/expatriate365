@@ -12,6 +12,7 @@ import { TransferAssistanceApiService } from './transfer-assistance-api.service'
 import { TransferAssistanceSyncService } from './transfer-assistance-sync.service';
 import {
   TransferAssistanceAssignment,
+  TransferAssistanceAvailableRequest,
   TransferAssistanceBeneficiaryCandidate,
   TransferAssistanceBeneficiaryOpenRequest,
   TransferAssistanceOffer,
@@ -43,6 +44,7 @@ describe('TransferAssistancePage session context', () => {
   const create = vi.fn();
   const submit = vi.fn();
   const getAvailableRequests = vi.fn();
+  const submitOffer = vi.fn();
   const getBeneficiaryOpenRequests = vi.fn();
   const getBeneficiaryCandidates = vi.fn();
   const designateBeneficiary = vi.fn();
@@ -53,7 +55,7 @@ describe('TransferAssistancePage session context', () => {
     lastSyncedAt: signal<Date | null>(null), stopped: signal(false),
   };
   const offer: TransferAssistanceOffer = {
-    id: 'offer-a', request_id: 'request-a', helper_member_id: 'helper-a', helper_name: 'Test Helper',
+    id: 'offer-a', request_id: 'request-a', helper_member_id: 'helper-a', intermediary_name: 'Test Intermediary',
     availability: 'Tomorrow', message: 'I can help', status: 'pending', created_at: '2026-10-20T00:00:00Z',
   };
   const instant = vi.fn((key: string, _params?: Record<string, string>) => key);
@@ -67,6 +69,12 @@ describe('TransferAssistancePage session context', () => {
     available_from: '2026-10-20', available_to: '2026-10-23', meeting_area: 'Ebene',
     status: 'draft', requester_handover_confirmed: false, helper_handover_confirmed: false,
     witness_attested: false, created_at: '2026-10-20T00:00:00Z',
+  };
+  const availableRequest: TransferAssistanceAvailableRequest = {
+    id: 'available-a', destination_country: 'CM', amount_mur: 1000, receive_currency: 'XAF',
+    receive_method: 'mobile_money', purpose: 'Family support', beneficiary_relationship: 'Parent',
+    available_from: '2026-10-20', available_to: '2026-10-23', meeting_area: 'Ebene',
+    expires_at: '2026-10-23T00:00:00Z', my_offer_submitted: false,
   };
   let page: TransferAssistancePage;
 
@@ -89,6 +97,7 @@ describe('TransferAssistancePage session context', () => {
     create.mockReset().mockReturnValue(of(request));
     submit.mockReset().mockReturnValue(of(request));
     getAvailableRequests.mockReset().mockReturnValue(of([]));
+    submitOffer.mockReset().mockReturnValue(of(offer));
     getBeneficiaryOpenRequests.mockReset().mockReturnValue(of([]));
     getBeneficiaryCandidates.mockReset().mockReturnValue(of([]));
     designateBeneficiary.mockReset().mockReturnValue(of(request));
@@ -105,7 +114,7 @@ describe('TransferAssistancePage session context', () => {
         } },
         { provide: TransferAssistanceApiService, useValue: {
           getMine, cancel, selectOffer, confirmHandover, attestWitness, searchWitnesses, updateProfile,
-          getProfile: () => of(null), create, submit, getAvailableRequests, getBeneficiaryOpenRequests,
+          getProfile: () => of(null), create, submit, getAvailableRequests, submitOffer, getBeneficiaryOpenRequests,
           getBeneficiaryCandidates, designateBeneficiary, applyAsBeneficiary, withdrawBeneficiaryCandidacy,
         } },
         { provide: TransferAssistanceSyncService, useValue: sync },
@@ -141,18 +150,25 @@ describe('TransferAssistancePage session context', () => {
     expect(page.nextActionForRequest({
       ...request, status: 'witness_pending', witness_member_id: 'witness-a',
     })).toBe('transfer_assistance.next_action_schedule_meeting');
+    expect(page.nextActionForRequest({
+      ...request, status: 'intermediary_assigned', beneficiary_pending: true,
+      beneficiary_candidate_count: 1,
+    })).toBe('transfer_assistance.next_action_designate_beneficiary');
+    expect(page.nextActionForRequest({
+      ...request, status: 'intermediary_assigned', beneficiary_pending: false,
+    })).toBe('transfer_assistance.next_action_schedule_meeting');
   });
 
   it('shows role-specific next actions for helper, witness, and beneficiary assignments', () => {
     const assignment: TransferAssistanceAssignment = {
-      request_id: 'request-a', role: 'helper', status: 'transfer_in_progress',
+      request_id: 'request-a', role: 'intermediary', status: 'transfer_in_progress',
       destination_country: 'CM', amount_mur: 1000, receive_currency: 'XAF',
       receive_method: 'mobile_money', purpose: 'Family support',
       available_from: '2026-10-20', available_to: '2026-10-23', meeting_area: 'Ebene',
       requester_handover_confirmed: true, helper_handover_confirmed: true, witness_attested: true,
     };
     expect(page.nextActionForAssignment(assignment))
-      .toBe('transfer_assistance.next_helper_submit_evidence');
+      .toBe('transfer_assistance.next_intermediary_submit_evidence');
     expect(page.nextActionForAssignment({
       ...assignment, role: 'witness', status: 'meeting_scheduled',
       meeting_at: new Date(Date.now() - 60_000).toISOString(), witness_attested: false,
@@ -165,7 +181,7 @@ describe('TransferAssistancePage session context', () => {
   it('waits until the scheduled meeting time before offering handover confirmations', () => {
     const meetingAt = new Date(Date.now() + 60_000).toISOString();
     const assignment: TransferAssistanceAssignment = {
-      request_id: 'request-a', role: 'helper', status: 'meeting_scheduled',
+      request_id: 'request-a', role: 'intermediary', status: 'meeting_scheduled',
       destination_country: 'CM', amount_mur: 1000, receive_currency: 'XAF',
       receive_method: 'mobile_money', purpose: 'Family support',
       available_from: '2026-10-20', available_to: '2026-10-23', meeting_area: 'Ebene',
@@ -250,8 +266,8 @@ describe('TransferAssistancePage session context', () => {
   it('selects a helper only after accepting the shared confirmation', () => {
     page.selectOffer(request, offer);
     expect(selectOffer).not.toHaveBeenCalled();
-    expect(instant).toHaveBeenCalledWith('transfer_assistance.confirm_select_helper', { name: offer.helper_name });
-    expect(confirm.mock.calls[0][0].message).toBe('transfer_assistance.confirm_select_helper');
+    expect(instant).toHaveBeenCalledWith('transfer_assistance.confirm_select_intermediary', { name: offer.intermediary_name });
+    expect(confirm.mock.calls[0][0].message).toBe('transfer_assistance.confirm_select_intermediary');
     confirm.mock.calls[0][0].accept?.();
     expect(selectOffer).toHaveBeenCalledExactlyOnceWith(request.id, offer.id);
     expect(getMine).toHaveBeenCalledTimes(2);
@@ -454,6 +470,39 @@ describe('TransferAssistancePage session context', () => {
     expect(getBeneficiaryOpenRequests).not.toHaveBeenCalled();
     expect(page.requests()[0].status).toBe('matching');
     expect(page.syncAnnouncement()).toBe('transfer_assistance.sync.updated');
+  });
+
+  it('replaces the offer form with a submitted status after success and restores it from the API', () => {
+    user.set(member({ permissions: [
+      'transfer_assistance.create', 'transfer_assistance.view_available', 'transfer_assistance.offer',
+    ] }));
+    getAvailableRequests.mockReturnValue(of([{ ...availableRequest, my_offer_submitted: true }]));
+    TestBed.tick();
+    page.availableRequests.set([availableRequest]);
+    page.offerAvailability.set({ 'available-a': 'Tomorrow' });
+    page.offerMessages.set({ 'available-a': 'I can coordinate this transfer.' });
+
+    page.submitOffer(availableRequest);
+
+    expect(submitOffer).toHaveBeenCalledExactlyOnceWith('available-a', {
+      availability: 'Tomorrow', message: 'I can coordinate this transfer.',
+    });
+    expect(page.availableRequests()[0].my_offer_submitted).toBe(true);
+
+    page.refresh();
+    expect(page.availableRequests()[0].my_offer_submitted).toBe(true);
+  });
+
+  it('keeps the offer form available when submission fails', () => {
+    submitOffer.mockReturnValue(throwError(() => new Error('offline')));
+    page.availableRequests.set([availableRequest]);
+    page.offerAvailability.set({ 'available-a': 'Tomorrow' });
+    page.offerMessages.set({ 'available-a': 'I can coordinate this transfer.' });
+
+    page.submitOffer(availableRequest);
+
+    expect(page.availableRequests()[0].my_offer_submitted).toBe(false);
+    expect(page.error()).toBe('transfer_assistance.workflow_failed');
   });
 
   it('keeps current data when a background section reload fails', () => {

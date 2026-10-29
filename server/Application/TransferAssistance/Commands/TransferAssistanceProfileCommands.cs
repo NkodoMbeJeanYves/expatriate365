@@ -83,7 +83,7 @@ public class UpdateTransferAssistanceProfileHandler(
              ((!profile.HelperOptedIn && helperOptedIn) || (!profile.WitnessOptedIn && witnessOptedIn)));
         if (member.User.Role == "org_admin" && requesting)
             return ServiceResult<TransferAssistanceProfileResponse>.Failure(
-                "Community administrators cannot be accredited as helpers or witnesses.",
+                "Community administrators cannot be accredited as intermediaries or witnesses.",
                 "errors.transfer_assistance.admin_participation_forbidden");
         if (command.Request.Action == "request" &&
             (command.Request.ParticipantRole == "helper" ? profile.HelperOptedIn : profile.WitnessOptedIn))
@@ -92,7 +92,7 @@ public class UpdateTransferAssistanceProfileHandler(
                 "errors.transfer_assistance.accreditation_exists");
         if (options.Value.RequireMfa && requesting && !member.User.MfaEnabled)
             return ServiceResult<TransferAssistanceProfileResponse>.Failure(
-                "Multi-factor authentication is required for helper and witness roles.",
+                "Multi-factor authentication is required for intermediary and witness roles.",
                 "errors.transfer_assistance.mfa_required");
         if (profile.HelperOptedIn == helperOptedIn && profile.WitnessOptedIn == witnessOptedIn)
             return ServiceResult<TransferAssistanceProfileResponse>.Success(ToResponse(profile));
@@ -204,7 +204,7 @@ public class ReviewTransferAssistanceProfileHandler(
         if (await db.Members.AnyAsync(m => m.Id == profile.MemberId &&
                 m.TenantId == command.TenantId && m.User.Role == "org_admin", ct))
             return ServiceResult<TransferAssistanceProfileResponse>.Failure(
-                "Community administrators cannot be accredited as helpers or witnesses.",
+                "Community administrators cannot be accredited as intermediaries or witnesses.",
                 "errors.transfer_assistance.admin_participation_forbidden");
         var isRequester = await db.Members.AnyAsync(
             m => m.Id == profile.MemberId && m.UserId == command.ReviewerUserId,

@@ -5,6 +5,7 @@ export type TransferAssistanceStatus =
   | 'submitted'
   | 'matching'
   | 'witness_pending'
+  | 'intermediary_assigned'
   | 'meeting_scheduled'
   | 'transfer_in_progress'
   | 'transfer_sent'
@@ -36,6 +37,9 @@ export interface TransferAssistanceRequest {
   review_reason?: string;
   helper_member_id?: string;
   witness_member_id?: string;
+  requester_name?: string;
+  intermediary_name?: string;
+  witness_name?: string;
   meeting_at?: string;
   expires_at?: string;
   requester_handover_confirmed: boolean;
@@ -93,13 +97,14 @@ export interface TransferAssistanceAvailableRequest {
   available_to: string;
   meeting_area: string;
   expires_at: string;
+  my_offer_submitted: boolean;
 }
 
 export interface TransferAssistanceOffer {
   id: string;
   request_id: string;
   helper_member_id: string;
-  helper_name: string;
+  intermediary_name: string;
   availability: string;
   message: string;
   status: 'pending' | 'selected' | 'declined' | 'withdrawn';
@@ -118,11 +123,17 @@ export interface TransferAssistanceInvitation {
   amount_mur: number;
   receive_currency: string;
   expires_at: string;
+  requester_name: string;
+  intermediary_name?: string;
+  purpose: string;
+  available_from: string;
+  available_to: string;
+  meeting_area: string;
 }
 
 export interface TransferAssistanceAssignment {
   request_id: string;
-  role: 'helper' | 'witness' | 'beneficiary';
+  role: 'intermediary' | 'witness' | 'beneficiary';
   status: TransferAssistanceStatus;
   destination_country: string;
   amount_mur: number;
@@ -144,6 +155,10 @@ export interface TransferAssistanceAssignment {
   transfer_sent_at?: string;
   beneficiary_confirmation?: 'full' | 'partial' | 'not_received';
   dispute_reason?: string;
+  requester_name?: string;
+  intermediary_name?: string;
+  witness_name?: string;
+  beneficiary_name?: string;
 }
 
 export interface TransferAssistanceReviewCase {

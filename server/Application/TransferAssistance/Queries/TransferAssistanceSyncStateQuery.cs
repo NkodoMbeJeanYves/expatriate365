@@ -61,7 +61,10 @@ public class GetTransferAssistanceSyncStateHandler(
                     await StampAsync(requests.Where(r => r.IsActive && r.BeneficiaryMemberId == null &&
                             r.ExpiresAt > now && r.RequesterMemberId != memberId &&
                             (r.Status == TransferAssistanceStatuses.Matching ||
-                             r.Status == TransferAssistanceStatuses.WitnessPending)),
+                            r.Status == TransferAssistanceStatuses.WitnessPending ||
+                            r.Status == TransferAssistanceStatuses.IntermediaryAssigned ||
+                            r.Status == TransferAssistanceStatuses.MeetingScheduled ||
+                            r.Status == TransferAssistanceStatuses.TransferInProgress)),
                         r => r.UpdatedAt ?? r.CreatedAt, ct),
                     await StampAsync(db.TransferAssistanceBeneficiaryCandidates.AsNoTracking()
                         .Where(c => c.TenantId == tenantId && c.MemberId == memberId),

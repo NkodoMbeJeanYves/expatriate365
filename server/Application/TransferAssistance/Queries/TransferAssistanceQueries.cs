@@ -42,7 +42,10 @@ public class ListMyTransferAssistanceRequestsHandler(AppDbContext db)
                 r.TransferProvider, r.TransferEvidenceReference, r.TransferSentAt,
                 r.BeneficiaryConfirmation, r.BeneficiaryConfirmedAt, r.DisputeReason,
                 r.BeneficiaryMemberId == null,
-                r.BeneficiaryCandidates.Count(c => c.Status == TransferAssistanceBeneficiaryCandidateStatuses.Pending)))
+                r.BeneficiaryCandidates.Count(c => c.Status == TransferAssistanceBeneficiaryCandidateStatuses.Pending),
+                r.RequesterMember.User.FirstName + " " + r.RequesterMember.User.LastName,
+                r.HelperMember == null ? null : r.HelperMember.User.FirstName + " " + r.HelperMember.User.LastName,
+                r.WitnessMember == null ? null : r.WitnessMember.User.FirstName + " " + r.WitnessMember.User.LastName))
             .ToListAsync(ct);
         return PagedResult<TransferAssistanceRequestResponse>.Create(data, page, limit, total);
     }
@@ -112,7 +115,10 @@ public class GetMyTransferAssistanceRequestHandler(AppDbContext db)
                 r.TransferProvider, r.TransferEvidenceReference, r.TransferSentAt,
                 r.BeneficiaryConfirmation, r.BeneficiaryConfirmedAt, r.DisputeReason,
                 r.BeneficiaryMemberId == null,
-                r.BeneficiaryCandidates.Count(c => c.Status == TransferAssistanceBeneficiaryCandidateStatuses.Pending)))
+                r.BeneficiaryCandidates.Count(c => c.Status == TransferAssistanceBeneficiaryCandidateStatuses.Pending),
+                r.RequesterMember.User.FirstName + " " + r.RequesterMember.User.LastName,
+                r.HelperMember == null ? null : r.HelperMember.User.FirstName + " " + r.HelperMember.User.LastName,
+                r.WitnessMember == null ? null : r.WitnessMember.User.FirstName + " " + r.WitnessMember.User.LastName))
             .FirstOrDefaultAsync(ct);
 }
 
@@ -198,12 +204,16 @@ public class ListMyTransferAssistanceAssignmentsHandler(
                         r.Status != TransferAssistanceStatuses.Rejected &&
                         r.Status != TransferAssistanceStatuses.Expired)
             .Select(r => new TransferAssistanceAssignmentResponse(
-                r.Id, "helper", r.Status, r.DestinationCountry, r.AmountMur, r.ReceiveCurrency,
+                r.Id, "intermediary", r.Status, r.DestinationCountry, r.AmountMur, r.ReceiveCurrency,
                 r.ReceiveMethod, r.Purpose, r.AvailableFrom, r.AvailableTo, r.MeetingArea,
                 r.HelperMemberId, r.WitnessMemberId, r.MeetingAt, null,
                 r.RequesterHandoverConfirmed, r.HelperHandoverConfirmed, r.WitnessAttested,
                 r.TransferProvider, r.TransferEvidenceReference, r.TransferSentAt,
-                r.BeneficiaryConfirmation, r.DisputeReason))
+                r.BeneficiaryConfirmation, r.DisputeReason,
+                r.RequesterMember.User.FirstName + " " + r.RequesterMember.User.LastName,
+                r.HelperMember == null ? null : r.HelperMember.User.FirstName + " " + r.HelperMember.User.LastName,
+                r.WitnessMember == null ? null : r.WitnessMember.User.FirstName + " " + r.WitnessMember.User.LastName,
+                r.BeneficiaryName))
             .ToListAsync(ct);
         var witnessAssignments = await db.TransferAssistanceWitnessInvitations.AsNoTracking()
             .Where(i => i.TenantId == query.TenantId && i.WitnessMemberId == query.MemberId &&
@@ -222,7 +232,11 @@ public class ListMyTransferAssistanceAssignmentsHandler(
                 i.Request.MeetingAt, i.Status, i.Request.RequesterHandoverConfirmed,
                 i.Request.HelperHandoverConfirmed, i.Request.WitnessAttested,
                 i.Request.TransferProvider, i.Request.TransferEvidenceReference,
-                i.Request.TransferSentAt, i.Request.BeneficiaryConfirmation, i.Request.DisputeReason))
+                i.Request.TransferSentAt, i.Request.BeneficiaryConfirmation, i.Request.DisputeReason,
+                i.Request.RequesterMember.User.FirstName + " " + i.Request.RequesterMember.User.LastName,
+                i.Request.HelperMember == null ? null : i.Request.HelperMember.User.FirstName + " " + i.Request.HelperMember.User.LastName,
+                i.Request.WitnessMember == null ? null : i.Request.WitnessMember.User.FirstName + " " + i.Request.WitnessMember.User.LastName,
+                i.Request.BeneficiaryName))
             .ToListAsync(ct);
         var beneficiaryAssignments = await db.TransferAssistanceRequests.AsNoTracking()
             .Where(r => r.TenantId == query.TenantId && r.BeneficiaryMemberId == query.MemberId &&
@@ -235,10 +249,14 @@ public class ListMyTransferAssistanceAssignmentsHandler(
                 r.MeetingArea, r.HelperMemberId, r.WitnessMemberId, r.MeetingAt, null,
                 r.RequesterHandoverConfirmed, r.HelperHandoverConfirmed, r.WitnessAttested,
                 r.TransferProvider, r.TransferEvidenceReference, r.TransferSentAt,
-                r.BeneficiaryConfirmation, r.DisputeReason))
+                r.BeneficiaryConfirmation, r.DisputeReason,
+                r.RequesterMember.User.FirstName + " " + r.RequesterMember.User.LastName,
+                r.HelperMember == null ? null : r.HelperMember.User.FirstName + " " + r.HelperMember.User.LastName,
+                r.WitnessMember == null ? null : r.WitnessMember.User.FirstName + " " + r.WitnessMember.User.LastName,
+                r.BeneficiaryName))
             .ToListAsync(ct);
 
-        log.LogInformation("Loaded {HelperCount} helper, {WitnessCount} witness, and {BeneficiaryCount} beneficiary assignments for member {MemberId}",
+        log.LogInformation("Loaded {IntermediaryCount} intermediary, {WitnessCount} witness, and {BeneficiaryCount} beneficiary assignments for member {MemberId}",
             helperAssignments.Count, witnessAssignments.Count, beneficiaryAssignments.Count, query.MemberId);
         return helperAssignments.Concat(witnessAssignments).Concat(beneficiaryAssignments)
             .OrderByDescending(a => a.MeetingAt ?? DateTime.MinValue)
@@ -301,7 +319,10 @@ public class ListMyTransferAssistanceWitnessInvitationsHandler(
             .OrderBy(i => i.ExpiresAt)
             .Select(i => new TransferAssistanceMyInvitationResponse(
                 i.Id, i.RequestId, i.Request.DestinationCountry, i.Request.AmountMur,
-                i.Request.ReceiveCurrency, i.ExpiresAt))
+                i.Request.ReceiveCurrency, i.ExpiresAt,
+                i.Request.RequesterMember.User.FirstName + " " + i.Request.RequesterMember.User.LastName,
+                i.Request.HelperMember == null ? null : i.Request.HelperMember.User.FirstName + " " + i.Request.HelperMember.User.LastName,
+                i.Request.Purpose, i.Request.AvailableFrom, i.Request.AvailableTo, i.Request.MeetingArea))
             .ToListAsync(ct);
         log.LogInformation("Loaded {InvitationCount} pending witness invitations for member {MemberId}",
             invitations.Count, query.MemberId);

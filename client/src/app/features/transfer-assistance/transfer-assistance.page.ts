@@ -45,7 +45,7 @@ const DISPUTE_PERMISSION = 'transfer_assistance.open_dispute';
 const RESOLVE_PERMISSION = 'transfer_assistance.resolve_dispute';
 const SUSPEND_PERMISSION = 'transfer_assistance.suspend';
 const READ_OWN_PERMISSION = 'transfer_assistance.read_own';
-const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending', 'meeting_scheduled', 'transfer_in_progress', 'transfer_sent', 'disputed']);
+const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending', 'intermediary_assigned', 'meeting_scheduled', 'transfer_in_progress', 'transfer_sent', 'disputed']);
 
 @Component({
   selector: 'app-transfer-assistance-page',
@@ -296,6 +296,17 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                       }
                     }
                   }
+                  @if (request.intermediary_name || request.witness_name) {
+                    <p class="text-sm text-gray-600">
+                      @if (request.intermediary_name) {
+                        <span>{{ 'transfer_assistance.intermediary_label' | translate }}: {{ request.intermediary_name }}</span>
+                      }
+                      @if (request.intermediary_name && request.witness_name) { <span> · </span> }
+                      @if (request.witness_name) {
+                        <span>{{ 'transfer_assistance.witness_label' | translate }}: {{ request.witness_name }}</span>
+                      }
+                    </p>
+                  }
                   @if (request.review_reason) {
                     <p class="mt-2 text-sm text-red-700">{{ request.review_reason }}</p>
                   }
@@ -317,13 +328,13 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                     @if (hasLoadedOffers(request.id)) {
                       @for (offer of offersFor(request.id); track offer.id) {
                         <div class="mt-2 rounded-lg border border-gray-200 p-3 text-sm">
-                          <p class="font-medium">{{ offer.helper_name }}</p>
+                          <p class="font-medium">{{ offer.intermediary_name }}</p>
                           <p>{{ offer.availability }}</p>
                           <p class="text-gray-600">{{ offer.message }}</p>
                           @if (offer.status === 'pending') {
                             <button type="button" (click)="selectOffer(request, offer)"
                               class="mt-2 rounded-lg bg-emerald-700 px-3 py-2 text-white">
-                              {{ 'transfer_assistance.select_helper' | translate }}
+                              {{ 'transfer_assistance.select_intermediary' | translate }}
                             </button>
                           }
                         </div>
@@ -355,7 +366,8 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                       }
                     </div>
                   }
-                  @if (request.status === 'witness_pending' && request.witness_member_id) {
+                  @if ((request.status === 'intermediary_assigned' ||
+                       (request.status === 'witness_pending' && request.witness_member_id))) {
                     <label class="mt-3 grid gap-1 text-sm md:max-w-sm">
                       {{ 'transfer_assistance.meeting_time' | translate }}
                       <input type="datetime-local" class="rounded-lg border border-gray-300 px-3 py-2"
@@ -380,6 +392,7 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                   }
                   @if (request.status === 'draft' || request.status === 'submitted' ||
                        request.status === 'matching' || request.status === 'witness_pending' ||
+                       request.status === 'intermediary_assigned' ||
                        request.status === 'meeting_scheduled') {
                     <button type="button" (click)="cancel(request)"
                       class="mt-2 ml-2 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700">
@@ -533,22 +546,28 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                   <p class="text-sm text-gray-600">{{ request.receive_currency }} ·
                     {{ ('transfer_assistance.' + request.receive_method) | translate }} · {{ request.meeting_area }}</p>
                   <p class="text-sm">{{ request.purpose }}</p>
-                  <label class="grid gap-1 text-sm">
-                    {{ 'transfer_assistance.availability_offer' | translate }}
-                    <input class="rounded-lg border border-gray-300 px-3 py-2"
-                      [value]="offerInputFor(request.id, 'availability')"
-                      (input)="setInputValue('offerAvailability', request.id, $event)" maxlength="200" />
-                  </label>
-                  <label class="grid gap-1 text-sm">
-                    {{ 'transfer_assistance.offer_message' | translate }}
-                    <textarea class="rounded-lg border border-gray-300 px-3 py-2"
-                      [value]="offerInputFor(request.id, 'message')"
-                      (input)="setInputValue('offerMessages', request.id, $event)" maxlength="500"></textarea>
-                  </label>
-                  <button type="button" (click)="submitOffer(request)"
-                    class="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white">
-                    {{ 'transfer_assistance.make_offer' | translate }}
-                  </button>
+                  @if (request.my_offer_submitted) {
+                    <p role="status" class="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
+                      {{ 'transfer_assistance.offer_submitted_status' | translate }}
+                    </p>
+                  } @else {
+                    <label class="grid gap-1 text-sm">
+                      {{ 'transfer_assistance.availability_offer' | translate }}
+                      <input class="rounded-lg border border-gray-300 px-3 py-2"
+                        [value]="offerInputFor(request.id, 'availability')"
+                        (input)="setInputValue('offerAvailability', request.id, $event)" maxlength="200" />
+                    </label>
+                    <label class="grid gap-1 text-sm">
+                      {{ 'transfer_assistance.offer_message' | translate }}
+                      <textarea class="rounded-lg border border-gray-300 px-3 py-2"
+                        [value]="offerInputFor(request.id, 'message')"
+                        (input)="setInputValue('offerMessages', request.id, $event)" maxlength="500"></textarea>
+                    </label>
+                    <button type="button" (click)="submitOffer(request)" [disabled]="saving()"
+                      class="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white disabled:opacity-50">
+                      {{ 'transfer_assistance.make_offer' | translate }}
+                    </button>
+                  }
                 </article>
               }
             </div>
@@ -570,6 +589,17 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
             @for (invitation of witnessInvitations(); track invitation.invitation_id) {
               <article class="space-y-3 border-b border-gray-100 p-5">
                 <p>{{ invitation.destination_country }} · {{ invitation.amount_mur }} MUR · {{ invitation.receive_currency }}</p>
+                <p class="text-sm">
+                  {{ 'transfer_assistance.requester_label' | translate }}: {{ invitation.requester_name }}
+                  @if (invitation.intermediary_name) {
+                    · {{ 'transfer_assistance.intermediary_label' | translate }}: {{ invitation.intermediary_name }}
+                  }
+                </p>
+                <p class="text-sm">{{ invitation.purpose }}</p>
+                <p class="text-sm text-gray-600">
+                  {{ invitation.available_from | date:'mediumDate':'UTC' }} – {{ invitation.available_to | date:'mediumDate':'UTC' }}
+                  · {{ invitation.meeting_area }}
+                </p>
                 <label class="flex items-center gap-2 text-sm">
                   <input type="checkbox" [checked]="conflictFor(invitation.invitation_id)"
                     (change)="setConflict(invitation.invitation_id, $event)" />
@@ -613,6 +643,20 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                 <p class="text-sm text-gray-600">{{ assignment.receive_currency }} ·
                   {{ ('transfer_assistance.' + assignment.receive_method) | translate }} · {{ assignment.meeting_area }}</p>
                 <p class="text-sm">{{ assignment.purpose }}</p>
+                <div class="grid gap-1 text-sm text-gray-600">
+                  @if (assignment.requester_name) {
+                    <p>{{ 'transfer_assistance.requester_label' | translate }}: {{ assignment.requester_name }}</p>
+                  }
+                  @if (assignment.intermediary_name) {
+                    <p>{{ 'transfer_assistance.intermediary_label' | translate }}: {{ assignment.intermediary_name }}</p>
+                  }
+                  @if (assignment.witness_name) {
+                    <p>{{ 'transfer_assistance.witness_label' | translate }}: {{ assignment.witness_name }}</p>
+                  }
+                  @if (assignment.beneficiary_name) {
+                    <p>{{ 'transfer_assistance.beneficiary_label' | translate }}: {{ assignment.beneficiary_name }}</p>
+                  }
+                </div>
                 <p class="text-sm font-semibold">{{ ('transfer_assistance.status_' + assignment.status) | translate }}</p>
                 <p class="rounded-lg bg-blue-50 p-3 text-sm text-blue-900" data-testid="assignment-next-action">
                   {{ nextActionForAssignment(assignment) | translate }}
@@ -620,7 +664,9 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                 @if (assignment.meeting_at) {
                   <p class="text-sm">{{ 'transfer_assistance.meeting_time' | translate }}: {{ assignment.meeting_at | date:'medium' }}</p>
                 }
-                @if (assignment.role === 'helper' && assignment.status === 'witness_pending') {
+                @if (assignment.role === 'intermediary' &&
+                     (assignment.status === 'intermediary_assigned' ||
+                      (assignment.status === 'witness_pending' && assignment.witness_member_id))) {
                   <label class="grid gap-1 text-sm md:max-w-sm">
                     {{ 'transfer_assistance.meeting_time' | translate }}
                     <input type="datetime-local" class="rounded-lg border border-gray-300 px-3 py-2"
@@ -632,7 +678,7 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                     {{ 'transfer_assistance.schedule_meeting' | translate }}
                   </button>
                 }
-                @if (assignment.role === 'helper' && assignment.status === 'meeting_scheduled' &&
+                @if (assignment.role === 'intermediary' && assignment.status === 'meeting_scheduled' &&
                      !assignment.helper_handover_confirmed && isMeetingTimeReached(assignment.meeting_at)) {
                   <button type="button" (click)="confirmHandover(assignment.request_id)"
                     class="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white">
@@ -646,7 +692,7 @@ const ACTIVE_CASE_STATUSES = new Set(['submitted', 'matching', 'witness_pending'
                     {{ 'transfer_assistance.attest_handover' | translate }}
                   </button>
                 }
-                @if (assignment.role === 'helper' && assignment.status === 'transfer_in_progress') {
+                @if (assignment.role === 'intermediary' && assignment.status === 'transfer_in_progress') {
                   <label class="grid gap-1 text-sm md:max-w-sm">
                     {{ 'transfer_assistance.provider_name' | translate }}
                     <input class="rounded-lg border border-gray-300 px-3 py-2"
@@ -851,7 +897,7 @@ export class TransferAssistancePage implements OnInit {
     ['member', 'board_member'].includes(this.auth.user()?.entity_type ?? '') && !!this.auth.user()?.entity_id);
   readonly isOrgAdmin = computed(() => this.auth.user()?.roles.includes('org_admin') ?? false);
   readonly canManageProfile = computed(() => !this.isOrgAdmin() && this.hasMemberEntity() && this.auth.hasPermission(PROFILE_PERMISSION));
-  readonly participationRoles = computed(() => (['helper', 'witness'] as const).map(role => ({
+  readonly participationRoles = computed(() => (['helper'] as const).map(role => ({
     role,
     optedIn: this.profile()?.[`${role}_opted_in`] ?? false,
     status: this.profile()?.[`${role}_verification_status`] ?? 'not_requested',
@@ -1286,7 +1332,9 @@ export class TransferAssistancePage implements OnInit {
   }
 
   canDesignateStatus(status: TransferAssistanceRequest['status']): boolean {
-    return status === 'matching' || status === 'witness_pending';
+    return status === 'matching' || status === 'witness_pending' ||
+      status === 'intermediary_assigned' || status === 'meeting_scheduled' ||
+      status === 'transfer_in_progress';
   }
 
   loadCandidates(request: TransferAssistanceRequest): void {
@@ -1445,6 +1493,10 @@ export class TransferAssistancePage implements OnInit {
         return request.witness_member_id
           ? 'transfer_assistance.next_action_schedule_meeting'
           : 'transfer_assistance.next_action_invite_witness';
+      case 'intermediary_assigned':
+        return (request.beneficiary_candidate_count ?? 0) > 0
+          ? 'transfer_assistance.next_action_designate_beneficiary'
+          : 'transfer_assistance.next_action_schedule_meeting';
       case 'meeting_scheduled':
         if (!request.requester_handover_confirmed && !this.isMeetingTimeReached(request.meeting_at)) {
           return 'transfer_assistance.next_action_wait_meeting_time';
@@ -1473,8 +1525,9 @@ export class TransferAssistancePage implements OnInit {
       return 'transfer_assistance.next_action_closed';
     }
 
-    if (assignment.role === 'helper') {
+    if (assignment.role === 'intermediary') {
       if (assignment.status === 'witness_pending') return 'transfer_assistance.next_helper_wait_witness';
+      if (assignment.status === 'intermediary_assigned') return 'transfer_assistance.next_action_schedule_meeting';
       if (assignment.status === 'meeting_scheduled') {
         if (!assignment.helper_handover_confirmed && !this.isMeetingTimeReached(assignment.meeting_at)) {
           return 'transfer_assistance.next_action_wait_meeting_time';
@@ -1483,8 +1536,8 @@ export class TransferAssistancePage implements OnInit {
           ? 'transfer_assistance.next_action_wait_handover'
           : 'transfer_assistance.next_action_confirm_handover';
       }
-      if (assignment.status === 'transfer_in_progress') return 'transfer_assistance.next_helper_submit_evidence';
-      if (assignment.status === 'transfer_sent') return 'transfer_assistance.next_helper_wait_receipt';
+      if (assignment.status === 'transfer_in_progress') return 'transfer_assistance.next_intermediary_submit_evidence';
+      if (assignment.status === 'transfer_sent') return 'transfer_assistance.next_intermediary_wait_receipt';
     }
 
     if (assignment.role === 'witness') {
@@ -1509,8 +1562,8 @@ export class TransferAssistancePage implements OnInit {
   }
 
   selectOffer(request: TransferAssistanceRequest, offer: TransferAssistanceOffer): void {
-    this.confirmAction(this.translate.instant('transfer_assistance.confirm_select_helper', {
-      name: offer.helper_name,
+    this.confirmAction(this.translate.instant('transfer_assistance.confirm_select_intermediary', {
+      name: offer.intermediary_name,
     }), () => this.runAction(this.api.selectOffer(request.id, offer.id), 'transfer_assistance.workflow_failed'));
   }
 
@@ -1522,7 +1575,10 @@ export class TransferAssistancePage implements OnInit {
       return;
     }
     this.runAction(this.api.submitOffer(request.id, { availability, message }),
-      'transfer_assistance.workflow_failed');
+      'transfer_assistance.workflow_failed', () => {
+        this.availableRequests.update(requests => requests.map(item =>
+          item.id === request.id ? { ...item, my_offer_submitted: true } : item));
+      });
   }
 
   inviteWitness(request: TransferAssistanceRequest, witness: TransferAssistanceBeneficiaryOption): void {
@@ -1693,12 +1749,15 @@ export class TransferAssistancePage implements OnInit {
     signals[field].update(current => ({ ...current, [id]: target.value }));
   }
 
-  private runAction<T>(action: Observable<T>, errorKey: string): void {
+  private runAction<T>(action: Observable<T>, errorKey: string, onSuccess?: () => void): void {
     if (this.saving()) return;
     this.saving.set(true);
     this.error.set('');
     action.pipe(finalize(() => this.saving.set(false))).pipe(takeUntil(this.contextChanged), takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => this.load(),
+      next: () => {
+        onSuccess?.();
+        this.load();
+      },
       error: () => this.error.set(errorKey),
     });
   }

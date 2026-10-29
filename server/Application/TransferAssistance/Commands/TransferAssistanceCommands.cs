@@ -89,6 +89,7 @@ public class CreateTransferAssistanceRequestHandler(
              r.Status == TransferAssistanceStatuses.Submitted ||
              r.Status == TransferAssistanceStatuses.Matching ||
              r.Status == TransferAssistanceStatuses.WitnessPending ||
+             r.Status == TransferAssistanceStatuses.IntermediaryAssigned ||
              r.Status == TransferAssistanceStatuses.MeetingScheduled ||
              r.Status == TransferAssistanceStatuses.TransferInProgress ||
              r.Status == TransferAssistanceStatuses.TransferSent ||
@@ -475,7 +476,7 @@ public class ReviewTransferAssistanceRequestHandler(
             var (reviewType, reviewTitle, reviewBody, reviewEvent) = command.Request.Decision switch
             {
                 "approve" => (TransferAssistanceNotificationTypes.Review, "Request approved",
-                    "Your request was approved and is now visible to potential helpers.", "review_approved"),
+                    "Your request was approved and is now visible to potential intermediaries.", "review_approved"),
                 "reject" => (TransferAssistanceNotificationTypes.Review, "Request rejected",
                     "Your request was rejected by a reviewer.", "review_rejected"),
                 _ => (TransferAssistanceNotificationTypes.CaseUpdate, "Request suspended",
@@ -531,7 +532,8 @@ public class CancelTransferAssistanceRequestHandler(
                 "Request not found.", "errors.transfer_assistance.not_found");
         if (entity.Status is not (TransferAssistanceStatuses.Draft or
             TransferAssistanceStatuses.Submitted or TransferAssistanceStatuses.Matching or
-            TransferAssistanceStatuses.WitnessPending or TransferAssistanceStatuses.MeetingScheduled))
+            TransferAssistanceStatuses.WitnessPending or TransferAssistanceStatuses.IntermediaryAssigned or
+            TransferAssistanceStatuses.MeetingScheduled))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The request can no longer be cancelled in its current state.",
                 "errors.transfer_assistance.invalid_transition");

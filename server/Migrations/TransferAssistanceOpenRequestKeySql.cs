@@ -16,7 +16,7 @@ internal static class TransferAssistanceOpenRequestKeySql
         )
         FROM transfer_assistance_requests
         WHERE is_active = 1 AND status IN (
-            'draft', 'submitted', 'matching', 'witness_pending',
+            'draft', 'submitted', 'matching', 'witness_pending', 'intermediary_assigned',
             'meeting_scheduled', 'transfer_in_progress', 'transfer_sent',
             'disputed', 'suspended'
         );
@@ -27,7 +27,7 @@ internal static class TransferAssistanceOpenRequestKeySql
         UPDATE transfer_assistance_requests
         SET open_request_key = NULL
         WHERE is_active = 0 OR status NOT IN (
-            'draft', 'submitted', 'matching', 'witness_pending',
+            'draft', 'submitted', 'matching', 'witness_pending', 'intermediary_assigned',
             'meeting_scheduled', 'transfer_in_progress', 'transfer_sent',
             'disputed', 'suspended'
         );
@@ -38,7 +38,7 @@ internal static class TransferAssistanceOpenRequestKeySql
             REPLACE(LOWER(CAST(requester_member_id AS CHAR)), '-', '')
         )
         WHERE is_active = 1 AND status IN (
-            'draft', 'submitted', 'matching', 'witness_pending',
+            'draft', 'submitted', 'matching', 'witness_pending', 'intermediary_assigned',
             'meeting_scheduled', 'transfer_in_progress', 'transfer_sent',
             'disputed', 'suspended'
         );

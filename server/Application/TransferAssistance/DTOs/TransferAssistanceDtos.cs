@@ -48,7 +48,10 @@ public sealed record TransferAssistanceRequestResponse(
     DateTime? BeneficiaryConfirmedAt = null,
     string? DisputeReason = null,
     bool BeneficiaryPending = false,
-    int BeneficiaryCandidateCount = 0);
+    int BeneficiaryCandidateCount = 0,
+    string? RequesterName = null,
+    string? IntermediaryName = null,
+    string? WitnessName = null);
 
 public sealed record TransferAssistanceBeneficiaryOption(Guid MemberId, string MemberName);
 
@@ -63,7 +66,8 @@ public sealed record TransferAssistanceAvailableRequestResponse(
     DateOnly AvailableFrom,
     DateOnly AvailableTo,
     string MeetingArea,
-    DateTime ExpiresAt);
+    DateTime ExpiresAt,
+    bool MyOfferSubmitted = false);
 
 public sealed record SubmitTransferAssistanceOfferRequest(string Availability, string Message);
 
@@ -71,7 +75,7 @@ public sealed record TransferAssistanceOfferResponse(
     Guid Id,
     Guid RequestId,
     Guid HelperMemberId,
-    string HelperName,
+    string IntermediaryName,
     string Availability,
     string Message,
     string Status,
@@ -116,7 +120,13 @@ public sealed record TransferAssistanceMyInvitationResponse(
     string DestinationCountry,
     decimal AmountMur,
     string ReceiveCurrency,
-    DateTime ExpiresAt);
+    DateTime ExpiresAt,
+    string RequesterName,
+    string? IntermediaryName,
+    string Purpose,
+    DateOnly AvailableFrom,
+    DateOnly AvailableTo,
+    string MeetingArea);
 
 public sealed record TransferAssistanceReviewCaseResponse(
     Guid Id,
@@ -153,7 +163,11 @@ public sealed record TransferAssistanceAssignmentResponse(
     string? TransferEvidenceReference,
     DateTime? TransferSentAt,
     string? BeneficiaryConfirmation,
-    string? DisputeReason);
+    string? DisputeReason,
+    string RequesterName,
+    string? IntermediaryName,
+    string? WitnessName,
+    string BeneficiaryName);
 
 public sealed record TransferAssistanceEventResponse(
     string EventType,

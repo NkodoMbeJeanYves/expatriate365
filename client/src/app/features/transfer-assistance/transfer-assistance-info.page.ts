@@ -62,9 +62,6 @@ type CheckItem = { key: string; ok: boolean };
                   <span>{{ 'transfer_assistance.info.helper_title' | translate }} :
                     <p-tag [value]="('transfer_assistance.verification_' + p.helper_verification_status) | translate"
                       [severity]="severity(p.helper_verification_status)" /></span>
-                  <span>{{ 'transfer_assistance.info.witness_title' | translate }} :
-                    <p-tag [value]="('transfer_assistance.verification_' + p.witness_verification_status) | translate"
-                      [severity]="severity(p.witness_verification_status)" /></span>
                 </div>
               }
               <p class="mt-4 text-sm" [class]="r.my_eligibility.can_request_accreditation ? 'text-green-700' : 'text-amber-800'">
@@ -79,18 +76,12 @@ type CheckItem = { key: string; ok: boolean };
           </section>
         }
 
-        <section class="grid gap-4 md:grid-cols-2">
+        <section>
           <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
               <i class="pi pi-user-plus text-primary-600" aria-hidden="true"></i>{{ 'transfer_assistance.info.helper_title' | translate }}
             </h2>
             <p class="mt-2 text-sm text-gray-600">{{ 'transfer_assistance.info.helper_desc' | translate }}</p>
-          </article>
-          <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-            <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <i class="pi pi-eye text-primary-600" aria-hidden="true"></i>{{ 'transfer_assistance.info.witness_title' | translate }}
-            </h2>
-            <p class="mt-2 text-sm text-gray-600">{{ 'transfer_assistance.info.witness_desc' | translate }}</p>
           </article>
         </section>
 
@@ -122,24 +113,13 @@ type CheckItem = { key: string; ok: boolean };
           <p class="mt-2 text-sm text-gray-600">{{ 'transfer_assistance.info.validation_self' | translate }}</p>
         </section>
 
-        <section class="grid gap-4 md:grid-cols-2">
+        <section>
           <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <h2 class="text-lg font-semibold text-gray-900">{{ 'transfer_assistance.info.helper_rules_title' | translate }}</h2>
             <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600">
               <li>{{ 'transfer_assistance.info.helper_rule_conflict' | translate }}</li>
               <li>{{ 'transfer_assistance.info.helper_rule_one_offer' | translate }}</li>
               <li>{{ 'transfer_assistance.info.helper_rule_recheck' | translate }}</li>
-            </ul>
-          </article>
-          <article class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-            <h2 class="text-lg font-semibold text-gray-900">{{ 'transfer_assistance.info.witness_rules_title' | translate }}</h2>
-            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600">
-              <li>{{ 'transfer_assistance.info.witness_rule_independent' | translate }}</li>
-              <li>{{ 'transfer_assistance.info.witness_rule_one_pending' | translate }}</li>
-              <li>{{ 'transfer_assistance.info.witness_rule_recheck' | translate }}</li>
-              @if (rules(); as r) {
-                <li data-testid="invitation-window">{{ 'transfer_assistance.info.witness_rule_window' | translate: { days: r.invitation_window_days } }}</li>
-              }
             </ul>
           </article>
         </section>
@@ -189,7 +169,7 @@ export class TransferAssistanceInfoPage implements OnInit {
 
   readonly featureEnabled = environment.features.transferAssistance;
   readonly steps = [
-    'accreditation', 'validation', 'matching', 'beneficiary', 'witness',
+    'accreditation', 'validation', 'matching', 'beneficiary', 'intermediary',
     'meeting', 'transfer', 'receipt',
   ] as const;
   readonly loading = signal(true);

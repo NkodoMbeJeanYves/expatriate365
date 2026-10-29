@@ -179,7 +179,8 @@ public class ListAvailableTransferAssistanceRequestsHandler(
             .Select(r => new TransferAssistanceAvailableRequestResponse(
                 r.Id, r.DestinationCountry, r.AmountMur, r.ReceiveCurrency, r.ReceiveMethod,
                 r.Purpose, r.BeneficiaryRelationship, r.AvailableFrom, r.AvailableTo,
-                r.MeetingArea, r.ExpiresAt!.Value))
+                r.MeetingArea, r.ExpiresAt!.Value,
+                r.Offers.Any(o => o.HelperMemberId == query.MemberId)))
             .Take(100)
             .ToListAsync(ct);
     }
@@ -216,7 +217,7 @@ public class SubmitTransferAssistanceOfferHandler(
             p.HelperOptedIn && p.HelperVerificationStatus == TransferAssistanceVerificationStatuses.Verified, ct);
         if (profile is null)
             return ServiceResult<TransferAssistanceOfferResponse>.Failure(
-                "A verified, opted-in helper profile is required.",
+                "A verified, opted-in intermediary profile is required.",
                 "errors.transfer_assistance.helper_not_verified");
 
         var helper = await db.Members.Include(m => m.User).FirstOrDefaultAsync(m =>
@@ -259,7 +260,7 @@ public class SubmitTransferAssistanceOfferHandler(
                 existing.Availability == availability && existing.Message == message)
                 return ServiceResult<TransferAssistanceOfferResponse>.Success(ToResponse(existing, helper.User.FullName));
             return ServiceResult<TransferAssistanceOfferResponse>.Failure(
-                "Only one offer per helper and request is allowed.",
+                "Only one offer per intermediary and request is allowed.",
                 "errors.transfer_assistance.offer_already_exists");
         }
 
@@ -296,7 +297,7 @@ public class SubmitTransferAssistanceOfferHandler(
                 return ServiceResult<TransferAssistanceOfferResponse>.Success(
                     ToResponse(concurrentOffer, helper.User.FullName));
             return ServiceResult<TransferAssistanceOfferResponse>.Failure(
-                "Only one offer per helper and request is allowed.",
+                "Only one offer per intermediary and request is allowed.",
                 "errors.transfer_assistance.offer_already_exists");
         }
 
@@ -383,10 +384,10 @@ public class SelectTransferAssistanceOfferHandler(
             (!options.Value.RequireMfa || p.Member.User.MfaEnabled), ct);
         if (!helperEligible)
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
-                "The helper is no longer eligible.", "errors.transfer_assistance.helper_not_verified");
+                "The intermediary is no longer eligible.", "errors.transfer_assistance.helper_not_verified");
 
         request.HelperMemberId = offer.HelperMemberId;
-        request.Status = TransferAssistanceStatuses.WitnessPending;
+        request.Status = TransferAssistanceStatuses.IntermediaryAssigned;
         request.ExpiresAt = DateTime.UtcNow.AddDays(Math.Clamp(options.Value.InvitationWindowDays, 1, 30));
         request.WorkflowVersion++;
         offer.Status = TransferAssistanceOfferStatuses.Selected;
@@ -400,21 +401,21 @@ public class SelectTransferAssistanceOfferHandler(
         foreach (var declinedUserId in declinedHelperUserIds)
             await TransferAssistanceWorkflowSupport.AddNotificationAsync(db, command.TenantId, declinedUserId,
                 TransferAssistanceNotificationTypes.OfferDeclined, "Offer not selected",
-                "Another helper was selected for a request you offered to assist. Thank you.",
+                "Another intermediary was selected for a request you offered to assist. Thank you.",
                 request.Id.ToString(), ct);
 
         audit.Log("transfer_assistance.offer.selected", command.UserId, command.TenantId,
             "transfer_assistance_request", request.Id.ToString());
-        TransferAssistanceWorkflowSupport.AddEvent(db, request, command.UserId, "helper_selected");
+        TransferAssistanceWorkflowSupport.AddEvent(db, request, command.UserId, "intermediary_selected");
         await TransferAssistanceWorkflowSupport.AddNotificationAsync(db, command.TenantId,
-            offer.HelperMember.UserId, TransferAssistanceNotificationTypes.Assignment, "Your offer was selected",
-            "You have been selected to assist with a community transfer assistance request.",
+            offer.HelperMember.UserId, TransferAssistanceNotificationTypes.Assignment, "Your intermediary offer was selected",
+            "You have been selected as the intermediary for a community transfer assistance request.",
             request.Id.ToString(), ct, options.Value, "assignment");
         if (!await TransferAssistanceWorkflowSupport.SaveWorkflowAsync(db, log, request.Id, ct))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
                 "The request changed concurrently. Refresh and try again.",
                 "errors.transfer_assistance.concurrent_update");
-        log.LogInformation("Request {RequestId} assigned to helper {MemberId}", request.Id, offer.HelperMemberId);
+        log.LogInformation("Request {RequestId} assigned to intermediary {MemberId}", request.Id, offer.HelperMemberId);
         return ServiceResult<TransferAssistanceRequestResponse>.Success(
             TransferAssistanceWorkflowSupport.ToResponse(request));
     }
@@ -445,7 +446,7 @@ public class InviteTransferAssistanceWitnessHandler(
             r.Status == TransferAssistanceStatuses.WitnessPending, ct);
         if (request is null || request.HelperMemberId is null)
             return ServiceResult<TransferAssistanceWitnessInvitationResponse>.Failure(
-                "A selected helper is required before inviting a witness.",
+                "A selected intermediary is required before inviting a witness.",
                 "errors.transfer_assistance.invalid_transition");
         if (request.BeneficiaryMemberId is null)
             return ServiceResult<TransferAssistanceWitnessInvitationResponse>.Failure(
@@ -463,7 +464,7 @@ public class InviteTransferAssistanceWitnessHandler(
         if (witness.Id == request.RequesterMemberId || witness.Id == request.HelperMemberId ||
             witness.Id == request.BeneficiaryMemberId)
             return ServiceResult<TransferAssistanceWitnessInvitationResponse>.Failure(
-                "The witness must be independent from the requester, helper, and beneficiary.",
+                "The witness must be independent from the requester, intermediary, and beneficiary.",
                 "errors.transfer_assistance.conflict_of_interest");
         var profile = await db.TransferAssistanceProfiles.AsNoTracking().FirstOrDefaultAsync(p =>
             p.TenantId == command.TenantId && p.MemberId == witness.Id && p.IsActive &&
@@ -652,12 +653,14 @@ public class ScheduleTransferAssistanceMeetingHandler(
     {
         var request = await db.TransferAssistanceRequests.FirstOrDefaultAsync(r =>
             r.Id == command.RequestId && r.TenantId == command.TenantId &&
-            (r.Status == TransferAssistanceStatuses.WitnessPending ||
+            (r.Status == TransferAssistanceStatuses.IntermediaryAssigned ||
+             r.Status == TransferAssistanceStatuses.WitnessPending ||
              r.Status == TransferAssistanceStatuses.MeetingScheduled), ct);
-        if (request is null || request.WitnessMemberId is null ||
+        if (request is null || request.HelperMemberId is null ||
+            (request.Status == TransferAssistanceStatuses.WitnessPending && request.WitnessMemberId is null) ||
             (request.RequesterMemberId != command.MemberId && request.HelperMemberId != command.MemberId))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
-                "An accepted witness and an assigned requester or helper are required.",
+                "An assigned requester or intermediary is required. Legacy witness-based requests still require an accepted witness.",
                 "errors.transfer_assistance.invalid_transition");
         var activeActor = await db.Members.AnyAsync(m => m.Id == command.MemberId &&
             m.TenantId == command.TenantId && m.IsActive && m.Status == "active" && m.User.IsActive, ct);
@@ -720,7 +723,7 @@ public class ConfirmTransferAssistanceHandoverHandler(
             request.MeetingAt is null || request.MeetingAt > DateTime.UtcNow ||
             (command.MemberId != request.RequesterMemberId && command.MemberId != request.HelperMemberId))
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
-                "Only the requester or selected helper can confirm the scheduled handover.",
+                "Only the requester or selected intermediary can confirm the scheduled handover.",
                 "errors.transfer_assistance.invalid_transition");
         var activeActor = await db.Members.AnyAsync(m => m.Id == command.MemberId &&
             m.TenantId == command.TenantId && m.IsActive && m.Status == "active" && m.User.IsActive, ct);
@@ -734,7 +737,8 @@ public class ConfirmTransferAssistanceHandoverHandler(
 
         if (command.MemberId == request.RequesterMemberId) request.RequesterHandoverConfirmed = true;
         else request.HelperHandoverConfirmed = true;
-        if (request.RequesterHandoverConfirmed && request.HelperHandoverConfirmed && request.WitnessAttested)
+        if (request.RequesterHandoverConfirmed && request.HelperHandoverConfirmed &&
+            (request.WitnessMemberId is null || request.WitnessAttested))
         {
             request.Status = TransferAssistanceStatuses.TransferInProgress;
             request.HandoverConfirmedAt ??= DateTime.UtcNow;
@@ -843,15 +847,19 @@ public class SubmitTransferAssistanceEvidenceHandler(
         if (request.Status != TransferAssistanceStatuses.TransferInProgress ||
             request.HelperMemberId != command.HelperMemberId)
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
-                "Only the assigned helper can submit the provider's declared transfer reference at this stage.",
+                "Only the assigned intermediary can submit the provider's declared transfer reference at this stage.",
                 "errors.transfer_assistance.invalid_transition");
+        if (request.BeneficiaryMemberId is null)
+            return ServiceResult<TransferAssistanceRequestResponse>.Failure(
+                "A beneficiary must be designated before the intermediary declares the transfer.",
+                "errors.transfer_assistance.beneficiary_required_before_transfer");
         var helperIsActive = await db.Members.AnyAsync(m => m.Id == command.HelperMemberId &&
             m.TenantId == command.TenantId && m.IsActive && m.Status == "active" &&
             m.User.IsActive && m.User.EmailVerifiedAt != null &&
             (!options.Value.RequireMfa || m.User.MfaEnabled), ct);
         if (!helperIsActive)
             return ServiceResult<TransferAssistanceRequestResponse>.Failure(
-                "An active, verified helper account is required.",
+                "An active, verified intermediary account is required.",
                 "errors.transfer_assistance.member_not_eligible");
 
         request.TransferProvider = provider;
