@@ -12,7 +12,8 @@ public record TenantSettingsDto(
     string CountryCode,
     string? LogoUrl,
     string SubscriptionTier,
-    string SubscriptionStatus
+    string SubscriptionStatus,
+    CurrencyValidationResponse? CurrencyValidation = null
 );
 
 public record GetTenantSettingsQuery(Guid TenantId) : IRequest<TenantSettingsDto?>;

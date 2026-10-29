@@ -9,11 +9,15 @@ public class SmtpEmailService(IOptions<EmailSettings> opts, ILogger<SmtpEmailSer
     private readonly EmailSettings _cfg = opts.Value;
 
     public async Task SendAsync(string toEmail, string toName, string subject, string htmlBody, CancellationToken ct = default)
+        => await TrySendAsync(toEmail, toName, subject, htmlBody, ct);
+
+    public async Task<EmailSendResult> TrySendAsync(
+        string toEmail, string toName, string subject, string htmlBody, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_cfg.Smtp.Host))
         {
-            log.LogWarning("SMTP not configured — email to {Email} skipped", toEmail);
-            return;
+            log.LogWarning("SMTP not configured — email to {Email} skipped", EmailAddressMasking.Mask(toEmail));
+            return EmailSendResult.NotConfigured;
         }
 
         try
@@ -36,11 +40,13 @@ public class SmtpEmailService(IOptions<EmailSettings> opts, ILogger<SmtpEmailSer
             };
 
             await client.SendMailAsync(message, ct);
-            log.LogInformation("Email sent to {Email} — subject: {Subject}", toEmail, subject);
+            log.LogInformation("Email sent to {Email} — subject: {Subject}", EmailAddressMasking.Mask(toEmail), subject);
+            return EmailSendResult.Sent;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            log.LogError(ex, "Failed to send email to {Email}", toEmail);
+            log.LogError(ex, "Failed to send email to {Email}", EmailAddressMasking.Mask(toEmail));
+            return EmailSendResult.TransientFailure;
         }
     }
 }

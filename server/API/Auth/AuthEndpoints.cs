@@ -61,7 +61,9 @@ public static class AuthEndpoints
             if (!Guid.TryParse(sub, out var userId))
                 return Results.Unauthorized();
 
-            var result = await mediator.Send(new GetMeQuery(userId));
+            Guid? tenantId = Guid.TryParse(principal.FindFirstValue("tenant_id"), out var selectedTenant)
+                ? selectedTenant : null;
+            var result = await mediator.Send(new GetMeQuery(userId, tenantId));
             return result.IsSuccess
                 ? Results.Ok(result.Data)
                 : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });

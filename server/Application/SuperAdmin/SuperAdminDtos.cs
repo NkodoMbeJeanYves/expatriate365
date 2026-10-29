@@ -24,5 +24,6 @@ public record TenantSummaryDto(
     string? UpdatedAt,
     string AdminEmail,
     string AdminFullName,
-    int UserCount
+    int UserCount,
+    server.Application.TenantSettings.CurrencyValidationResponse? CurrencyValidation = null
 );

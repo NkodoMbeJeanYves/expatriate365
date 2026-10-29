@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { AppCurrencyPipe } from '@core/tenant/app-currency.pipe';
 import { TenantStore } from '@core/tenant/tenant.store';
 import { AuthStore } from '@core/auth/auth.store';
+import { ROLES } from '@core/auth/models/role.model';
 import { PERMISSIONS } from '@core/auth/models/permission.model';
 import { ButtonModule } from 'primeng/button';
 import { TabsModule } from 'primeng/tabs';
@@ -62,12 +63,14 @@ import { PageChangeEvent } from '@shared/components/paginator/app-paginator.comp
               <i [class]="exporting() ? 'pi pi-spin pi-spinner text-sm' : 'pi pi-download text-sm'"></i>
               <span class="hidden sm:inline">Export CSV</span>
             </button>
-            <button (click)="sendReminders()" [disabled]="sendingReminders()"
-              class="inline-flex items-center gap-2 px-4 py-2.5 border border-amber-300 rounded-xl text-sm font-medium text-amber-700 hover:bg-amber-50 bg-white shadow-sm disabled:opacity-50"
-              [title]="'contributions.send_reminders_tooltip' | translate">
-              <i [class]="sendingReminders() ? 'pi pi-spin pi-spinner text-sm' : 'pi pi-bell text-sm'"></i>
-              <span class="hidden sm:inline">{{ 'contributions.send_reminders' | translate }}</span>
-            </button>
+            @if (canSendReminders()) {
+              <button (click)="sendReminders()" [disabled]="sendingReminders()"
+                class="inline-flex items-center gap-2 px-4 py-2.5 border border-amber-300 rounded-xl text-sm font-medium text-amber-700 hover:bg-amber-50 bg-white shadow-sm disabled:opacity-50"
+                [title]="'contributions.send_reminders_tooltip' | translate">
+                <i [class]="sendingReminders() ? 'pi pi-spin pi-spinner text-sm' : 'pi pi-bell text-sm'"></i>
+                <span class="hidden sm:inline">{{ 'contributions.send_reminders' | translate }}</span>
+              </button>
+            }
             <button (click)="openPlan()" class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 bg-white shadow-sm">
               <i class="pi pi-cog text-sm"></i>
               <span class="hidden sm:inline">Plans</span>
@@ -350,6 +353,10 @@ export class ContributionListPageComponent implements OnInit {
   private readonly confirm = inject(ConfirmationService);
 
   readonly isStaff = computed(() => this.authStore.hasPermission(PERMISSIONS.CONTRIBUTIONS_READ));
+  readonly canSendReminders = computed(() =>
+    !this.authStore.hasRole(ROLES.MEMBER) &&
+    this.authStore.hasPermission(PERMISSIONS.CONTRIBUTIONS_VALIDATE)
+  );
   private get memberEntityId(): string | undefined {
     const u = this.authStore.currentUser();
     return u?.entity_type === 'member' ? u.entity_id : undefined;

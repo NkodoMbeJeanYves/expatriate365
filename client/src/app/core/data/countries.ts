@@ -59,6 +59,7 @@ export const COUNTRIES: CountryData[] = [
   { name: 'Rwanda',               code: 'RW', currency: 'RWF', flag: '🇷🇼' },
   { name: 'São Tomé & Príncipe',  code: 'ST', currency: 'STN', flag: '🇸🇹' },
   { name: 'Senegal',              code: 'SN', currency: 'XOF', flag: '🇸🇳' },
+  { name: 'Serbia',               code: 'RS', currency: 'RSD', flag: '🇷🇸' },
   { name: 'Seychelles',           code: 'SC', currency: 'SCR', flag: '🇸🇨' },
   { name: 'Sierra Leone',         code: 'SL', currency: 'SLE', flag: '🇸🇱' },
   { name: 'Somalia',              code: 'SO', currency: 'SOS', flag: '🇸🇴' },
@@ -76,5 +77,5 @@ export const COUNTRIES: CountryData[] = [
   { name: 'United Kingdom',       code: 'GB', currency: 'GBP', flag: '🇬🇧' },
   { name: 'United States',        code: 'US', currency: 'USD', flag: '🇺🇸' },
   { name: 'Zambia',               code: 'ZM', currency: 'ZMW', flag: '🇿🇲' },
-  { name: 'Zimbabwe',             code: 'ZW', currency: 'ZWL', flag: '🇿🇼' },
+  { name: 'Zimbabwe',             code: 'ZW', currency: 'ZWG', flag: '🇿🇼' },
 ];

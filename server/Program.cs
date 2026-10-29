@@ -11,6 +11,7 @@ using server.Api.Members;
 using server.API.Contributions;
 using server.API.Payments;
 using server.API.Welfare;
+using server.API.TransferAssistance;
 using server.API.Events;
 using server.API.Meetings;
 using server.API.Elections;
@@ -35,6 +36,7 @@ using server.Infrastructure.BackgroundServices;
 using server.Infrastructure.Persistence;
 using server.Infrastructure.Services;
 using Microsoft.Extensions.FileProviders;
+using server.Application.TransferAssistance;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -82,13 +84,26 @@ try
         cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
     builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+    builder.Services.AddSingleton(TimeProvider.System);
+    builder.Services.AddFrankfurterHttpClient(builder.Configuration);
+    builder.Services.AddSingleton<server.Application.TenantSettings.ICurrencyCatalogue,
+        server.Infrastructure.Services.FrankfurterCurrencyCatalogue>();
+    builder.Services.AddScoped<server.Application.TenantSettings.CurrencyValidationService>();
 
     builder.Services.Configure<server.Infrastructure.Services.EmailSettings>(
         builder.Configuration.GetSection("Email"));
     builder.Services.AddScoped<server.Infrastructure.Services.IEmailService,
         server.Infrastructure.Services.SmtpEmailService>();
+    builder.Services.Configure<server.Infrastructure.Services.EmailOutboxOptions>(
+        builder.Configuration.GetSection("EmailOutbox"));
+    builder.Services.AddScoped<server.Infrastructure.Services.EmailOutboxProcessor>();
+    builder.Services.AddHostedService<server.Infrastructure.BackgroundServices.EmailOutboxDispatcher>();
 
     builder.Services.AddHostedService<ChargeGenerationBackgroundService>();
+    builder.Services.Configure<TransferAssistanceOptions>(
+        builder.Configuration.GetSection("TransferAssistance"));
+    if (builder.Configuration.GetValue<bool>("Features:TransferAssistanceEnabled"))
+        builder.Services.AddHostedService<TransferAssistanceExpirationService>();
     builder.Services.AddSingleton<JwtService>();
     builder.Services.AddScoped<server.Infrastructure.Services.AuditService>();
     builder.Services.AddScoped<server.Infrastructure.Services.PermissionResolverService>();
@@ -134,23 +149,23 @@ try
     
     Directory.CreateDirectory(downloadPath);
 
-    foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
-    {
-        if (!Directory.Exists(Path.Combine(downloadPath, sub)))
-        {
-            Directory.CreateDirectory(Path.Combine(downloadPath, sub));
-        }
-    }
+    // foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
+    // {
+    //     if (!Directory.Exists(Path.Combine(downloadPath, sub)))
+    //     {
+    //         Directory.CreateDirectory(Path.Combine(downloadPath, sub));
+    //     }
+    // }
 
     app.UseStaticFiles();
-    foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
-    {
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = new PhysicalFileProvider(Path.Combine(downloadPath, sub)),
-            RequestPath  = $"/downloads/{sub}",
-        });
-    }
+    // foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
+    // {
+    //     app.UseStaticFiles(new StaticFileOptions
+    //     {
+    //         FileProvider = new PhysicalFileProvider(Path.Combine(downloadPath, sub)),
+    //         RequestPath  = $"/downloads/{sub}",
+    //     });
+    // }
 
     app.UseAuthentication();
     app.UseAuthorization();
@@ -209,6 +224,8 @@ try
     app.MapContributionEndpoints();
     app.MapPaymentEndpoints();
     app.MapWelfareEndpoints();
+    if (app.Configuration.GetValue<bool>("Features:TransferAssistanceEnabled"))
+        app.MapTransferAssistanceEndpoints();
     app.MapEventEndpoints();
     app.MapMeetingEndpoints();
     app.MapElectionEndpoints();
@@ -238,4 +255,3 @@ finally
 {
     Log.CloseAndFlush();
 }
-

@@ -5,6 +5,7 @@ using server.Application.Common;
 using server.Domain.Entities;
 using server.Infrastructure.Persistence;
 using server.Infrastructure.Services;
+using server.Application.TenantSettings;
 
 namespace server.Application.SuperAdmin;
 
@@ -31,13 +32,18 @@ public class CreateTenantCommandHandler(
     ILogger<CreateTenantCommandHandler> log,
     PermissionResolverService permissionResolver,
     IEmailService emailService,
-    IConfiguration config)
+    IConfiguration config,
+    CurrencyValidationService currencyValidation)
     : IRequestHandler<CreateTenantCommand, ServiceResult<TenantSummaryDto>>
 {
     public async Task<ServiceResult<TenantSummaryDto>> Handle(CreateTenantCommand request, CancellationToken ct)
     {
         var dto = request.Dto;
         log.LogInformation("SuperAdmin creating tenant: {Slug}", dto.Slug);
+        var validation = await currencyValidation.ValidateAsync(new(dto.CountryCode, dto.BaseCurrency), ct);
+        if (!validation.IsConsistent)
+            return ServiceResult<TenantSummaryDto>.Failure(
+                "The currency does not match the association country.", "errors.tenant.currency_mismatch");
 
         if (await db.Tenants.AnyAsync(t => t.Slug == dto.Slug, ct))
             return ServiceResult<TenantSummaryDto>.Failure("Ce slug est déjà utilisé.", "errors.auth.slug_taken");
@@ -50,8 +56,9 @@ public class CreateTenantCommandHandler(
             Id           = Guid.NewGuid(),
             Name         = dto.AssociationName,
             Slug         = dto.Slug,
-            CountryCode  = dto.CountryCode,
-            BaseCurrency = dto.BaseCurrency,
+            CountryCode  = validation.CountryCode,
+            BaseCurrency = validation.BaseCurrency,
+            CurrencySymbol = validation.BaseCurrency,
         };
 
         var admin = new User
@@ -99,7 +106,8 @@ public class CreateTenantCommandHandler(
             null,
             admin.Email,
             $"{admin.FirstName} {admin.LastName}",
-            1
+            1,
+            validation
         ));
     }
 }

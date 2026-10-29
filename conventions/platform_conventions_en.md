@@ -39,15 +39,14 @@
 
 ## 2. Database and provider convention (DB-CONF)
 
-- Both SQLite and MySQL are supported.
-- **SQLite is the default provider.**
-- The provider is selected via the configuration file — no business code change is required to switch from SQLite to MySQL.
+- **MySQL is the only supported provider**, following the product decision of 2026-10-22. SQLite is no longer part of the project.
+- Production target: MySQL 8.0.46, character set `utf8mb4`, collation `utf8mb4_unicode_ci`.
+- Required SQL modes: `ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION`.
 - The **Domain** and **Application** layers must not depend on the database engine.
-- EF Core migrations must remain compatible with both SQLite and MySQL.
+- EF Core migrations must be tested on the production MySQL version, for fresh installations and upgrades with historical data.
 - Connection parameters must be externalized.
 - Provider-specific code must be isolated in the **Infrastructure** layer.
-- SQLite and MySQL may coexist in the solution, but only the configured provider is active at runtime.
-- The project must be delivered with a working default SQLite configuration.
+- MySQL-specific persistence code must not leak into Domain or Application.
 
 ---
 
@@ -60,7 +59,7 @@
 | PC-003 | Multi-school ready          | Even if the MVP starts with a limited number of schools, tables must include a school reference where relevant. |
 | PC-004 | Auditable data              | Core entities must contain: `created_at`, `updated_at`, `created_by`, `updated_by`, `is_active`.                |
 | PC-005 | Automatic period generation | Course periods must never be created manually. They are generated from the academic day template.               |
-| PC-006 | SQLite-to-MySQL readiness   | Column types, constraints and names must remain compatible with a future MySQL migration.                       |
+| PC-006 | MySQL production readiness | Column types, constraints and migrations must be validated on the production MySQL version.                    |
 
 ---
 
@@ -156,7 +155,7 @@ Technologies:
 
 - ASP.NET Core 9 (or latest stable version)
 - Entity Framework Core
-- SQLite (MVP) / MySQL (evolution)
+- MySQL only — see DB-CONF
 - JWT Bearer Authentication
 - Clean Architecture (Domain / Application / Infrastructure / Api)
 

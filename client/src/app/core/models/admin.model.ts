@@ -1,3 +1,5 @@
+import { CurrencyValidationResponse } from './currency-validation.model';
+
 export interface AdminUserDto {
   id: string;
   email: string;
@@ -74,6 +76,7 @@ export interface TenantSummaryDto {
   admin_email: string;
   admin_full_name: string;
   user_count: number;
+  currency_validation?: CurrencyValidationResponse | null;
 }
 
 export interface CreateTenantRequest {
