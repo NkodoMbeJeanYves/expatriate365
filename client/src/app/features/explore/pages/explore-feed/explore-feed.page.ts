@@ -74,6 +74,18 @@ import { PublicTenant } from '@core/auth/models/user.model';
           </div>
         }
 
+        <div class="mb-6 flex items-center justify-between gap-4 rounded-xl border border-emerald-200
+                    bg-emerald-50 px-5 py-4 dark:border-emerald-800 dark:bg-emerald-900/20">
+          <div>
+            <p class="font-semibold text-gray-900 dark:text-white">{{ 'showcases.title' | translate }}</p>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ 'showcases.public_intro' | translate }}</p>
+          </div>
+          <a [routerLink]="['/showcases', slug()]">
+            <p-button [label]="'showcases.browse' | translate" icon="pi pi-arrow-right"
+                      iconPos="right" size="small" severity="secondary" />
+          </a>
+        </div>
+
         <!-- Search -->
         <div class="mb-6 flex gap-3">
           <input pInputText [(ngModel)]="searchTerm" [placeholder]="'common.search' | translate"

@@ -313,6 +313,209 @@ namespace server.Migrations
                     b.ToTable("communication_recipients", (string)null);
                 });
 
+            modelBuilder.Entity("server.Domain.Entities.CommunityShowcase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("category");
+
+                    b.Property<string>("ContactLink")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("contact_link");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)")
+                        .HasColumnName("contact_phone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("varchar(4000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("varchar(160)")
+                        .HasColumnName("display_name");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("member_id");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("photo_url");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("ServiceArea")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("service_area");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)")
+                        .HasColumnName("slug");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("draft")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("TenantId", "MemberId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "Slug")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "Status");
+
+                    b.ToTable("community_showcases", (string)null);
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.CommunityShowcaseOffer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("details");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("varchar(160)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("int")
+                        .HasColumnName("position");
+
+                    b.Property<decimal?>("Price")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("price");
+
+                    b.Property<bool>("PriceOnRequest")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("price_on_request");
+
+                    b.Property<Guid>("ShowcaseId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("showcase_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShowcaseId", "Position");
+
+                    b.ToTable("community_showcase_offers", (string)null);
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.CommunityShowcaseReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("HandledAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("handled_at");
+
+                    b.Property<Guid?>("HandledByUserId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("handled_by_user_id");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("reason");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<Guid>("ShowcaseId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("showcase_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("pending")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShowcaseId");
+
+                    b.HasIndex("TenantId", "Status", "CreatedAt");
+
+                    b.ToTable("community_showcase_reports", (string)null);
+                });
+
             modelBuilder.Entity("server.Domain.Entities.ContributionCharge", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2911,6 +3114,47 @@ namespace server.Migrations
                     b.Navigation("Member");
                 });
 
+            modelBuilder.Entity("server.Domain.Entities.CommunityShowcase", b =>
+                {
+                    b.HasOne("server.Domain.Entities.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("server.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.CommunityShowcaseOffer", b =>
+                {
+                    b.HasOne("server.Domain.Entities.CommunityShowcase", "Showcase")
+                        .WithMany("Offers")
+                        .HasForeignKey("ShowcaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Showcase");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.CommunityShowcaseReport", b =>
+                {
+                    b.HasOne("server.Domain.Entities.CommunityShowcase", "Showcase")
+                        .WithMany()
+                        .HasForeignKey("ShowcaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Showcase");
+                });
+
             modelBuilder.Entity("server.Domain.Entities.ContributionCharge", b =>
                 {
                     b.HasOne("server.Domain.Entities.ContributionType", "ContributionType")
@@ -3398,6 +3642,11 @@ namespace server.Migrations
             modelBuilder.Entity("server.Domain.Entities.Communication", b =>
                 {
                     b.Navigation("Recipients");
+                });
+
+            modelBuilder.Entity("server.Domain.Entities.CommunityShowcase", b =>
+                {
+                    b.Navigation("Offers");
                 });
 
             modelBuilder.Entity("server.Domain.Entities.ContributionCharge", b =>

@@ -1,0 +1,103 @@
+@baseUrl = http://localhost:5001
+@tenantSlug = demo-community
+@tenantId = 00000000-0000-0000-0000-000000000001
+@showcaseSlug = home-cooking
+@token = replace-with-a-valid-access-token
+@reportId = replace-with-report-guid
+@photoFileName = 00000000-0000-0000-0000-000000000002.jpg
+
+### Public showcase photo
+GET {{baseUrl}}/downloads/{{tenantId}}/showcases/{{photoFileName}}
+
+### Public showcase directory
+GET {{baseUrl}}/api/v1/showcases/{{tenantSlug}}?page=1&limit=20
+
+### Public showcase details
+GET {{baseUrl}}/api/v1/showcases/{{tenantSlug}}/{{showcaseSlug}}
+
+### Send a private contact message
+POST {{baseUrl}}/api/v1/showcases/{{tenantSlug}}/{{showcaseSlug}}/contact
+Content-Type: application/json
+
+{
+  "name": "Visitor Name",
+  "email": "visitor@example.test",
+  "message": "I would like to know more about this offer.",
+  "website": ""
+}
+
+### Report a showcase
+POST {{baseUrl}}/api/v1/showcases/{{tenantSlug}}/{{showcaseSlug}}/reports
+Content-Type: application/json
+
+{
+  "reason": "This offer appears to violate the community guidelines.",
+  "website": ""
+}
+
+### Get my showcase
+GET {{baseUrl}}/api/v1/my/showcases/me
+Authorization: Bearer {{token}}
+
+### Create or update my showcase
+PUT {{baseUrl}}/api/v1/my/showcases/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "display_name": "Example Kitchen",
+  "title": "Home-cooked meals",
+  "description": "Locally prepared meals available for pickup.",
+  "category": "Food",
+  "service_area": "Central district",
+  "contact_phone": "",
+  "contact_link": "",
+  "photo_url": "",
+  "offers": [
+    {
+      "name": "Weekly meal",
+      "description": "A freshly prepared meal.",
+      "price": null,
+      "price_on_request": true,
+      "details": "Ask about ingredients and allergens."
+    }
+  ]
+}
+
+### Publish my showcase
+POST {{baseUrl}}/api/v1/my/showcases/me/publish
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### Unpublish my showcase
+POST {{baseUrl}}/api/v1/my/showcases/me/unpublish
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### List pending showcase reports
+GET {{baseUrl}}/api/v1/moderation/showcases/reports?page=1&limit=20
+Authorization: Bearer {{token}}
+
+### Hide a reported showcase
+POST {{baseUrl}}/api/v1/moderation/showcases/reports/{{reportId}}/resolve
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "action": "hide",
+  "note": "The content violates the community guidelines."
+}
+
+### Dismiss a report
+POST {{baseUrl}}/api/v1/moderation/showcases/reports/{{reportId}}/resolve
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "action": "dismiss",
+  "note": "The report was reviewed and no action is required."
+}
