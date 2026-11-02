@@ -18,7 +18,7 @@ public record BulkImportMembersResult(int Created, int Skipped, List<BulkImportR
 
 public record BulkImportRowError(int Row, string FirstName, string LastName, string Error);
 
-public class BulkImportMembersHandler(AppDbContext db, IMediator mediator, ILogger<BulkImportMembersHandler> log)
+public class BulkImportMembersHandler(IMediator mediator, ILogger<BulkImportMembersHandler> log)
     : IRequestHandler<BulkImportMembersCommand, ServiceResult<BulkImportMembersResult>>
 {
     public async Task<ServiceResult<BulkImportMembersResult>> Handle(BulkImportMembersCommand request, CancellationToken ct)

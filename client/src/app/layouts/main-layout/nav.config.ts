@@ -32,6 +32,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.payments', icon: 'pi pi-wallet', route: '/payments' },
       { labelKey: 'nav.welfare', icon: 'pi pi-heart', route: '/welfare', roles: STAFF_ROLES },
       { labelKey: 'nav.my_welfare', icon: 'pi pi-heart', route: '/my-welfare', roles: [ROLES.MEMBER] },
+      { labelKey: 'nav.showcases_manage', icon: 'pi pi-briefcase', route: '/manage/showcases', roles: [ROLES.MEMBER] },
       { labelKey: 'nav.transfer_assistance', icon: 'pi pi-send', route: '/transfer-assistance', enabled: environment.features.transferAssistance },
     ],
   },
@@ -51,6 +52,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.elections', icon: 'pi pi-check-square', route: '/elections' },
       { labelKey: 'nav.community', icon: 'pi pi-comments', route: '/community' },
       { labelKey: 'nav.community_moderation', icon: 'pi pi-shield', route: '/community/moderation', roles: STAFF_ROLES },
+      { labelKey: 'nav.showcases_moderation', icon: 'pi pi-flag', route: '/manage/showcases/moderation', roles: STAFF_ROLES },
     ],
   },
   {

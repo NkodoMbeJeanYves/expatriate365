@@ -54,13 +54,13 @@ services:
       Jwt__RefreshTokenExpiryDays:  ${JWT_REFRESH_TOKEN_EXPIRY_DAYS:-30}
       FileStorage__UrlPrefix:       ${APP_URL:-http://localhost}
       Cors__AllowedOrigins:         ${APP_URL:-http://localhost}
-      Smtp__Enabled:                ${SMTP_ENABLED:-false}
-      Smtp__Host:                   ${SMTP_HOST:-}
-      Smtp__Port:                   ${SMTP_PORT:-587}
-      Smtp__Username:               ${SMTP_USERNAME:-}
-      Smtp__Password:               ${SMTP_PASSWORD:-}
-      Smtp__FromEmail:              ${SMTP_FROM_EMAIL:-}
-      Smtp__FromName:               ${SMTP_FROM_NAME:-Expatriate365}
+      Email__From:                  ${SMTP_FROM_EMAIL:-noreply@expatriate365.mu}
+      Email__FromName:              ${SMTP_FROM_NAME:-Expatriate365}
+      Email__Smtp__Host:            ${SMTP_HOST:-}
+      Email__Smtp__Port:            ${SMTP_PORT:-587}
+      Email__Smtp__Username:        ${SMTP_USERNAME:-}
+      Email__Smtp__Password:        ${SMTP_PASSWORD:-}
+      Email__Smtp__EnableSsl:       ${SMTP_ENABLE_SSL:-true}
       FrontendBaseUrl:              ${FrontendBaseUrl:-https://app.expatriate365.mu}
     volumes:
       - downloads:/app/downloads

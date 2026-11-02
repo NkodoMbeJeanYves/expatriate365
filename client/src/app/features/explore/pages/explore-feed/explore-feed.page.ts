@@ -1,61 +1,106 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed } from '@angular/core';
-import { RouterLink, ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { AuthStore } from '@core/auth/auth.store';
+import { PublicTenant } from '@core/auth/models/user.model';
+import { DirectoryApiService } from '@directory/services/directory-api.service';
+import { PostSummaryDto } from '@models/post.model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { ExploreApiService } from '../../services/explore-api.service';
-import { DirectoryApiService } from '@directory/services/directory-api.service';
-import { PostSummaryDto } from '@models/post.model';
-import { PublicTenant } from '@core/auth/models/user.model';
 
 @Component({
   selector: 'app-explore-feed',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, DatePipe, ButtonModule, InputTextModule, ProgressSpinnerModule, TranslatePipe, LangSwitcherComponent],
+  imports: [
+    RouterLink,
+    FormsModule,
+    DatePipe,
+    ButtonModule,
+    InputTextModule,
+    ProgressSpinnerModule,
+    TranslatePipe,
+    LangSwitcherComponent,
+  ],
   template: `
     <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
-
       <!-- Header -->
-      <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4
-                     flex items-center justify-between">
+      <header
+        class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4
+                     flex items-center justify-between"
+      >
         <div class="flex items-center gap-3 min-w-0">
-          <a routerLink="/explore" class="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+          <a
+            routerLink="/explore"
+            class="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+          >
             <i class="pi pi-arrow-left"></i>
           </a>
           @if (tenant()?.logo_url) {
-            <img [src]="tenant()!.logo_url!" [alt]="tenant()!.name"
-                 class="w-8 h-8 rounded-lg object-cover shrink-0" />
+            <img
+              [src]="tenant()!.logo_url!"
+              [alt]="tenant()!.name"
+              class="w-8 h-8 rounded-lg object-cover shrink-0"
+            />
           }
-          <span class="font-bold text-gray-900 dark:text-white truncate">{{ tenant()?.name ?? slug() }}</span>
+          <span class="font-bold text-gray-900 dark:text-white truncate">{{
+            tenant()?.name ?? slug()
+          }}</span>
         </div>
         <div class="flex items-center gap-3">
           <app-lang-switcher />
-          <a routerLink="/auth/login">
-            <p-button [label]="'auth.login' | translate" icon="pi pi-sign-in" severity="secondary" size="small" />
-          </a>
+          @if (authStore.isAuthenticated()) {
+            <a routerLink="/profile">
+              <p-button
+                [label]="'nav.profile' | translate"
+                icon="pi pi-user"
+                severity="secondary"
+                size="small"
+              />
+            </a>
+          } @else {
+            <a routerLink="/auth/login">
+              <p-button
+                [label]="'auth.login' | translate"
+                icon="pi pi-sign-in"
+                severity="secondary"
+                size="small"
+              />
+            </a>
+          }
         </div>
       </header>
 
       <main class="max-w-5xl mx-auto px-6 py-8">
-
         <!-- Directory banner -->
         @if (directoryCount() > 0) {
-          <div class="mb-6 flex items-center justify-between gap-4
+          <div
+            class="mb-6 flex items-center justify-between gap-4
                       bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700
-                      rounded-xl px-5 py-4">
+                      rounded-xl px-5 py-4"
+          >
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                   style="background: #FEF3C7">
+              <div
+                class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                style="background: #FEF3C7"
+              >
                 <i class="pi pi-briefcase" style="color: #D97706"></i>
               </div>
               <div>
                 <p class="font-semibold text-gray-900 dark:text-white text-sm">
-                  {{ 'explore.directory_banner_title' | translate : { count: directoryCount() } }}
+                  {{ 'explore.directory_banner_title' | translate: { count: directoryCount() } }}
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
                   {{ 'explore.directory_banner_subtitle' | translate }}
@@ -74,10 +119,38 @@ import { PublicTenant } from '@core/auth/models/user.model';
           </div>
         }
 
+        <div
+          class="mb-6 flex items-center justify-between gap-4 rounded-xl border border-emerald-200
+                    bg-emerald-50 px-5 py-4 dark:border-emerald-800 dark:bg-emerald-900/20"
+        >
+          <div>
+            <p class="font-semibold text-gray-900 dark:text-white">
+              {{ 'showcases.title' | translate }}
+            </p>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+              {{ 'showcases.public_intro' | translate }}
+            </p>
+          </div>
+          <a [routerLink]="['/showcases', slug()]">
+            <p-button
+              [label]="'showcases.browse' | translate"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              size="small"
+              severity="secondary"
+            />
+          </a>
+        </div>
+
         <!-- Search -->
         <div class="mb-6 flex gap-3">
-          <input pInputText [(ngModel)]="searchTerm" [placeholder]="'common.search' | translate"
-                 class="flex-1 min-w-0" (keyup.enter)="search()" />
+          <input
+            pInputText
+            [(ngModel)]="searchTerm"
+            [placeholder]="'common.search' | translate"
+            class="flex-1 min-w-0"
+            (keyup.enter)="search()"
+          />
           <p-button icon="pi pi-search" severity="secondary" (onClick)="search()" />
         </div>
 
@@ -91,19 +164,25 @@ import { PublicTenant } from '@core/auth/models/user.model';
         } @else {
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
             @for (post of posts(); track post.id) {
-              <a [routerLink]="['/explore', slug(), post.id]"
-                 class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800
+              <a
+                [routerLink]="['/explore', slug(), post.id]"
+                class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800
                         shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow no-underline
-                        overflow-hidden">
+                        overflow-hidden"
+              >
                 <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30
-                              flex items-center justify-center shrink-0">
+                  <div
+                    class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30
+                              flex items-center justify-center shrink-0"
+                  >
                     <i class="pi pi-user text-primary-600 dark:text-primary-400 text-sm"></i>
                   </div>
                   <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{{ post.author_name }}</p>
+                    <p class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                      {{ post.author_name }}
+                    </p>
                     <p class="text-xs text-gray-400">
-                      {{ (post.published_at ?? post.created_at) | date:'mediumDate' }}
+                      {{ post.published_at ?? post.created_at | date: 'mediumDate' }}
                     </p>
                   </div>
                 </div>
@@ -115,7 +194,8 @@ import { PublicTenant } from '@core/auth/models/user.model';
                 </p>
                 <p class="text-xs text-gray-400 flex items-center gap-1 mt-auto pt-1">
                   @if (post.attachment_count > 0) {
-                    <i class="pi pi-paperclip"></i> {{ post.attachment_count }} {{ 'explore.files' | translate }}
+                    <i class="pi pi-paperclip"></i> {{ post.attachment_count }}
+                    {{ 'explore.files' | translate }}
                   } @else {
                     <i class="pi pi-file-o"></i> {{ 'explore.no_files' | translate }}
                   }
@@ -126,8 +206,12 @@ import { PublicTenant } from '@core/auth/models/user.model';
 
           @if (hasMore()) {
             <div class="flex justify-center mt-8">
-              <p-button [label]="'community.load_more' | translate" severity="secondary"
-                        [loading]="loadingMore()" (onClick)="loadMore()" />
+              <p-button
+                [label]="'community.load_more' | translate"
+                severity="secondary"
+                [loading]="loadingMore()"
+                (onClick)="loadMore()"
+              />
             </div>
           }
         }
@@ -136,21 +220,22 @@ import { PublicTenant } from '@core/auth/models/user.model';
   `,
 })
 export class ExploreFeedPage implements OnInit {
-  private readonly api       = inject(ExploreApiService);
+  private readonly api = inject(ExploreApiService);
   private readonly directory = inject(DirectoryApiService);
-  private readonly route     = inject(ActivatedRoute);
+  private readonly route = inject(ActivatedRoute);
+  readonly authStore = inject(AuthStore);
 
-  readonly slug           = signal('');
-  readonly tenant         = signal<PublicTenant | null>(null);
-  readonly posts          = signal<PostSummaryDto[]>([]);
-  readonly total          = signal(0);
-  readonly loading        = signal(true);
-  readonly loadingMore    = signal(false);
-  readonly page           = signal(1);
-  readonly limit          = 12;
-  readonly hasMore        = computed(() => this.posts().length < this.total());
+  readonly slug = signal('');
+  readonly tenant = signal<PublicTenant | null>(null);
+  readonly posts = signal<PostSummaryDto[]>([]);
+  readonly total = signal(0);
+  readonly loading = signal(true);
+  readonly loadingMore = signal(false);
+  readonly page = signal(1);
+  readonly limit = 12;
+  readonly hasMore = computed(() => this.posts().length < this.total());
   readonly directoryCount = signal(0);
-  searchTerm              = '';
+  searchTerm = '';
 
   ngOnInit(): void {
     const s = this.route.snapshot.paramMap.get('slug') ?? '';
@@ -165,7 +250,7 @@ export class ExploreFeedPage implements OnInit {
 
   private loadTenant(slug: string): void {
     this.api.getTenants().subscribe({
-      next: (list) => this.tenant.set(list.find(t => t.slug === slug) ?? null),
+      next: (list) => this.tenant.set(list.find((t) => t.slug === slug) ?? null),
     });
   }
 
@@ -173,17 +258,26 @@ export class ExploreFeedPage implements OnInit {
     const obs = this.api.getPosts(this.slug(), page, this.limit, this.searchTerm || undefined);
     obs.subscribe({
       next: (r) => {
-        this.posts.update(prev => append ? [...prev, ...r.data] : r.data);
+        this.posts.update((prev) => (append ? [...prev, ...r.data] : r.data));
         this.total.set(r.pagination.total);
         this.page.set(page);
         this.loading.set(false);
         this.loadingMore.set(false);
       },
-      error: () => { this.loading.set(false); this.loadingMore.set(false); },
+      error: () => {
+        this.loading.set(false);
+        this.loadingMore.set(false);
+      },
     });
   }
 
-  search(): void { this.loading.set(true); this.loadPosts(1); }
+  search(): void {
+    this.loading.set(true);
+    this.loadPosts(1);
+  }
 
-  loadMore(): void { this.loadingMore.set(true); this.loadPosts(this.page() + 1, true); }
+  loadMore(): void {
+    this.loadingMore.set(true);
+    this.loadPosts(this.page() + 1, true);
+  }
 }
