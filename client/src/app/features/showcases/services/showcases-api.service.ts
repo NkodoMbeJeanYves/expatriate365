@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
 import { APP_CONFIG } from '@core/config/app-config.token';
 import { PagedResult } from '@shared/models/pagination.model';
+import { Observable } from 'rxjs';
 
 export interface ShowcaseOffer {
   id: string;
@@ -24,6 +24,7 @@ export interface CommunityShowcase {
   service_area?: string;
   contact_phone?: string;
   contact_link?: string;
+  contact_enabled: boolean;
   photo_url?: string;
   status: 'draft' | 'published' | 'suspended';
   tenant_name: string;
@@ -52,6 +53,7 @@ export interface SaveShowcaseRequest {
   service_area: string;
   contact_phone: string;
   contact_link: string;
+  contact_enabled: boolean;
   photo_url: string;
   offers: ShowcaseOfferRequest[];
 }

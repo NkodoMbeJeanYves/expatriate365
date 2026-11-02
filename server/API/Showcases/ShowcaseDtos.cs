@@ -21,6 +21,7 @@ public sealed record ShowcaseResponse(
     string? ServiceArea,
     string? ContactPhone,
     string? ContactLink,
+    bool ContactEnabled,
     string? PhotoUrl,
     string Status,
     string TenantName,
@@ -49,6 +50,7 @@ public sealed record SaveShowcaseRequest(
     string? ServiceArea,
     string? ContactPhone,
     string? ContactLink,
+    bool ContactEnabled,
     string? PhotoUrl,
     IReadOnlyList<ShowcaseOfferRequest> Offers);
 

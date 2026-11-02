@@ -13,6 +13,7 @@ public class CommunityShowcase
     public string? ServiceArea { get; set; }
     public string? ContactPhone { get; set; }
     public string? ContactLink { get; set; }
+    public bool ContactEnabled { get; set; }
     public string? PhotoUrl { get; set; }
     public string Status { get; set; } = "draft";
     public DateTime? PublishedAt { get; set; }

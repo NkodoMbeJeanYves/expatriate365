@@ -1,9 +1,32 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
-import { applyEach, form, FormField, maxLength, min, required, submit } from '@angular/forms/signals';
-import { firstValueFrom } from 'rxjs';
-import { TranslatePipe } from '@ngx-translate/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
+import {
+  applyEach,
+  form,
+  FormField,
+  maxLength,
+  min,
+  required,
+  submit,
+} from '@angular/forms/signals';
 import { TenantStore } from '@core/tenant/tenant.store';
-import { CommunityShowcase, SaveShowcaseRequest, ShowcaseOfferRequest, ShowcasesApiService } from '../services/showcases-api.service';
+import { TranslatePipe } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
+import {
+  CommunityShowcase,
+  SaveShowcaseRequest,
+  ShowcaseOfferRequest,
+  ShowcasesApiService,
+} from '../services/showcases-api.service';
 import { calculateImageCrop } from '../utils/image-crop.utils';
 
 interface OfferDraft {
@@ -22,6 +45,7 @@ interface ShowcaseDraft {
   service_area: string;
   contact_phone: string;
   contact_link: string;
+  contact_enabled: boolean;
   photo_url: string;
   offers: OfferDraft[];
 }
@@ -34,7 +58,9 @@ interface ShowcaseDraft {
   template: `
     <div class="mx-auto max-w-4xl space-y-6">
       <header>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ 'showcases.manage_title' | translate }}</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+          {{ 'showcases.manage_title' | translate }}
+        </h1>
         <p class="mt-1 text-sm text-gray-500">{{ 'showcases.manage_intro' | translate }}</p>
       </header>
 
@@ -42,36 +68,73 @@ interface ShowcaseDraft {
         <p class="py-10 text-center text-gray-500">{{ 'common.loading' | translate }}</p>
       } @else {
         @if (error()) {
-          <p class="rounded-lg bg-red-50 p-4 text-red-700">{{ 'showcases.save_error' | translate }}</p>
+          <p class="rounded-lg bg-red-50 p-4 text-red-700">
+            {{ 'showcases.save_error' | translate }}
+          </p>
         }
         @if (showcase()?.status === 'published') {
-          <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-emerald-50 p-4 text-emerald-900">
+          <div
+            class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-emerald-50 p-4 text-emerald-900"
+          >
             <span>{{ 'showcases.published' | translate }}</span>
-            <a [href]="publicUrl()" target="_blank" rel="noopener noreferrer" class="font-medium underline">{{ 'showcases.preview_public' | translate }}</a>
+            <a
+              [href]="publicUrl()"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-medium underline"
+              >{{ 'showcases.preview_public' | translate }}</a
+            >
           </div>
         } @else if (showcase()?.status === 'suspended') {
-          <p class="rounded-xl bg-amber-50 p-4 text-amber-900">{{ 'showcases.suspended' | translate }}</p>
+          <p class="rounded-xl bg-amber-50 p-4 text-amber-900">
+            {{ 'showcases.suspended' | translate }}
+          </p>
         }
 
-        <section class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 dark:border-emerald-900 dark:bg-emerald-950/30">
-          <p class="text-sm font-semibold text-emerald-900 dark:text-emerald-200">{{ 'showcases.preview_title' | translate }}</p>
-          <h2 class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ showcaseModel().title || ('showcases.title_field' | translate) }}</h2>
-          <p class="mt-1 text-sm text-gray-500">{{ showcaseModel().display_name || ('showcases.display_name' | translate) }} · {{ showcaseModel().category || ('showcases.category_field' | translate) }}</p>
+        <section
+          class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 dark:border-emerald-900 dark:bg-emerald-950/30"
+        >
+          <p class="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+            {{ 'showcases.preview_title' | translate }}
+          </p>
+          <h2 class="mt-2 text-xl font-bold text-gray-900 dark:text-white">
+            {{ showcaseModel().title || ('showcases.title_field' | translate) }}
+          </h2>
+          <p class="mt-1 text-sm text-gray-500">
+            {{ showcaseModel().display_name || ('showcases.display_name' | translate) }} ·
+            {{ showcaseModel().category || ('showcases.category_field' | translate) }}
+          </p>
           @if (showcaseModel().photo_url) {
-            <img [src]="showcaseModel().photo_url" [alt]="showcaseModel().title" class="mt-4 aspect-video w-full rounded-xl object-cover" />
+            <img
+              [src]="showcaseModel().photo_url"
+              [alt]="showcaseModel().title"
+              class="mt-4 aspect-video w-full rounded-xl object-cover"
+            />
           }
-          <p class="mt-4 whitespace-pre-line text-gray-700 dark:text-gray-300">{{ showcaseModel().description || ('showcases.description_field' | translate) }}</p>
+          <p class="mt-4 whitespace-pre-line text-gray-700 dark:text-gray-300">
+            {{ showcaseModel().description || ('showcases.description_field' | translate) }}
+          </p>
           @if (showcaseModel().service_area) {
-            <p class="mt-3 text-sm text-gray-500">{{ 'showcases.service_area' | translate }}: {{ showcaseModel().service_area }}</p>
+            <p class="mt-3 text-sm text-gray-500">
+              {{ 'showcases.service_area' | translate }}: {{ showcaseModel().service_area }}
+            </p>
           }
           <div class="mt-4 grid gap-3 sm:grid-cols-2">
             @for (offer of showcaseModel().offers; track $index; let i = $index) {
               @if (offer.name || offer.description) {
                 <article class="rounded-xl bg-white p-4 dark:bg-gray-900">
-                  <h3 class="font-semibold">{{ offer.name || ('showcases.offer_number' | translate : { number: i + 1 }) }}</h3>
-                  <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ offer.description }}</p>
+                  <h3 class="font-semibold">
+                    {{ offer.name || ('showcases.offer_number' | translate: { number: i + 1 }) }}
+                  </h3>
+                  <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                    {{ offer.description }}
+                  </p>
                   <p class="mt-2 text-sm text-emerald-700">
-                    {{ offer.price_on_request ? ('showcases.price_on_request' | translate) : offer.price + ' ' + tenantStore.symbol() }}
+                    {{
+                      offer.price_on_request
+                        ? ('showcases.price_on_request' | translate)
+                        : offer.price + ' ' + tenantStore.symbol()
+                    }}
                   </p>
                   @if (offer.details) {
                     <p class="mt-1 text-xs text-gray-500">{{ offer.details }}</p>
@@ -80,52 +143,144 @@ interface ShowcaseDraft {
               }
             }
           </div>
-          <p class="mt-4 text-xs text-gray-600 dark:text-gray-400">{{ 'showcases.preview_privacy' | translate }}</p>
+          <div
+            class="mt-4 space-y-2 border-t border-emerald-200 pt-4 text-sm dark:border-emerald-900"
+          >
+            @if (showcaseModel().contact_enabled) {
+              <p>{{ 'showcases.contact_form_enabled' | translate }}</p>
+            } @else {
+              <p>{{ 'showcases.contact_form_disabled' | translate }}</p>
+            }
+            @if (showcaseModel().contact_phone) {
+              <p>{{ 'showcases.phone' | translate }}: {{ showcaseModel().contact_phone }}</p>
+            }
+            @if (showcaseModel().contact_link) {
+              <p>
+                {{ 'showcases.external_contact' | translate }}: {{ showcaseModel().contact_link }}
+              </p>
+            }
+          </div>
+          <p class="mt-4 text-xs text-gray-600 dark:text-gray-400">
+            {{ 'showcases.preview_privacy' | translate }}
+          </p>
         </section>
 
-        <section class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 class="font-semibold text-gray-900 dark:text-white">{{ 'showcases.profile_section' | translate }}</h2>
-          <label class="block text-sm">{{ 'showcases.display_name' | translate }}
-            <input class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950" [formField]="showcaseForm.display_name" />
+        <section
+          class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+        >
+          <h2 class="font-semibold text-gray-900 dark:text-white">
+            {{ 'showcases.profile_section' | translate }}
+          </h2>
+          <label class="block text-sm"
+            >{{ 'showcases.display_name' | translate }}
+            <input
+              class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950"
+              [formField]="showcaseForm.display_name"
+            />
           </label>
-          <label class="block text-sm">{{ 'showcases.title_field' | translate }}
-            <input class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950" [formField]="showcaseForm.title" />
+          <label class="block text-sm"
+            >{{ 'showcases.title_field' | translate }}
+            <input
+              class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950"
+              [formField]="showcaseForm.title"
+            />
           </label>
-          <label class="block text-sm">{{ 'showcases.description_field' | translate }}
-            <textarea class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950" [formField]="showcaseForm.description" rows="5"></textarea>
+          <label class="block text-sm"
+            >{{ 'showcases.description_field' | translate }}
+            <textarea
+              class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950"
+              [formField]="showcaseForm.description"
+              rows="5"
+            ></textarea>
           </label>
           <div class="grid gap-4 sm:grid-cols-2">
-            <label class="block text-sm">{{ 'showcases.category_field' | translate }}
-              <input class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950" [formField]="showcaseForm.category" [placeholder]="'showcases.category_hint' | translate" />
+            <label class="block text-sm"
+              >{{ 'showcases.category_field' | translate }}
+              <input
+                class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950"
+                [formField]="showcaseForm.category"
+                [placeholder]="'showcases.category_hint' | translate"
+              />
             </label>
-            <label class="block text-sm">{{ 'showcases.service_area_field' | translate }}
-              <input class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950" [formField]="showcaseForm.service_area" />
+            <label class="block text-sm"
+              >{{ 'showcases.service_area_field' | translate }}
+              <input
+                class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950"
+                [formField]="showcaseForm.service_area"
+              />
             </label>
           </div>
-          <label class="block text-sm">{{ 'showcases.photo_field' | translate }}
-            <input class="mt-1 block w-full text-sm" type="file" accept="image/jpeg,image/png,image/webp,image/gif" (change)="uploadPhoto($event)" />
+          <label class="block text-sm"
+            >{{ 'showcases.photo_field' | translate }}
+            <input
+              class="mt-1 block w-full text-sm"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              (change)="uploadPhoto($event)"
+            />
           </label>
           @if (cropSourceUrl()) {
             <div class="space-y-4 rounded-xl border border-emerald-200 p-4 dark:border-emerald-900">
               <div>
                 <h3 class="font-medium">{{ 'showcases.crop_title' | translate }}</h3>
-                <p class="mt-1 text-sm text-gray-500">{{ 'showcases.crop_instructions' | translate }}</p>
+                <p class="mt-1 text-sm text-gray-500">
+                  {{ 'showcases.crop_instructions' | translate }}
+                </p>
               </div>
-              <canvas #cropCanvas class="block aspect-video w-full rounded-lg bg-gray-100" [attr.aria-label]="'showcases.crop_preview' | translate"></canvas>
-              <label class="block text-sm">{{ 'showcases.crop_horizontal' | translate }}
-                <input class="mt-2 block w-full" type="range" min="0" max="100" [value]="cropFocusX()" (input)="updateCropFocusX($event)" />
+              <canvas
+                #cropCanvas
+                class="block aspect-video w-full rounded-lg bg-gray-100"
+                [attr.aria-label]="'showcases.crop_preview' | translate"
+              ></canvas>
+              <label class="block text-sm"
+                >{{ 'showcases.crop_horizontal' | translate }}
+                <input
+                  class="mt-2 block w-full"
+                  type="range"
+                  min="0"
+                  max="100"
+                  [value]="cropFocusX()"
+                  (input)="updateCropFocusX($event)"
+                />
               </label>
-              <label class="block text-sm">{{ 'showcases.crop_vertical' | translate }}
-                <input class="mt-2 block w-full" type="range" min="0" max="100" [value]="cropFocusY()" (input)="updateCropFocusY($event)" />
+              <label class="block text-sm"
+                >{{ 'showcases.crop_vertical' | translate }}
+                <input
+                  class="mt-2 block w-full"
+                  type="range"
+                  min="0"
+                  max="100"
+                  [value]="cropFocusY()"
+                  (input)="updateCropFocusY($event)"
+                />
               </label>
-              <label class="block text-sm">{{ 'showcases.crop_zoom' | translate }}
-                <input class="mt-2 block w-full" type="range" min="1" max="3" step="0.1" [value]="cropZoom()" (input)="updateCropZoom($event)" />
+              <label class="block text-sm"
+                >{{ 'showcases.crop_zoom' | translate }}
+                <input
+                  class="mt-2 block w-full"
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.1"
+                  [value]="cropZoom()"
+                  (input)="updateCropZoom($event)"
+                />
               </label>
               <div class="flex flex-wrap gap-3">
-                <button type="button" class="rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white disabled:opacity-50" [disabled]="uploading()" (click)="confirmCrop()">
+                <button
+                  type="button"
+                  class="rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white disabled:opacity-50"
+                  [disabled]="uploading()"
+                  (click)="confirmCrop()"
+                >
                   {{ 'showcases.crop_apply' | translate }}
                 </button>
-                <button type="button" class="rounded-lg border px-4 py-2" [disabled]="uploading()" (click)="cancelCrop()">
+                <button
+                  type="button"
+                  class="rounded-lg border px-4 py-2"
+                  [disabled]="uploading()"
+                  (click)="cancelCrop()"
+                >
                   {{ 'common.cancel' | translate }}
                 </button>
               </div>
@@ -133,8 +288,14 @@ interface ShowcaseDraft {
           }
           @if (showcaseModel().photo_url) {
             <div class="flex items-center gap-3">
-              <img [src]="showcaseModel().photo_url" [alt]="showcaseModel().title || ('showcases.photo_field' | translate)" class="aspect-video w-36 rounded-lg object-cover" />
-              <button type="button" class="text-sm text-red-700" (click)="removePhoto()">{{ 'showcases.remove_photo' | translate }}</button>
+              <img
+                [src]="showcaseModel().photo_url"
+                [alt]="showcaseModel().title || ('showcases.photo_field' | translate)"
+                class="aspect-video w-36 rounded-lg object-cover"
+              />
+              <button type="button" class="text-sm text-red-700" (click)="removePhoto()">
+                {{ 'showcases.remove_photo' | translate }}
+              </button>
             </div>
           }
           @if (uploading()) {
@@ -145,52 +306,122 @@ interface ShowcaseDraft {
           }
         </section>
 
-        <section class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <section
+          class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+        >
           <div class="flex items-center justify-between gap-3">
-            <h2 class="font-semibold text-gray-900 dark:text-white">{{ 'showcases.offers' | translate }}</h2>
-            <button type="button" class="rounded-lg border px-3 py-2 text-sm" (click)="addOffer()">{{ 'showcases.add_offer' | translate }}</button>
+            <h2 class="font-semibold text-gray-900 dark:text-white">
+              {{ 'showcases.offers' | translate }}
+            </h2>
+            <button type="button" class="rounded-lg border px-3 py-2 text-sm" (click)="addOffer()">
+              {{ 'showcases.add_offer' | translate }}
+            </button>
           </div>
           @for (offer of showcaseForm.offers; track $index; let i = $index) {
             <div class="space-y-3 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
               <div class="flex justify-between gap-3">
-                <h3 class="font-medium">{{ 'showcases.offer_number' | translate : { number: i + 1 } }}</h3>
-                <button type="button" class="text-sm text-red-700" (click)="removeOffer(i)">{{ 'common.delete' | translate }}</button>
+                <h3 class="font-medium">
+                  {{ 'showcases.offer_number' | translate: { number: i + 1 } }}
+                </h3>
+                <button type="button" class="text-sm text-red-700" (click)="removeOffer(i)">
+                  {{ 'common.delete' | translate }}
+                </button>
               </div>
-              <input class="w-full rounded-lg border p-3 dark:bg-gray-950" [formField]="offer.name" [placeholder]="'showcases.offer_name' | translate" />
-              <textarea class="w-full rounded-lg border p-3 dark:bg-gray-950" [formField]="offer.description" rows="3" [placeholder]="'showcases.offer_description' | translate"></textarea>
+              <input
+                class="w-full rounded-lg border p-3 dark:bg-gray-950"
+                [formField]="offer.name"
+                [placeholder]="'showcases.offer_name' | translate"
+              />
+              <textarea
+                class="w-full rounded-lg border p-3 dark:bg-gray-950"
+                [formField]="offer.description"
+                rows="3"
+                [placeholder]="'showcases.offer_description' | translate"
+              ></textarea>
               <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" [formField]="offer.price_on_request" />
                 {{ 'showcases.price_on_request' | translate }}
               </label>
               @if (!offer.price_on_request().value()) {
-                <input class="w-full rounded-lg border p-3 dark:bg-gray-950" type="number" step="0.01" [formField]="offer.price" [placeholder]="'showcases.price_field' | translate" />
+                <input
+                  class="w-full rounded-lg border p-3 dark:bg-gray-950"
+                  type="number"
+                  step="0.01"
+                  [formField]="offer.price"
+                  [placeholder]="'showcases.price_field' | translate"
+                />
               }
-              <input class="w-full rounded-lg border p-3 dark:bg-gray-950" [formField]="offer.details" [placeholder]="'showcases.details_field' | translate" />
+              <input
+                class="w-full rounded-lg border p-3 dark:bg-gray-950"
+                [formField]="offer.details"
+                [placeholder]="'showcases.details_field' | translate"
+              />
             </div>
           }
         </section>
 
-        <section class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 class="font-semibold text-gray-900 dark:text-white">{{ 'showcases.contact_options' | translate }}</h2>
+        <section
+          class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+        >
+          <h2 class="font-semibold text-gray-900 dark:text-white">
+            {{ 'showcases.contact_options' | translate }}
+          </h2>
           <p class="text-sm text-gray-500">{{ 'showcases.contact_options_hint' | translate }}</p>
+          <label class="flex items-start gap-3 text-sm">
+            <input class="mt-1" type="checkbox" [formField]="showcaseForm.contact_enabled" />
+            <span>{{ 'showcases.enable_contact_form' | translate }}</span>
+          </label>
           <div class="grid gap-4 sm:grid-cols-2">
-            <label class="block text-sm">{{ 'showcases.phone_field' | translate }}
-              <input class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950" [formField]="showcaseForm.contact_phone" />
+            <label class="block text-sm"
+              >{{ 'showcases.phone_field' | translate }}
+              <input
+                class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950"
+                [formField]="showcaseForm.contact_phone"
+              />
             </label>
-            <label class="block text-sm">{{ 'showcases.link_field' | translate }}
-              <input class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950" type="url" [formField]="showcaseForm.contact_link" placeholder="https://" />
+            <label class="block text-sm"
+              >{{ 'showcases.link_field' | translate }}
+              <input
+                class="mt-1 w-full rounded-lg border p-3 dark:bg-gray-950"
+                type="url"
+                [formField]="showcaseForm.contact_link"
+                placeholder="https://"
+              />
             </label>
           </div>
         </section>
 
         @if (success()) {
-          <p class="rounded-lg bg-emerald-50 p-3 text-emerald-800">{{ 'showcases.saved' | translate }}</p>
+          <p class="rounded-lg bg-emerald-50 p-3 text-emerald-800">
+            {{ 'showcases.saved' | translate }}
+          </p>
         }
         <div class="flex flex-wrap gap-3">
-          <button type="button" class="rounded-lg bg-gray-800 px-5 py-3 font-medium text-white disabled:opacity-50" [disabled]="saving() || uploading() || cropSourceUrl() !== null" (click)="save()">{{ 'showcases.save_draft' | translate }}</button>
-          <button type="button" class="rounded-lg bg-emerald-700 px-5 py-3 font-medium text-white disabled:opacity-50" [disabled]="saving() || uploading() || cropSourceUrl() !== null" (click)="saveAndPublish()">{{ 'showcases.publish' | translate }}</button>
+          <button
+            type="button"
+            class="rounded-lg bg-gray-800 px-5 py-3 font-medium text-white disabled:opacity-50"
+            [disabled]="saving() || uploading() || cropSourceUrl() !== null"
+            (click)="save()"
+          >
+            {{ 'showcases.save_draft' | translate }}
+          </button>
+          <button
+            type="button"
+            class="rounded-lg bg-emerald-700 px-5 py-3 font-medium text-white disabled:opacity-50"
+            [disabled]="saving() || uploading() || cropSourceUrl() !== null"
+            (click)="saveAndPublish()"
+          >
+            {{ 'showcases.publish' | translate }}
+          </button>
           @if (showcase()?.status === 'published') {
-            <button type="button" class="rounded-lg border px-5 py-3 font-medium" [disabled]="saving()" (click)="unpublish()">{{ 'showcases.unpublish' | translate }}</button>
+            <button
+              type="button"
+              class="rounded-lg border px-5 py-3 font-medium"
+              [disabled]="saving()"
+              (click)="unpublish()"
+            >
+              {{ 'showcases.unpublish' | translate }}
+            </button>
           }
         </div>
       }
@@ -222,6 +453,7 @@ export class ShowcaseManagePage implements OnInit, OnDestroy {
     service_area: '',
     contact_phone: '',
     contact_link: '',
+    contact_enabled: false,
     photo_url: '',
     offers: [],
   });
@@ -278,9 +510,9 @@ export class ShowcaseManagePage implements OnInit, OnDestroy {
   }
 
   addOffer(): void {
-    this.showcaseModel.update((model) => model.offers.length < 20
-      ? { ...model, offers: [...model.offers, this.emptyOffer()] }
-      : model);
+    this.showcaseModel.update((model) =>
+      model.offers.length < 20 ? { ...model, offers: [...model.offers, this.emptyOffer()] } : model,
+    );
   }
 
   removeOffer(index: number): void {
@@ -294,8 +526,10 @@ export class ShowcaseManagePage implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type) ||
-        file.size > 20 * 1024 * 1024) {
+    if (
+      !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type) ||
+      file.size > 20 * 1024 * 1024
+    ) {
       this.uploadError.set(true);
       input.value = '';
       return;
@@ -403,7 +637,7 @@ export class ShowcaseManagePage implements OnInit, OnDestroy {
     );
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.min(1600, Math.round(crop.width)));
-    canvas.height = Math.max(1, Math.round(canvas.width * 9 / 16));
+    canvas.height = Math.max(1, Math.round((canvas.width * 9) / 16));
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Unable to prepare the image crop.');
 
@@ -421,7 +655,12 @@ export class ShowcaseManagePage implements OnInit, OnDestroy {
       canvas.height,
     );
     const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Unable to encode the image crop.')), 'image/jpeg', 0.9);
+      canvas.toBlob(
+        (result) =>
+          result ? resolve(result) : reject(new Error('Unable to encode the image crop.')),
+        'image/jpeg',
+        0.9,
+      );
     });
     return new File([blob], 'showcase-preview.jpg', { type: 'image/jpeg' });
   }
@@ -490,6 +729,7 @@ export class ShowcaseManagePage implements OnInit, OnDestroy {
       service_area: model.service_area,
       contact_phone: model.contact_phone,
       contact_link: model.contact_link,
+      contact_enabled: model.contact_enabled,
       photo_url: model.photo_url,
       offers: model.offers.map((offer): ShowcaseOfferRequest => ({
         ...offer,
@@ -508,6 +748,7 @@ export class ShowcaseManagePage implements OnInit, OnDestroy {
       service_area: showcase.service_area ?? '',
       contact_phone: showcase.contact_phone ?? '',
       contact_link: showcase.contact_link ?? '',
+      contact_enabled: showcase.contact_enabled,
       photo_url: showcase.photo_url ?? '',
       offers: showcase.offers.map((offer) => ({
         name: offer.name,

@@ -41,8 +41,10 @@ public class CommunityShowcasePersistenceTests
     public void Report_schema_tracks_moderation_decisions()
     {
         using var db = TestDbFactory.Create();
+        var showcase = db.Model.FindEntityType(typeof(CommunityShowcase))!;
         var report = db.Model.FindEntityType(typeof(CommunityShowcaseReport))!;
 
+        Assert.Equal(false, showcase.FindProperty(nameof(CommunityShowcase.ContactEnabled))!.GetDefaultValue());
         Assert.Equal("community_showcase_reports", report.GetTableName());
         Assert.NotNull(report.FindProperty(nameof(CommunityShowcaseReport.HandledByUserId)));
         Assert.NotNull(report.FindProperty(nameof(CommunityShowcaseReport.ResolutionNote)));

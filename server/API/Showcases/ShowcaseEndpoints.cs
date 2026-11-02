@@ -96,12 +96,13 @@ public static partial class ShowcaseEndpoints
                     OwnerName = s.Member.User.FirstName + " " + s.Member.User.LastName,
                     s.Member.User.ContactEmail,
                     s.Member.User.PreferredLanguage,
+                    s.ContactEnabled,
                     s.Title,
                 })
                 .FirstOrDefaultAsync(ct);
             if (owner is null)
                 return Results.NotFound(new { error = "Showcase not found." });
-            if (string.IsNullOrWhiteSpace(owner.ContactEmail))
+            if (!owner.ContactEnabled || string.IsNullOrWhiteSpace(owner.ContactEmail))
                 return Results.Conflict(new { error = "The showcase owner has not enabled email contact." });
 
             var visitorEmail = request.Email.Trim();
@@ -250,6 +251,7 @@ public static partial class ShowcaseEndpoints
             showcase.ServiceArea = CleanOptional(request.ServiceArea);
             showcase.ContactPhone = CleanOptional(request.ContactPhone);
             showcase.ContactLink = CleanOptional(request.ContactLink);
+            showcase.ContactEnabled = request.ContactEnabled;
             showcase.PhotoUrl = CleanOptional(request.PhotoUrl);
 
             var existingOffers = showcase.Offers.OrderBy(offer => offer.Position).ToList();
@@ -463,13 +465,14 @@ public static partial class ShowcaseEndpoints
         s.ServiceArea,
         s.ContactPhone,
         s.ContactLink,
+        s.ContactEnabled,
         s.PhotoUrl,
         s.Status,
         s.Tenant.Name,
         s.Tenant.Slug,
         s.Tenant.BaseCurrency,
         s.Tenant.CurrencySymbol,
-        !string.IsNullOrWhiteSpace(s.Member.User.ContactEmail),
+        s.ContactEnabled && !string.IsNullOrWhiteSpace(s.Member.User.ContactEmail),
         new DateTimeOffset(s.CreatedAt, TimeSpan.Zero),
         s.UpdatedAt is null ? null : new DateTimeOffset(s.UpdatedAt.Value, TimeSpan.Zero),
         s.Offers.OrderBy(o => o.Position)

@@ -21,6 +21,7 @@ public class CommunityShowcaseConfiguration : IEntityTypeConfiguration<Community
         b.Property(e => e.ServiceArea).HasColumnName("service_area").HasMaxLength(200);
         b.Property(e => e.ContactPhone).HasColumnName("contact_phone").HasMaxLength(40);
         b.Property(e => e.ContactLink).HasColumnName("contact_link").HasMaxLength(500);
+        b.Property(e => e.ContactEnabled).HasColumnName("contact_enabled").HasDefaultValue(false).IsRequired();
         b.Property(e => e.PhotoUrl).HasColumnName("photo_url").HasMaxLength(1000);
         b.Property(e => e.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("draft").IsRequired();
         b.Property(e => e.PublishedAt).HasColumnName("published_at");

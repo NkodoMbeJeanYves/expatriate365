@@ -326,6 +326,12 @@ namespace server.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("category");
 
+                    b.Property<bool>("ContactEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnName("contact_enabled");
+
                     b.Property<string>("ContactLink")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)")

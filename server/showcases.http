@@ -52,6 +52,7 @@ Content-Type: application/json
   "service_area": "Central district",
   "contact_phone": "",
   "contact_link": "",
+  "contact_enabled": false,
   "photo_url": "",
   "offers": [
     {
