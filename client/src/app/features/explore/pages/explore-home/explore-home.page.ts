@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthStore } from '@core/auth/auth.store';
+import { PublicTenant } from '@core/auth/models/user.model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { BrandLogoComponent } from '@shared/components/brand-logo/brand-logo.component';
+import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
-import { BrandLogoComponent } from '@shared/components/brand-logo/brand-logo.component';
-import { ExploreApiService } from '../../services/explore-api.service';
-import { PublicTenant } from '@core/auth/models/user.model';
 import { ToastModule } from 'primeng/toast';
+import { ExploreApiService } from '../../services/explore-api.service';
 
 @Component({
   selector: 'app-explore-home',
@@ -32,14 +33,25 @@ import { ToastModule } from 'primeng/toast';
         <app-brand-logo />
         <div class="flex items-center gap-3">
           <app-lang-switcher />
-          <a routerLink="/auth/login">
-            <p-button
-              [label]="'auth.login' | translate"
-              icon="pi pi-sign-in"
-              severity="secondary"
-              size="small"
-            />
-          </a>
+          @if (authStore.isAuthenticated()) {
+            <a routerLink="/profile">
+              <p-button
+                [label]="'nav.profile' | translate"
+                icon="pi pi-user"
+                severity="secondary"
+                size="small"
+              />
+            </a>
+          } @else {
+            <a routerLink="/auth/login">
+              <p-button
+                [label]="'auth.login' | translate"
+                icon="pi pi-sign-in"
+                severity="secondary"
+                size="small"
+              />
+            </a>
+          }
         </div>
       </header>
 
@@ -97,6 +109,7 @@ import { ToastModule } from 'primeng/toast';
 })
 export class ExploreHomePage implements OnInit {
   private readonly api = inject(ExploreApiService);
+  readonly authStore = inject(AuthStore);
 
   readonly tenants = signal<PublicTenant[]>([]);
   readonly loading = signal(true);

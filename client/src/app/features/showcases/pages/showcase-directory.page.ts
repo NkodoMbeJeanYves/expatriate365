@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { AuthStore } from '@core/auth/auth.store';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LangSwitcherComponent } from '@shared/components/lang-switcher/lang-switcher.component';
 import { ButtonModule } from 'primeng/button';
@@ -27,14 +28,25 @@ import { CommunityShowcase, ShowcasesApiService } from '../services/showcases-ap
         </a>
         <div class="flex items-center gap-3">
           <app-lang-switcher />
-          <a routerLink="/auth/login">
-            <p-button
-              [label]="'auth.login' | translate"
-              icon="pi pi-sign-in"
-              severity="secondary"
-              size="small"
-            />
-          </a>
+          @if (authStore.isAuthenticated()) {
+            <a routerLink="/profile">
+              <p-button
+                [label]="'nav.profile' | translate"
+                icon="pi pi-user"
+                severity="secondary"
+                size="small"
+              />
+            </a>
+          } @else {
+            <a routerLink="/auth/login">
+              <p-button
+                [label]="'auth.login' | translate"
+                icon="pi pi-sign-in"
+                severity="secondary"
+                size="small"
+              />
+            </a>
+          }
         </div>
       </header>
       <main class="mx-auto max-w-6xl px-5 py-10">
@@ -124,6 +136,7 @@ import { CommunityShowcase, ShowcasesApiService } from '../services/showcases-ap
 export class ShowcaseDirectoryPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(ShowcasesApiService);
+  readonly authStore = inject(AuthStore);
   readonly tenantSlug = signal('');
   readonly items = signal<CommunityShowcase[]>([]);
   readonly loading = signal(true);
