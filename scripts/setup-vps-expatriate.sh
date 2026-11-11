@@ -262,8 +262,9 @@ echo ""
 info "─── SMTP (1/5) — Adresse email expéditrice ───────────────────────────────"
 info "  Email utilisé comme expéditeur dans les emails envoyés par l'application."
 info "  Aussi utilisé comme contact pour le certificat SSL Let's Encrypt."
-_SAVED_SMTP_FROM=$(_env_get "Email__FromAddress")
-_env_preview "Email__FromAddress" "$_SAVED_SMTP_FROM"
+_SAVED_SMTP_FROM=$(_env_get "Email__From")
+[[ -n "$_SAVED_SMTP_FROM" ]] || _SAVED_SMTP_FROM=$(_env_get "Email__FromAddress")
+_env_preview "Email__From" "$_SAVED_SMTP_FROM"
 [[ -n "$_SAVED_SMTP_FROM" ]] && info "  Valeur actuelle : $_SAVED_SMTP_FROM"
 read -rp "  Email SMTP (From) [Entrée = conserver] : " SMTP_FROM
 SMTP_FROM="${SMTP_FROM:-$_SAVED_SMTP_FROM}"
@@ -271,8 +272,9 @@ SMTP_FROM="${SMTP_FROM:-$_SAVED_SMTP_FROM}"
 echo ""
 info "─── SMTP (2/5) — Serveur SMTP ────────────────────────────────────────────"
 info "  Adresse du serveur qui enverra les emails."
-_SAVED_SMTP_HOST=$(_env_get "Email__SmtpHost")
-_env_preview "Email__SmtpHost" "$_SAVED_SMTP_HOST"
+_SAVED_SMTP_HOST=$(_env_get "Email__Smtp__Host")
+[[ -n "$_SAVED_SMTP_HOST" ]] || _SAVED_SMTP_HOST=$(_env_get "Email__SmtpHost")
+_env_preview "Email__Smtp__Host" "$_SAVED_SMTP_HOST"
 info "  Gmail: smtp.gmail.com | OVH/LWS: ssl0.ovh.net | Office365: smtp.office365.com"
 [[ -n "$_SAVED_SMTP_HOST" ]] && info "  Valeur actuelle : $_SAVED_SMTP_HOST"
 read -rp "  Hôte SMTP [Entrée = conserver] : " SMTP_HOST
@@ -282,8 +284,9 @@ echo ""
 info "─── SMTP (3/5) — Port SMTP ───────────────────────────────────────────────"
 info "  587 = STARTTLS (recommandé pour Gmail, OVH, Office365)."
 info "  465 = SSL/TLS direct (moins courant)."
-_SAVED_SMTP_PORT=$(_env_get "Email__SmtpPort")
-_env_preview "Email__SmtpPort" "$_SAVED_SMTP_PORT"
+_SAVED_SMTP_PORT=$(_env_get "Email__Smtp__Port")
+[[ -n "$_SAVED_SMTP_PORT" ]] || _SAVED_SMTP_PORT=$(_env_get "Email__SmtpPort")
+_env_preview "Email__Smtp__Port" "$_SAVED_SMTP_PORT"
 [[ -n "$_SAVED_SMTP_PORT" ]] && info "  Valeur actuelle : $_SAVED_SMTP_PORT"
 read -rp "  Port SMTP [Entrée = conserver / défaut 587] : " SMTP_PORT
 SMTP_PORT="${SMTP_PORT:-${_SAVED_SMTP_PORT:-587}}"
@@ -291,8 +294,9 @@ SMTP_PORT="${SMTP_PORT:-${_SAVED_SMTP_PORT:-587}}"
 echo ""
 info "─── SMTP (4/5) — Identifiant de connexion ────────────────────────────────"
 info "  Généralement votre adresse email complète (ex: monapp@gmail.com)."
-_SAVED_SMTP_USER=$(_env_get "Email__Username")
-_env_preview "Email__Username" "$_SAVED_SMTP_USER"
+_SAVED_SMTP_USER=$(_env_get "Email__Smtp__Username")
+[[ -n "$_SAVED_SMTP_USER" ]] || _SAVED_SMTP_USER=$(_env_get "Email__Username")
+_env_preview "Email__Smtp__Username" "$_SAVED_SMTP_USER"
 [[ -n "$_SAVED_SMTP_USER" ]] && info "  Valeur actuelle : $_SAVED_SMTP_USER"
 read -rp "  Identifiant SMTP [Entrée = conserver] : " SMTP_USER
 SMTP_USER="${SMTP_USER:-$_SAVED_SMTP_USER}"
@@ -303,8 +307,9 @@ info "  Pour Gmail : NE PAS utiliser votre mot de passe principal."
 info "  Créez un App Password sur https://myaccount.google.com/apppasswords"
 info "  Pour OVH/LWS/Office365 : mot de passe de la boîte email."
 info "  La saisie est masquée (rien ne s'affiche)."
-_SAVED_SMTP_PASS=$(_env_get "Email__Password")
-_env_preview "Email__Password" "$_SAVED_SMTP_PASS" true
+_SAVED_SMTP_PASS=$(_env_get "Email__Smtp__Password")
+[[ -n "$_SAVED_SMTP_PASS" ]] || _SAVED_SMTP_PASS=$(_env_get "Email__Password")
+_env_preview "Email__Smtp__Password" "$_SAVED_SMTP_PASS" true
 if [[ -n "$_SAVED_SMTP_PASS" ]]; then
     info "  Mot de passe SMTP : déjà défini (masqué) — appuyez Entrée pour conserver."
     read -rp "  Mot de passe SMTP [Entrée = conserver] : " -s SMTP_PASSWORD; echo
@@ -645,12 +650,12 @@ Seed__SuperAdminEmail='${SEED_ADMIN_EMAIL}'
 Seed__SuperAdminPassword='${SEED_ADMIN_PASSWORD}'
 
 # Email SMTP
-Email__SmtpHost=${SMTP_HOST}
-Email__SmtpPort=${SMTP_PORT}
-Email__EnableSsl=true
-Email__Username='${SMTP_USER}'
-Email__Password='${SMTP_PASSWORD}'
-Email__FromAddress=${SMTP_FROM}
+Email__Smtp__Host=${SMTP_HOST}
+Email__Smtp__Port=${SMTP_PORT}
+Email__Smtp__EnableSsl=true
+Email__Smtp__Username='${SMTP_USER}'
+Email__Smtp__Password='${SMTP_PASSWORD}'
+Email__From=${SMTP_FROM}
 Email__PortalDomain=${DOMAIN}
 
 # Stockage fichiers

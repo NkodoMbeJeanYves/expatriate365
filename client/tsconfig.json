@@ -27,6 +27,7 @@
       "@auth/*":          ["app/features/auth/*"],
       "@members/*":       ["app/features/members/*"],
       "@directory/*":     ["app/features/directory/*"],
+      "@showcases/*":     ["app/features/showcases/*"],
       "@contributions/*": ["app/features/contributions/*"],
       "@payments/*":      ["app/features/payments/*"],
       "@finances/*":      ["app/features/finances/*"],

@@ -30,6 +30,63 @@ public static class DbSeeder
         await SeedTenantRolesAsync(db);
     }
 
+    public static async Task SeedAliceShowcaseAsync(AppDbContext db)
+    {
+        var member = await db.Members
+            .Include(m => m.Tenant)
+            .Include(m => m.User)
+            .FirstOrDefaultAsync(m =>
+                m.Tenant.Slug == SeedTenantSlug &&
+                m.User.Email == "alice.biya@acm.mu" &&
+                m.IsActive &&
+                m.Status == "active");
+
+        if (member is null)
+            throw new InvalidOperationException(
+                "Active member alice.biya@acm.mu was not found in the ACM demo community. Seed the demo community first.");
+
+        if (await db.CommunityShowcases.AnyAsync(s =>
+                s.TenantId == member.TenantId && s.MemberId == member.Id))
+        {
+            Console.WriteLine("[Seeder] Alice already has a showcase in the ACM community — skipping.");
+            return;
+        }
+
+        var showcaseId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        db.CommunityShowcases.Add(new CommunityShowcase
+        {
+            Id = showcaseId,
+            TenantId = member.TenantId,
+            MemberId = member.Id,
+            Slug = "alice-biya-saveurs-du-cameroun",
+            DisplayName = "Alice Biya",
+            Title = "Saveurs du Cameroun à Maurice",
+            Description = "Découvrez une cuisine camerounaise généreuse, préparée avec soin et inspirée des recettes du pays. Les plats sont proposés sur commande pour vos repas en famille, vos événements et vos envies de saveurs authentiques.",
+            Category = "Cuisine et plats faits maison",
+            ServiceArea = "Île Maurice",
+            PhotoUrl = null,
+            Status = "published",
+            PublishedAt = now,
+            CreatedAt = now,
+            Offers =
+            [
+                new CommunityShowcaseOffer
+                {
+                    Id = Guid.NewGuid(),
+                    ShowcaseId = showcaseId,
+                    Name = "Plats camerounais sur commande",
+                    Description = "Plats faits maison inspirés de la cuisine camerounaise.",
+                    PriceOnRequest = true,
+                    Position = 0,
+                },
+            ],
+        });
+
+        await db.SaveChangesAsync();
+        Console.WriteLine("[Seeder] Published showcase created for alice.biya@acm.mu without a photo.");
+    }
+
     // Seed tenant_roles for every existing tenant that doesn't have them yet (idempotent)
     private static async Task SeedTenantRolesAsync(AppDbContext db)
     {

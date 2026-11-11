@@ -44,6 +44,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PostAttachment> PostAttachments => Set<PostAttachment>();
     public DbSet<PostComment> PostComments => Set<PostComment>();
     public DbSet<PostReaction> PostReactions => Set<PostReaction>();
+    public DbSet<CommunityShowcase> CommunityShowcases => Set<CommunityShowcase>();
+    public DbSet<CommunityShowcaseOffer> CommunityShowcaseOffers => Set<CommunityShowcaseOffer>();
+    public DbSet<CommunityShowcaseReport> CommunityShowcaseReports => Set<CommunityShowcaseReport>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();

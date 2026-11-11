@@ -30,7 +30,9 @@ using server.API.DirectoryFeature;
 using server.API.SuperAdmin;
 using server.API.Notifications;
 using server.API.Expenses;
+using server.API.Showcases;
 using Microsoft.AspNetCore.Authorization;
+using System.Threading.RateLimiting;
 using server.Infrastructure.Auth;
 using server.Infrastructure.BackgroundServices;
 using server.Infrastructure.Persistence;
@@ -133,6 +135,20 @@ try
     builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
     builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
     builder.Services.AddAuthorization();
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        options.AddPolicy("public-showcase", context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                    AutoReplenishment = true,
+                }));
+    });
 
     var app = builder.Build();
 
@@ -143,7 +159,9 @@ try
     }
 
     app.UseSerilogRequestLogging();
+    app.UseRouting();
     app.UseCors();
+    app.UseRateLimiter();
 
     var downloadPath = Path.Combine(app.Environment.ContentRootPath, "downloads");
     
@@ -197,6 +215,13 @@ try
 
         // Démarrage normal : applique les migrations en attente (idempotent)
         await db.Database.MigrateAsync();
+        if (args.Contains("--seed-alice-showcase"))
+        {
+            await DbSeeder.SeedAliceShowcaseAsync(db);
+            Console.WriteLine("[Seed] Alice's showcase seed complete. Exiting.");
+            return;
+        }
+
         await DbSeeder.BootstrapAsync(db, config);
     }
 
@@ -244,6 +269,7 @@ try
     app.MapNotificationEndpoints();
     app.MapExpenseEndpoints();
     app.MapDirectoryEndpoints();
+    app.MapShowcaseEndpoints();
 
     app.Run();
 }

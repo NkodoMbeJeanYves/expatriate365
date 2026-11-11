@@ -31,6 +31,8 @@ export const routes: Routes = [
       { path: 'my-welfare', canActivate: [hasRoleGuard([ROLES.MEMBER])], loadChildren: () => import('@welfare/welfare.routes').then((m) => m.MY_WELFARE_ROUTES) },
       { path: 'transfer-assistance/info', loadComponent: () => import('./features/transfer-assistance/transfer-assistance-info.page').then(m => m.TransferAssistanceInfoPage) },
       { path: 'transfer-assistance', loadComponent: () => import('./features/transfer-assistance/transfer-assistance.page').then(m => m.TransferAssistancePage) },
+      { path: 'manage/showcases', loadComponent: () => import('@showcases/pages/showcase-manage.page').then(m => m.ShowcaseManagePage) },
+      { path: 'manage/showcases/moderation', canActivate: [hasRoleGuard(STAFF_ROLES)], loadComponent: () => import('@showcases/pages/showcase-moderation.page').then(m => m.ShowcaseModerationPage) },
       { path: 'elections', loadChildren: () => import('@elections/elections.routes').then((m) => m.ELECTIONS_ROUTES) },
       { path: 'meetings', loadChildren: () => import('@meetings/meetings.routes').then((m) => m.MEETINGS_ROUTES) },
       { path: 'communications', canActivate: [hasRoleGuard(STAFF_ROLES)], loadChildren: () => import('@communications/communications.routes').then((m) => m.COMMUNICATIONS_ROUTES) },
@@ -53,6 +55,13 @@ export const routes: Routes = [
     ],
   },
   { path: 'select-tenant', loadComponent: () => import('@auth/pages/select-tenant/select-tenant.page').then((m) => m.SelectTenantPage) },
+  {
+    path: 'showcases',
+    children: [
+      { path: ':tenantSlug', loadComponent: () => import('@showcases/pages/showcase-directory.page').then(m => m.ShowcaseDirectoryPage) },
+      { path: ':tenantSlug/:showcaseSlug', loadComponent: () => import('@showcases/pages/showcase-detail.page').then(m => m.ShowcaseDetailPage) },
+    ],
+  },
   {
     path: 'explore',
     children: [
