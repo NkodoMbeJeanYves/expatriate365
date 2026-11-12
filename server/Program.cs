@@ -167,23 +167,7 @@ try
     
     Directory.CreateDirectory(downloadPath);
 
-    // foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
-    // {
-    //     if (!Directory.Exists(Path.Combine(downloadPath, sub)))
-    //     {
-    //         Directory.CreateDirectory(Path.Combine(downloadPath, sub));
-    //     }
-    // }
-
     app.UseStaticFiles();
-    // foreach (var sub in new[] { "attachments", "avatars", "branding", "docs" })
-    // {
-    //     app.UseStaticFiles(new StaticFileOptions
-    //     {
-    //         FileProvider = new PhysicalFileProvider(Path.Combine(downloadPath, sub)),
-    //         RequestPath  = $"/downloads/{sub}",
-    //     });
-    // }
 
     app.UseAuthentication();
     app.UseAuthorization();
