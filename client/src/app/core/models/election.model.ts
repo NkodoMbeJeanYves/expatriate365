@@ -25,6 +25,9 @@ export interface ElectionCandidateDto {
   display_order: number;
   vote_count: number;
   rank: number;
+  status: string;
+  review_reason?: string;
+  reviewed_at?: string;
 }
 
 export interface ElectionResultDto {
@@ -59,6 +62,11 @@ export interface AddCandidateRequest {
   member_id: string;
   statement?: string;
   display_order: number;
+}
+
+export interface ReviewElectionCandidateRequest {
+  decision: 'approved' | 'rejected';
+  reason?: string;
 }
 
 export interface CastVoteRequest {

@@ -6,7 +6,7 @@ import { PagedResult } from '@shared/models/pagination.model';
 import {
   ElectionDto, ElectionFilters, ElectionCandidateDto, ElectionResultDto,
   ElectionStatsDto, CreateElectionRequest, UpdateElectionRequest,
-  AddCandidateRequest, CastVoteRequest,
+  AddCandidateRequest, CastVoteRequest, ReviewElectionCandidateRequest,
 } from '@models/election.model';
 
 @Injectable({ providedIn: 'root' })
@@ -55,6 +55,10 @@ export class ElectionsApiService {
 
   removeCandidate(electionId: string, candidateId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${electionId}/candidates/${candidateId}`);
+  }
+
+  reviewCandidate(electionId: string, candidateId: string, dto: ReviewElectionCandidateRequest): Observable<ElectionCandidateDto> {
+    return this.http.post<ElectionCandidateDto>(`${this.base}/${electionId}/candidates/${candidateId}/review`, dto);
   }
 
   castVote(id: string, dto: CastVoteRequest): Observable<{ voted: boolean }> {

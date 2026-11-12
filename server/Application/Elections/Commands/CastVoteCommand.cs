@@ -15,7 +15,7 @@ public class CastVoteCommandHandler(AppDbContext db, ILogger<CastVoteCommandHand
 {
     public async Task<ServiceResult<bool>> Handle(CastVoteCommand request, CancellationToken ct)
     {
-        var election = await db.Elections.Include(e => e.Candidates.Where(c => c.IsActive))
+        var election = await db.Elections.Include(e => e.Candidates.Where(c => c.IsActive && c.Status == "approved"))
             .FirstOrDefaultAsync(e => e.Id == request.ElectionId && e.TenantId == request.TenantId, ct);
         if (election is null) return ServiceResult<bool>.Failure("Élection introuvable.", "errors.election.not_found");
         if (election.Status != "open") return ServiceResult<bool>.Failure("L'élection n'est pas ouverte au vote.", "errors.election.not_open");

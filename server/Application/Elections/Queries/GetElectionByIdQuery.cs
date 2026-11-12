@@ -6,7 +6,7 @@ using server.Infrastructure.Persistence;
 
 namespace server.Application.Elections.Queries;
 
-public record GetElectionByIdQuery(Guid TenantId, Guid Id, Guid? VoterId = null)
+public record GetElectionByIdQuery(Guid TenantId, Guid Id, Guid? VoterId = null, bool IncludePendingCandidates = false)
     : IRequest<ServiceResult<(ElectionDto Election, List<ElectionCandidateDto> Candidates, List<ElectionResultDto> Results)>>;
 
 public class GetElectionByIdQueryHandler(AppDbContext db)
@@ -15,8 +15,9 @@ public class GetElectionByIdQueryHandler(AppDbContext db)
     public async Task<ServiceResult<(ElectionDto, List<ElectionCandidateDto>, List<ElectionResultDto>)>> Handle(
         GetElectionByIdQuery request, CancellationToken ct)
     {
-        var e = await db.Elections
-            .Include(x => x.Candidates.Where(c => c.IsActive)).ThenInclude(c => c.Member).ThenInclude(m => m.User)
+        var e = await db.Elections.AsNoTracking()
+            .Include(x => x.Candidates.Where(c => c.IsActive
+                && (request.IncludePendingCandidates || c.Status == "approved"))).ThenInclude(c => c.Member).ThenInclude(m => m.User)
             .Include(x => x.Votes.Where(v => v.IsActive))
             .Include(x => x.Ballots.Where(b => b.IsActive)).ThenInclude(b => b.Candidate).ThenInclude(c => c.Member).ThenInclude(m => m.User)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
@@ -34,7 +35,8 @@ public class GetElectionByIdQueryHandler(AppDbContext db)
             return new ElectionCandidateDto(
                 c.Id.ToString(), c.ElectionId.ToString(), c.MemberId.ToString(),
                 $"{c.Member.User.FirstName} {c.Member.User.LastName}", c.Member.MembershipNumber,
-                c.Statement, c.DisplayOrder, ballot?.VoteCount ?? 0, ballot?.Rank ?? 0);
+                c.Statement, c.DisplayOrder, ballot?.VoteCount ?? 0, ballot?.Rank ?? 0,
+                c.Status, c.ReviewReason, c.ReviewedAt?.ToString("O"));
         }).ToList();
 
         var results = e.Ballots.OrderBy(b => b.Rank).Select(b =>

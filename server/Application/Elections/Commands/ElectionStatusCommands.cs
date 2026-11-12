@@ -22,7 +22,7 @@ public class OpenElectionCommandHandler(AppDbContext db, ILogger<OpenElectionCom
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);
         if (e is null) return ServiceResult<ElectionDto>.Failure("Élection introuvable.", "errors.election.not_found");
         if (e.Status != "draft") return ServiceResult<ElectionDto>.Failure("Seuls les brouillons peuvent être ouverts.", "errors.election.invalid_status_transition");
-        if (!e.Candidates.Any(c => c.IsActive))
+        if (!e.Candidates.Any(c => c.IsActive && c.Status == "approved"))
             return ServiceResult<ElectionDto>.Failure("L'élection doit avoir au moins un candidat.", "errors.election.no_candidates");
 
         e.Status = "open";
@@ -86,7 +86,7 @@ public class PublishResultsCommandHandler(AppDbContext db, ILogger<PublishResult
     public async Task<ServiceResult<ElectionDto>> Handle(PublishResultsCommand request, CancellationToken ct)
     {
         var e = await db.Elections
-            .Include(x => x.Candidates.Where(c => c.IsActive))
+            .Include(x => x.Candidates.Where(c => c.IsActive && c.Status == "approved"))
             .Include(x => x.Votes.Where(v => v.IsActive))
             .Include(x => x.Ballots)
             .FirstOrDefaultAsync(x => x.Id == request.Id && x.TenantId == request.TenantId, ct);

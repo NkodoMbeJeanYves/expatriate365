@@ -12,5 +12,6 @@ public static class Roles
     public const string BoardMember     = "board_member";
     public const string EventManager    = "event_manager";
     public const string CommitteeMember = "committee_member";
+    public const string ElectionCommissionMember = "election_commission_member";
     public const string Member          = "member";
 }

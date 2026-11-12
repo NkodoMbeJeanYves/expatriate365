@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using System.Text.Json;
 using MediatR;
 using server.Application.Common;
 using server.Application.Elections.Commands;
@@ -42,7 +43,10 @@ public static class ElectionEndpoints
             var tenantId = GetTenantId(principal);
             if (tenantId is null) return Results.Unauthorized();
             var voterId = GetUserId(principal);
-            var result = await mediator.Send(new GetElectionByIdQuery(tenantId.Value, id, voterId));
+            var includePendingCandidates =
+                HasPermission(principal, Permissions.VotesCandidatesReview)
+                || HasPermission(principal, Permissions.VotesManage);
+            var result = await mediator.Send(new GetElectionByIdQuery(tenantId.Value, id, voterId, includePendingCandidates));
             return result.IsSuccess
                 ? Results.Ok(new { election = result.Data.Election, candidates = result.Data.Candidates, results = result.Data.Results })
                 : Results.NotFound(new { error = result.ErrorCode ?? result.ErrorMessage });
@@ -96,6 +100,27 @@ public static class ElectionEndpoints
             return result.IsSuccess ? Results.Ok() : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
         }).RequireAuthorization(Permissions.VotesDelete);
 
+        group.MapPost("/{id:guid}/candidates/{candidateId:guid}/review", async (
+            Guid id, Guid candidateId, ClaimsPrincipal principal, IMediator mediator, ReviewElectionCandidateRequest dto) =>
+        {
+            var tenantId = GetTenantId(principal);
+            if (tenantId is null) return Results.Unauthorized();
+            var reviewerId = GetUserId(principal);
+            if (reviewerId == Guid.Empty) return Results.Unauthorized();
+            var result = await mediator.Send(new ReviewElectionCandidateCommand(
+                tenantId.Value, id, candidateId, reviewerId, dto));
+            return result.IsSuccess
+                ? Results.Ok(result.Data)
+                : Results.BadRequest(new { error = result.ErrorCode ?? result.ErrorMessage });
+        })
+        .RequireAuthorization(Permissions.VotesCandidatesReview)
+        .WithSummary("Review an election candidate")
+        .WithDescription("Approve or reject a pending candidacy before the election opens. A rejection requires a reason.")
+        .Produces<ElectionCandidateDto>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized)
+        .Produces(StatusCodes.Status403Forbidden);
+
         group.MapPost("/{id:guid}/vote", async (Guid id, ClaimsPrincipal principal, IMediator mediator, CastVoteRequest dto) =>
         {
             var tenantId = GetTenantId(principal);
@@ -126,5 +151,20 @@ public static class ElectionEndpoints
     {
         var value = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub");
         return Guid.TryParse(value, out var id) ? id : Guid.Empty;
+    }
+
+    private static bool HasPermission(ClaimsPrincipal principal, string permission)
+    {
+        var claim = principal.FindFirstValue("permissions");
+        if (claim is null) return false;
+
+        try
+        {
+            return JsonSerializer.Deserialize<string[]>(claim)?.Contains(permission) == true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 }

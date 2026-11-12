@@ -10,7 +10,8 @@ public record ElectionDto(
 public record ElectionCandidateDto(
     string Id, string ElectionId, string MemberId, string MemberName,
     string MembershipNumber, string? Statement, int DisplayOrder,
-    int VoteCount, int Rank);
+    int VoteCount, int Rank, string Status, string? ReviewReason,
+    string? ReviewedAt);
 
 public record ElectionResultDto(
     string CandidateId, string MemberName, string MembershipNumber,
@@ -28,5 +29,7 @@ public record UpdateElectionRequest(
     string? StartDate, string? EndDate, int MaxChoices);
 
 public record AddCandidateRequest(string MemberId, string? Statement, int DisplayOrder);
+
+public record ReviewElectionCandidateRequest(string Decision, string? Reason);
 
 public record CastVoteRequest(List<string> CandidateIds);

@@ -54,7 +54,7 @@ public class ListElectionsQueryHandler(AppDbContext db)
         e.Type, e.Status,
         e.StartDate?.ToString("O"), e.EndDate?.ToString("O"),
         e.MaxChoices,
-        e.Candidates.Count(c => c.IsActive),
+        e.Candidates.Count(c => c.IsActive && c.Status == "approved"),
         e.Votes.Count(v => v.IsActive),
         e.CreatedAt.ToString("O"), e.UpdatedAt?.ToString("O"),
         hasVoted);

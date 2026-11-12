@@ -38,6 +38,10 @@ public class ElectionCandidateConfiguration : IEntityTypeConfiguration<ElectionC
         b.Property(e => e.MemberId).HasColumnName("member_id").IsRequired();
         b.Property(e => e.Statement).HasColumnName("statement");
         b.Property(e => e.DisplayOrder).HasColumnName("display_order").HasDefaultValue(0);
+        b.Property(e => e.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("pending").IsRequired();
+        b.Property(e => e.ReviewReason).HasColumnName("review_reason").HasMaxLength(1000);
+        b.Property(e => e.ReviewedBy).HasColumnName("reviewed_by");
+        b.Property(e => e.ReviewedAt).HasColumnName("reviewed_at");
         b.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
         b.Property(e => e.CreatedAt).HasColumnName("created_at");
         b.Property(e => e.UpdatedAt).HasColumnName("updated_at");

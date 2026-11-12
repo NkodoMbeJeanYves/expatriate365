@@ -11,6 +11,7 @@ export const ROLES = {
   DEPUTY_AUDITOR: 'deputy_auditor',
   CENSOR: 'censor',
   COMMITTEE_MEMBER: 'committee_member',
+  ELECTION_COMMISSION_MEMBER: 'election_commission_member',
   REGIONAL_COORDINATOR: 'regional_coordinator',
   EVENT_MANAGER: 'event_manager',
   MEMBER: 'member',

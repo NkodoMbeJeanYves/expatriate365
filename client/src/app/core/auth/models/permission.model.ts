@@ -46,6 +46,7 @@ export const PERMISSIONS = {
   VOTES_MANAGE:  'votes.manage',
   VOTES_DELETE:  'votes.delete',
   VOTES_EXPORT:  'votes.export',
+  VOTES_CANDIDATES_REVIEW: 'votes.candidates.review',
 
   // Welfare
   WELFARE_READ:              'welfare.read',

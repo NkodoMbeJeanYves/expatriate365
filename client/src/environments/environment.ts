@@ -15,5 +15,10 @@ export const environment = {
     { label: 'Secrétaire', email: 'paul.mvondo@acm.mu', password: 'Password123!' },
     { label: 'Membre', email: 'alice.biya@acm.mu', password: 'Password123!' },
     { label: 'Membre 2', email: 'eric.manga@acm.mu', password: 'Password123!' },
+    { label: 'Commission — Yebila David Njafuh', email: 'yebila.david.njafuh@acm.mu', password: 'Password123!' },
+    { label: 'Commission — Alain Barriere', email: 'alain.barriere@acm.mu', password: 'Password123!' },
+    { label: 'Commission — Djeuko Sonya', email: 'djeuko.sonya@acm.mu', password: 'Password123!' },
+    { label: 'Commission — Bienvenue Armel', email: 'bienvenue.armel@acm.mu', password: 'Password123!' },
+    { label: 'Commission — Tatsinda Nzapa Narcisse', email: 'tatsinda.nzapa.narcisse@acm.mu', password: 'Password123!' },
   ] as QuickLoginAccount[],
 };

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +12,8 @@ import { ElectionsApiService } from '../../services/elections-api.service';
 import { MembersApiService } from '@members/services/members-api.service';
 import { MemberListItem } from '@models/member.model';
 import { PagedResult } from '@shared/models/pagination.model';
+import { AuthStore } from '@core/auth/auth.store';
+import { PERMISSIONS } from '@core/auth/models/permission.model';
 
 @Component({
   selector: 'app-election-candidates-drawer',
@@ -21,7 +23,7 @@ import { PagedResult } from '@shared/models/pagination.model';
   template: `
     <p-drawer #drawerEl [(visible)]="visible" position="right" styleClass="!w-full sm:!w-[600px]" [header]="election()?.title + ' — Candidats'">
       <div class="p-4 flex flex-col gap-4">
-        @if (election()?.status === 'draft') {
+        @if (election()?.status === 'draft' && canManageCandidates()) {
           <div class="bg-gray-50 rounded-xl border p-4 flex flex-col gap-3">
             <h4 class="font-medium text-sm">{{ 'elections.add_candidate' | translate }}</h4>
             <div class="flex flex-col gap-1">
@@ -52,19 +54,45 @@ import { PagedResult } from '@shared/models/pagination.model';
                 <div class="font-medium text-sm">{{ c.member_name }}</div>
                 <div class="font-mono text-xs text-gray-400">{{ c.membership_number }}</div>
                 @if (c.statement) { <p class="text-xs text-gray-500 mt-1">{{ c.statement }}</p> }
+                <span class="text-xs font-medium"
+                  [class.text-amber-600]="c.status === 'pending'"
+                  [class.text-green-600]="c.status === 'approved'"
+                  [class.text-red-600]="c.status === 'rejected'">
+                  {{ ('elections.candidate_status_' + c.status) | translate }}
+                </span>
+                @if (c.status === 'rejected' && c.review_reason && canReviewCandidates()) {
+                  <p class="text-xs text-red-600">{{ 'elections.review_reason' | translate }}: {{ c.review_reason }}</p>
+                }
               </div>
               <div class="flex items-center gap-2 shrink-0">
-                <span class="text-xs text-gray-400">Ordre {{ c.display_order }}</span>
-                @if (election()?.status === 'draft') {
+                <span class="text-xs text-gray-400">{{ 'elections.candidate_order' | translate }} {{ c.display_order }}</span>
+                @if (c.status === 'pending' && election()?.status === 'draft' && canReviewCandidates()) {
+                  <p-button [label]="'elections.approve_candidate' | translate" icon="pi pi-check"
+                    size="small" severity="success" [loading]="reviewingCandidate() === c.id"
+                    (onClick)="reviewCandidate(c, 'approved')" />
+                }
+                @if (election()?.status === 'draft' && canManageCandidates()) {
                   <p-button icon="pi pi-times" severity="danger" [text]="true" size="small" (onClick)="removeCandidate(c)" />
                 }
               </div>
             </div>
+            @if (c.status === 'pending' && election()?.status === 'draft' && canReviewCandidates()) {
+              <div class="ml-3 flex flex-col gap-2">
+                <label class="text-xs text-gray-600">{{ 'elections.rejection_reason' | translate }}</label>
+                <textarea pTextarea rows="2" maxlength="1000"
+                  [ngModel]="rejectionReasons()[c.id] || ''"
+                  (ngModelChange)="setRejectionReason(c.id, $event)"></textarea>
+                <p-button [label]="'elections.reject_candidate' | translate" icon="pi pi-times"
+                  size="small" severity="danger" [loading]="reviewingCandidate() === c.id"
+                  [disabled]="!canReject(c.id)" (onClick)="reviewCandidate(c, 'rejected')" />
+              </div>
+            }
           } @empty {
             <div class="text-center py-8 text-gray-400 text-sm">{{ 'elections.no_candidates' | translate }}</div>
           }
         </div>
-        @if (error()) { <p class="text-red-500 text-sm">{{ error() }}</p> }
+        @if (notice()) { <p class="text-green-600 text-sm">{{ notice() | translate }}</p> }
+        @if (error()) { <p class="text-red-500 text-sm">{{ error() | translate }}</p> }
       </div>
     </p-drawer>
   `,
@@ -73,16 +101,22 @@ export class ElectionCandidatesDrawerComponent {
   private readonly api = inject(ElectionsApiService);
   private readonly membersApi = inject(MembersApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly auth = inject(AuthStore);
   private readonly drawerRef = viewChild<Drawer>('drawerEl');
 
   readonly candidateAdded = output<void>();
+  protected readonly canManageCandidates = computed(() => this.auth.hasPermission(PERMISSIONS.VOTES_MANAGE));
+  protected readonly canReviewCandidates = computed(() => this.auth.hasPermission(PERMISSIONS.VOTES_CANDIDATES_REVIEW));
 
   protected visible = false;
   protected readonly election = signal<ElectionDto | null>(null);
   protected readonly candidates = signal<ElectionCandidateDto[]>([]);
   protected readonly adding = signal(false);
+  protected readonly reviewingCandidate = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
+  protected readonly notice = signal<string | null>(null);
   protected readonly members = signal<{ label: string; value: string }[]>([]);
+  protected readonly rejectionReasons = signal<Record<string, string>>({});
 
   protected selectedMemberId = '';
   protected newStatement = '';
@@ -92,6 +126,8 @@ export class ElectionCandidatesDrawerComponent {
     this.election.set(e);
     this.candidates.set([...candidates]);
     this.error.set(null);
+    this.notice.set(null);
+    this.rejectionReasons.set({});
     this.selectedMemberId = '';
     this.newStatement = '';
     this.newOrder = candidates.length;
@@ -114,21 +150,61 @@ export class ElectionCandidatesDrawerComponent {
       display_order: this.newOrder,
     }).subscribe({
       next: c => {
-        this.candidates.update(list => [...list, c]);
         this.selectedMemberId = '';
         this.newStatement = '';
-        this.newOrder = this.candidates().length;
         this.adding.set(false);
+        this.notice.set('elections.candidate_submitted');
+        this.reloadCandidates();
         this.candidateAdded.emit();
       },
-      error: () => { this.adding.set(false); this.error.set("Erreur lors de l'ajout."); },
+      error: () => { this.adding.set(false); this.error.set('elections.candidate_add_error'); },
+    });
+  }
+
+  protected setRejectionReason(candidateId: string, reason: string): void {
+    this.rejectionReasons.update(reasons => ({ ...reasons, [candidateId]: reason }));
+  }
+
+  protected canReject(candidateId: string): boolean {
+    return (this.rejectionReasons()[candidateId] ?? '').trim().length > 0;
+  }
+
+  protected reviewCandidate(c: ElectionCandidateDto, decision: 'approved' | 'rejected'): void {
+    if (!this.election() || this.reviewingCandidate()) return;
+    const reason = this.rejectionReasons()[c.id]?.trim();
+    if (decision === 'rejected' && !reason) return;
+
+    this.reviewingCandidate.set(c.id);
+    this.api.reviewCandidate(this.election()!.id, c.id, {
+      decision,
+      reason: decision === 'rejected' ? reason : undefined,
+    }).subscribe({
+      next: updated => {
+        this.candidates.update(list => list.map(candidate => candidate.id === updated.id ? updated : candidate));
+        this.reviewingCandidate.set(null);
+        this.notice.set(decision === 'approved' ? 'elections.candidate_approved' : 'elections.candidate_rejected');
+        this.candidateAdded.emit();
+      },
+      error: () => {
+        this.reviewingCandidate.set(null);
+        this.error.set('elections.candidate_review_error');
+      },
+    });
+  }
+
+  private reloadCandidates(): void {
+    const election = this.election();
+    if (!election) return;
+    this.api.getById(election.id).subscribe({
+      next: result => this.candidates.set(result.candidates),
+      error: () => this.error.set('elections.candidate_load_error'),
     });
   }
 
   protected removeCandidate(c: ElectionCandidateDto): void {
     this.api.removeCandidate(this.election()!.id, c.id).subscribe({
       next: () => { this.candidates.update(list => list.filter(x => x.id !== c.id)); this.candidateAdded.emit(); },
-      error: () => this.error.set('Erreur lors de la suppression.'),
+      error: () => this.error.set('elections.candidate_remove_error'),
     });
   }
 }

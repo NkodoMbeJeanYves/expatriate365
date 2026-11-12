@@ -10,6 +10,27 @@ public static class RoleSeeder
     private static string P(params string[] perms) =>
         JsonSerializer.Serialize(perms);
 
+    private static readonly string[] MemberBase =
+    [
+        Permissions.MembersReadOwn,
+        Permissions.ContributionsReadOwn,
+        Permissions.PaymentsReadOwn, Permissions.PaymentsReceiptPrint,
+        Permissions.VotesRead, Permissions.VotesCast, Permissions.VotesResults,
+        Permissions.EventsRead, Permissions.EventsRegister,
+        Permissions.DocumentsRead,
+        Permissions.AnnouncementsRead,
+        Permissions.NotificationsReadOwn,
+        Permissions.DashboardRead,
+        Permissions.TransferAssistanceCreate,
+        Permissions.TransferAssistanceReadOwn,
+        Permissions.TransferAssistanceProfileManage,
+        Permissions.TransferAssistanceViewAvailable,
+        Permissions.TransferAssistanceOffer,
+        Permissions.TransferAssistanceParticipate,
+        Permissions.TransferAssistanceConfirmReceipt,
+        Permissions.TransferAssistanceOpenDispute,
+    ];
+
     private static readonly string[] BureauBase =
     [
         Permissions.MembersRead, Permissions.MembersReadOwn, Permissions.MembersViewContact,
@@ -278,6 +299,12 @@ public static class RoleSeeder
             ])
         ),
         (
+            "election_commission_member",
+            "Membre de la commission électorale",
+            "Examine et valide les candidatures aux élections",
+            P([..MemberBase, Permissions.VotesCandidatesReview])
+        ),
+        (
             "regional_coordinator",
             "Coordinateur Régional",
             "Coordination des activités dans une région",
@@ -304,25 +331,7 @@ public static class RoleSeeder
             "member",
             "Membre",
             "Membre ordinaire de l'association",
-            P([
-                Permissions.MembersReadOwn,
-                Permissions.ContributionsReadOwn,
-                Permissions.PaymentsReadOwn, Permissions.PaymentsReceiptPrint,
-                Permissions.VotesRead, Permissions.VotesCast, Permissions.VotesResults,
-                Permissions.EventsRead, Permissions.EventsRegister,
-                Permissions.DocumentsRead,
-                Permissions.AnnouncementsRead,
-                Permissions.NotificationsReadOwn,
-                Permissions.DashboardRead,
-                Permissions.TransferAssistanceCreate,
-                Permissions.TransferAssistanceReadOwn,
-                Permissions.TransferAssistanceProfileManage,
-                Permissions.TransferAssistanceViewAvailable,
-                Permissions.TransferAssistanceOffer,
-                Permissions.TransferAssistanceParticipate,
-                Permissions.TransferAssistanceConfirmReceipt,
-                Permissions.TransferAssistanceOpenDispute,
-            ])
+            P(MemberBase)
         ),
     ];
 

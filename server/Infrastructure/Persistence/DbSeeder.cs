@@ -28,6 +28,38 @@ public static class DbSeeder
         await RoleSeeder.SeedRolesAsync(db);
         await SeedSuperAdminAsync(db, config);
         await SeedTenantRolesAsync(db);
+        await UpdateLegacyCommissionEmailsAsync(db);
+    }
+
+    private static async Task UpdateLegacyCommissionEmailsAsync(AppDbContext db)
+    {
+        var tenantId = await db.Tenants
+            .Where(tenant => tenant.Slug == SeedTenantSlug)
+            .Select(tenant => (Guid?)tenant.Id)
+            .FirstOrDefaultAsync();
+        if (tenantId is null)
+            return;
+
+        var commissionUsers = await db.Users
+            .Where(user => user.TenantId == tenantId && user.Role == Roles.ElectionCommissionMember)
+            .ToListAsync();
+        var updatedCount = 0;
+        foreach (var user in commissionUsers)
+        {
+            const string legacyDomain = "@example.test";
+            if (!user.Email.EndsWith(legacyDomain, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            user.Email = user.Email[..(user.Email.Length - legacyDomain.Length)] + "@acm.mu";
+            user.UpdatedAt = DateTime.UtcNow;
+            updatedCount++;
+        }
+
+        if (updatedCount == 0)
+            return;
+
+        await db.SaveChangesAsync();
+        Console.WriteLine($"[Seeder] Updated {updatedCount} ACM election commission email addresses.");
     }
 
     public static async Task SeedAliceShowcaseAsync(AppDbContext db)
@@ -95,10 +127,10 @@ public static class DbSeeder
 
         foreach (var tenantId in tenantIds)
         {
-            var existingRoleIds = await db.TenantRoles
+            var existingTenantRoles = await db.TenantRoles
                 .Where(tr => tr.TenantId == tenantId)
-                .Select(tr => tr.RoleId)
                 .ToListAsync();
+            var existingRoleIds = existingTenantRoles.Select(tr => tr.RoleId).ToList();
 
             var toAdd = roles
                 .Where(r => !existingRoleIds.Contains(r.Id))
@@ -112,6 +144,16 @@ public static class DbSeeder
                 });
 
             db.TenantRoles.AddRange(toAdd);
+            foreach (var role in roles)
+            {
+                var existingTenantRole = existingTenantRoles.FirstOrDefault(tr => tr.RoleId == role.Id);
+                if (existingTenantRole is not null
+                    && !existingTenantRole.IsCustomized
+                    && existingTenantRole.Permissions != role.Permissions)
+                {
+                    existingTenantRole.Permissions = role.Permissions;
+                }
+            }
         }
 
         await db.SaveChangesAsync();
@@ -162,8 +204,17 @@ public static class DbSeeder
     // ─────────────────────────────────────────────────────────────────────────
     private static async Task SeedDemoDataAsync(AppDbContext db)
     {
-        if (await db.Tenants.AnyAsync(t => t.Slug == SeedTenantSlug))
+        var existingTenant = await db.Tenants.FirstOrDefaultAsync(t => t.Slug == SeedTenantSlug);
+        if (existingTenant is not null)
         {
+            var membershipCategoryId = await db.MembershipCategories
+                .Where(c => c.TenantId == existingTenant.Id && c.IsActive)
+                .Select(c => (Guid?)c.Id)
+                .FirstOrDefaultAsync();
+            if (membershipCategoryId is null)
+                throw new InvalidOperationException("The ACM demo community has no active membership category.");
+
+            await SeedElectionCommissionMembersAsync(db, existingTenant.Id, membershipCategoryId.Value);
             Console.WriteLine("[Seeder] Demo data already present — skipping.");
             return;
         }
@@ -465,52 +516,17 @@ public static class DbSeeder
         );
 
         // ── Elections ─────────────────────────────────────────────────────────
-        var electionCloturee = new Election
+        var election = new Election
         {
             Id = Guid.NewGuid(), TenantId = tenantId,
-            Title = "Élection du bureau 2024-2026",
-            Description = "Renouvellement du bureau exécutif de l'ACM",
-            Type = "board", Status = "results_published",
-            StartDate = DateTime.UtcNow.AddDays(-60),
-            EndDate = DateTime.UtcNow.AddDays(-45),
+            Title = "Élection du bureau exécutif ACM 2026–2028",
+            Description = "election des membres du bureau executif de l'ACM",
+            Type = "board", Status = "draft",
+            StartDate = new DateTime(2026, 10, 18),
+            EndDate = new DateTime(2026, 12, 19),
             MaxChoices = 1, IsActive = true,
         };
-        var electionEnCours = new Election
-        {
-            Id = Guid.NewGuid(), TenantId = tenantId,
-            Title = "Vote — Projet activités culturelles 2025",
-            Description = "Sélection du projet culturel prioritaire pour 2025",
-            Type = "custom", Status = "open",
-            StartDate = DateTime.UtcNow.AddDays(-3),
-            EndDate = DateTime.UtcNow.AddDays(7),
-            MaxChoices = 1, IsActive = true,
-        };
-        db.Elections.AddRange(electionCloturee, electionEnCours);
-
-        var candPresident = new ElectionCandidate { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionCloturee.Id, MemberId = mPresident.Id,  Statement = "Je m'engage à renforcer les liens de notre communauté.", DisplayOrder = 1, IsActive = true };
-        var candTresorier = new ElectionCandidate { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionCloturee.Id, MemberId = mTresorier.Id,  Statement = "Transparence et rigueur dans la gestion des finances.",    DisplayOrder = 2, IsActive = true };
-        var candMember    = new ElectionCandidate { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionCloturee.Id, MemberId = mMember3.Id,    Statement = "Innovation et dynamisme pour notre association.",           DisplayOrder = 3, IsActive = true };
-        db.ElectionCandidates.AddRange(candPresident, candTresorier, candMember);
-
-        db.ElectionBallots.AddRange(
-            new ElectionBallot { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionCloturee.Id, CandidateId = candPresident.Id, VoteCount = 4, Rank = 1, IsActive = true },
-            new ElectionBallot { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionCloturee.Id, CandidateId = candTresorier.Id, VoteCount = 2, Rank = 2, IsActive = true },
-            new ElectionBallot { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionCloturee.Id, CandidateId = candMember.Id,    VoteCount = 0, Rank = 3, IsActive = true }
-        );
-        foreach (var m in activeMembers)
-            db.ElectionVotes.Add(new ElectionVote { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionCloturee.Id, VoterId = m.Id, IsActive = true });
-
-        var candFestival = new ElectionCandidate { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, MemberId = mPresident.Id,  Statement = "Festival gastronomique camerounais",      DisplayOrder = 1, IsActive = true };
-        var candExpo     = new ElectionCandidate { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, MemberId = mSecretaire.Id, Statement = "Exposition photos — Histoire du Cameroun", DisplayOrder = 2, IsActive = true };
-        db.ElectionCandidates.AddRange(candFestival, candExpo);
-
-        // Votes pour l'élection en cours (3 membres ont déjà voté)
-        db.ElectionBallots.AddRange(
-            new ElectionBallot { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, CandidateId = candFestival.Id, VoteCount = 2, Rank = 1, IsActive = true },
-            new ElectionBallot { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, CandidateId = candExpo.Id,     VoteCount = 1, Rank = 2, IsActive = true }
-        );
-        foreach (var m in new[] { mTresorier, mMember1, mMember3 })
-            db.ElectionVotes.Add(new ElectionVote { Id = Guid.NewGuid(), TenantId = tenantId, ElectionId = electionEnCours.Id, VoterId = m.Id, IsActive = true });
+        db.Elections.Add(election);
 
         // ── Communications ────────────────────────────────────────────────────
         var commSent = new Communication
@@ -763,16 +779,90 @@ public static class DbSeeder
         );
 
         await db.SaveChangesAsync();
+        await SeedElectionCommissionMembersAsync(db, tenantId, catOrd.Id);
 
         Console.WriteLine("[Seeder] ACM demo data seeded:");
-        Console.WriteLine("[Seeder]   8 users / 8 members / 3 membership categories");
+        Console.WriteLine("[Seeder]   13 users / 13 members / 3 membership categories");
         Console.WriteLine("[Seeder]   6 contribution charges → 6 payments (4 annual + 2 solidarity)");
         Console.WriteLine("[Seeder]   3 welfare requests / 3 events / 5 event registrations batches");
         Console.WriteLine("[Seeder]   2 meetings / 5 action items (3 passé + 2 prochain)");
-        Console.WriteLine("[Seeder]   2 elections / votes seeded on both");
+        Console.WriteLine("[Seeder]   1 draft board election");
         Console.WriteLine("[Seeder]   2 communications / 3 documents / 2 resolutions");
         Console.WriteLine("[Seeder]   5 board roles / 5 board members (3 expiring soon)");
         Console.WriteLine("[Seeder]   5 posts / 6 comments / 12 reactions / 3 attachments");
+    }
+
+    private static async Task SeedElectionCommissionMembersAsync(AppDbContext db, Guid tenantId, Guid membershipCategoryId)
+    {
+        var commissionMembers = new (string Email, string FirstName, string LastName, string Phone)[]
+        {
+            ("yebila.david.njafuh@acm.mu", "Yebila", "David Njafuh", "00000001"),
+            ("alain.barriere@acm.mu", "Alain", "Barriere", "00000002"),
+            ("djeuko.sonya@acm.mu", "Djeuko", "Sonya", "00000003"),
+            ("bienvenue.armel@acm.mu", "Bienvenue", "Armel", "00000004"),
+            ("tatsinda.nzapa.narcisse@acm.mu", "Tatsinda", "Nzapa Narcisse", "00000005"),
+        };
+        var usedMembershipNumbers = await db.Members
+            .Where(m => m.TenantId == tenantId)
+            .Select(m => m.MembershipNumber)
+            .ToHashSetAsync();
+        var pwdHash = BCrypt.Net.BCrypt.HashPassword("Password123!");
+        var nextMembershipNumber = 9;
+        var seededCount = 0;
+        var existingEmailUpdated = false;
+
+        foreach (var commissionMember in commissionMembers)
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u =>
+                u.TenantId == tenantId && u.Email == commissionMember.Email);
+            if (user is null)
+            {
+                var legacyEmail = commissionMember.Email.Replace("@acm.mu", "@example.test");
+                user = await db.Users.FirstOrDefaultAsync(u =>
+                    u.TenantId == tenantId && u.Email == legacyEmail);
+                if (user is not null)
+                {
+                    user.Email = commissionMember.Email;
+                    user.UpdatedAt = DateTime.UtcNow;
+                    existingEmailUpdated = true;
+                }
+            }
+
+            if (user is null)
+            {
+                user = MakeUser(
+                    commissionMember.Email, commissionMember.FirstName, commissionMember.LastName,
+                    Roles.ElectionCommissionMember, tenantId, pwdHash);
+                user.Phone = commissionMember.Phone;
+                db.Users.Add(user);
+            }
+
+            var existingMember = await db.Members.AnyAsync(m =>
+                m.TenantId == tenantId && m.UserId == user.Id);
+            if (existingMember)
+                continue;
+
+            string membershipNumber;
+            do
+            {
+                membershipNumber = $"ACM-{nextMembershipNumber++:D4}";
+            } while (!usedMembershipNumbers.Add(membershipNumber));
+
+            db.Members.Add(MakeMember(
+                tenantId, user.Id, membershipCategoryId, membershipNumber, "active",
+                DateOnly.FromDateTime(DateTime.UtcNow)));
+            seededCount++;
+        }
+
+        if (seededCount > 0 || existingEmailUpdated)
+        {
+            await db.SaveChangesAsync();
+        }
+
+        if (seededCount > 0)
+        {
+            Console.WriteLine($"[Seeder] Added {seededCount} election commission demo members.");
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

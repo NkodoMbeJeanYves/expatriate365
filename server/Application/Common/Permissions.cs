@@ -49,6 +49,7 @@ public static class Permissions
     public const string VotesManage  = "votes.manage";
     public const string VotesDelete  = "votes.delete";
     public const string VotesExport  = "votes.export";
+    public const string VotesCandidatesReview = "votes.candidates.review";
 
     // ── Welfare ──────────────────────────────────────────────────────────────
     public const string WelfareRead     = "welfare.read";
@@ -151,7 +152,7 @@ public static class Permissions
             ["categories"]    = [CategoriesRead, CategoriesCreate, CategoriesUpdate, CategoriesDelete],
             ["contributions"] = [ContributionsRead, ContributionsReadOwn, ContributionsCreate, ContributionsUpdate, ContributionsDelete, ContributionsValidate, ContributionsExport, ContributionsImport],
             ["payments"]      = [PaymentsRead, PaymentsReadOwn, PaymentsCreate, PaymentsUpdate, PaymentsDelete, PaymentsValidate, PaymentsRefund, PaymentsExport, PaymentsReceiptPrint],
-            ["votes"]         = [VotesRead, VotesCast, VotesResults, VotesCreate, VotesManage, VotesDelete, VotesExport],
+            ["votes"]         = [VotesRead, VotesCast, VotesResults, VotesCreate, VotesManage, VotesDelete, VotesExport, VotesCandidatesReview],
             ["welfare"]       = [WelfareRead, WelfareReadOwn, WelfareCreate, WelfareValidate, WelfareDelete],
             ["transfer_assistance"] = [
                 TransferAssistanceCreate, TransferAssistanceReadOwn, TransferAssistanceProfileManage,
